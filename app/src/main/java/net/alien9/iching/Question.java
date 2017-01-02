@@ -4,10 +4,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -32,9 +39,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 
 public class Question extends AppCompatActivity {
 
@@ -50,9 +61,11 @@ public class Question extends AppCompatActivity {
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int FIELD_INDEX = 99;
+    public static final int POSITION_UPDATE = 0;
 
 
     private JSONObject groselha;
+    private File imageFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +101,9 @@ public class Question extends AppCompatActivity {
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
         pu.setAdapter(pa);
+        final Handler locator=new Chandler();
+        LocationListenerDourado l = new LocationListenerDourado(locator);
+
     }
 
     @Override
@@ -190,16 +206,29 @@ public class Question extends AppCompatActivity {
     }
 
     private void requestCamera() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        try {
+            imageFile = createImageFile();
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (imageFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "net.alien9.iching",
+                        imageFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }else{
+                Snackbar.make(findViewById(R.id.main_view), "Erro ao abrir arquivo", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+            }
+        } catch (IOException e) {
+            Snackbar.make(findViewById(R.id.main_view), "Erro ao abrir arquivo", Snackbar.LENGTH_LONG).setAction("Action", null).show();
         }
+
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
+            //Bundle extras = data.getExtras();
+            Bitmap imageBitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
+            //Bitmap imageBitmap = (Bitmap) extras.get("data");
             ImageView iw= (ImageView) findViewById(R.id.camera_image_view);
             if(iw!=null)
                 iw.setImageBitmap(imageBitmap);
@@ -236,10 +265,37 @@ public class Question extends AppCompatActivity {
                     byte[] byteArray = byteArrayOutputStream .toByteArray();
                     groselha.getJSONArray("items").getJSONObject(ix).put("value",Base64.encodeToString(byteArray, Base64.DEFAULT));
                 }
+                if(groselha.getJSONArray("items").getJSONObject(ix).optBoolean("gps",false)){
+
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
+        }
+    }
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        //mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    private class Chandler extends Handler {
+        public void handleMessage (Message msg){
+            if(msg.what==POSITION_UPDATE){
+                Bundle da = msg.getData();
+
+            }
         }
     }
 }

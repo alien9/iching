@@ -1,7 +1,7 @@
 {"items": [
   {"options": ["verdade", "mentira"], "title": "O que quer dizer ironia?", "type": "radio"},
   {"options": [{"caption":"Falsa"}, {"caption":"Inc\u00f4moda"}], "title": "Que tipo de pessoa voc\u00ea \u00e9?", "type": "checkbox"},
-  {"title":"Descreva uma experiência desagradável:"},
+  {"title":"Descreva uma experiência desagradável:","gps":true},
   {"title":"Alguma coisa mais?","type":"text"},
   {"title":"Preciso de uma imagem", "type":"camera"}
 ]}
