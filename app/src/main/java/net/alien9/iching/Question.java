@@ -1,11 +1,15 @@
 package net.alien9.iching;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,6 +18,7 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -22,6 +27,7 @@ import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
@@ -53,22 +59,25 @@ public class Question extends AppCompatActivity {
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
     private static final int TYPE_CAMERA = 5;
-    private static final Hashtable<String,Integer> FIELD_TYPES = new Hashtable<String, Integer>(){{
-        put("radio",TYPE_RADIO);
-        put("checkbox",TYPE_CHECKBOX);
-        put("text",TYPE_TEXT);
-        put("camera",TYPE_CAMERA);
+    private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
+        put("radio", TYPE_RADIO);
+        put("checkbox", TYPE_CHECKBOX);
+        put("text", TYPE_TEXT);
+        put("camera", TYPE_CAMERA);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int FIELD_INDEX = 99;
     public static final int POSITION_UPDATE = 0;
+    private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
 
 
     private JSONObject groselha;
     private File imageFile;
+    private JSONObject last_known_position;
+    private JSONArray results;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -80,9 +89,14 @@ public class Question extends AppCompatActivity {
             public void onClick(View view) {
                 //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 //        .setAction("Action", null).show();
-                save();
+
                 ViewPager pu = (ViewPager) findViewById(R.id.main_view);
-                pu.setCurrentItem(pu.getCurrentItem()+1);
+                if(pu.getCurrentItem()<groselha.optJSONArray("items").length()-1) {
+                    save();
+                    pu.setCurrentItem(pu.getCurrentItem() + 1);
+                }else{
+                    saveAll();
+                }
             }
         });
         //JSONOBJECT vem carregado no intent
@@ -101,9 +115,19 @@ public class Question extends AppCompatActivity {
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
         pu.setAdapter(pa);
-        final Handler locator=new Chandler();
+        final Handler locator = new Chandler();
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         LocationListenerDourado l = new LocationListenerDourado(locator);
-
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Activity budega = (Activity) this;
+            ActivityCompat.requestPermissions(budega,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    ICHING_REQUEST_GPS_PERMISSION);
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+        cleanUp();
     }
 
     @Override
@@ -241,6 +265,24 @@ public class Question extends AppCompatActivity {
         int ix= (int) v.getTag();
         iterate(v,ix);
     }
+    protected void saveAll(){
+        try {
+            results=new JSONArray(groselha.optJSONArray("items").length());
+        } catch (JSONException e) {}
+        ViewGroup vu = (ViewGroup) findViewById(R.id.main_view);
+        for(int i=0;i<vu.getChildCount();i++){
+            View v = vu.getChildAt(i);
+            int ix= (int) v.getTag();
+            iterate(v,ix);
+        }
+    }
+    private void cleanUp(){
+        results=new JSONArray();
+        for(int j=0;j<groselha.optJSONArray("items").length();j++){
+            results.put(new JSONObject());
+        }
+    };
+
 
     private void iterate(View v, int ix) {
         try {
@@ -251,22 +293,31 @@ public class Question extends AppCompatActivity {
         }catch(ClassCastException exx){
             try {
                 if(v.getClass().getCanonicalName().equals(CheckBox.class.getCanonicalName())){
-                    groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag()).put("checked",((CheckBox)v).isChecked());
+                    JSONObject option = groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag());
+                    option.put("checked",((CheckBox)v).isChecked());
+                    JSONArray vs = results.optJSONObject(ix).optJSONArray("value");
+                    if(vs==null) results.optJSONObject(ix).put("value",new JSONArray());
+                    results.optJSONObject(ix).optJSONArray("value").put(option);
+//                    groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag()).put("checked",((CheckBox)v).isChecked());
                 }else if(v.getClass().getCanonicalName().equals(RadioButton.class.getCanonicalName())){
                     if(((RadioButton)v).isChecked())
-                        groselha.optJSONArray("items").getJSONObject(ix).put("value",v.getTag());
+                        results.optJSONObject(ix).put("value",v.getTag());
+                        //groselha.optJSONArray("items").getJSONObject(ix).put("value",v.getTag());
                 }else if(v.getClass().getCanonicalName().equals(AppCompatEditText.class.getCanonicalName())){
-                    groselha.getJSONArray("items").getJSONObject(ix).put("value",((TextView)v).getText());
+                    results.getJSONObject(ix).put("value",((TextView)v).getText());
+
                 }else if(v.getClass().getCanonicalName().equals(AppCompatImageView.class.getCanonicalName())){
                     BitmapDrawable drawable = (BitmapDrawable) ((ImageView)v).getDrawable();
-                    Bitmap bitmap = drawable.getBitmap();
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-                    byte[] byteArray = byteArrayOutputStream .toByteArray();
-                    groselha.getJSONArray("items").getJSONObject(ix).put("value",Base64.encodeToString(byteArray, Base64.DEFAULT));
+                    if(drawable!=null) {
+                        Bitmap bitmap = drawable.getBitmap();
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
+                        results.getJSONObject(ix).put("value", Base64.encodeToString(byteArray, Base64.DEFAULT));
+                    }
                 }
                 if(groselha.getJSONArray("items").getJSONObject(ix).optBoolean("gps",false)){
-
+                    results.getJSONObject(ix).put("location",last_known_position);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -293,7 +344,11 @@ public class Question extends AppCompatActivity {
     private class Chandler extends Handler {
         public void handleMessage (Message msg){
             if(msg.what==POSITION_UPDATE){
-                Bundle da = msg.getData();
+                try {
+                    last_known_position = new JSONObject(msg.getData().getString("location"));
+                } catch (JSONException e) {
+
+                }
 
             }
         }
