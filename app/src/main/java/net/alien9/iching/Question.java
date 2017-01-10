@@ -79,12 +79,15 @@ public class Question extends AppCompatActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_question);
-        Intent intent = new Intent(this,Login.class);
-        startActivity(intent);
-
+        if(!Util.hasValidSession(this)) {
+            setContentView(R.layout.activity_question);
+            Intent intent = new Intent(this, Login.class);
+            startActivity(intent);
+            finish();
+        }
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        final Context context = this;
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -94,15 +97,25 @@ public class Question extends AppCompatActivity {
                 //        .setAction("Action", null).show();
 
                 ViewPager pu = (ViewPager) findViewById(R.id.main_view);
-                if(pu.getCurrentItem()<groselha.optJSONArray("items").length()-1) {
+                if (pu.getCurrentItem() < groselha.optJSONArray("items").length() - 1) {
                     save();
                     pu.setCurrentItem(pu.getCurrentItem() + 1);
-                }else{
+                } else {
                     saveAll();
+                    Intent intent = new Intent(context, Lista.class);
+                    intent.putExtra("results", results.toString());
+                    startActivity(intent);
                 }
             }
         });
         //JSONOBJECT vem carregado no intent
+        Intent intent = getIntent();
+        try {
+            groselha = new JSONObject(intent.getExtras().getString("content"));
+        } catch (JSONException e) {
+            Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+        }
+        /*
         try {
             String u = "";
             Resources res = getResources();
@@ -113,7 +126,8 @@ public class Question extends AppCompatActivity {
             groselha = new JSONObject(u);
         } catch (JSONException ignored) {
         } catch (IOException ignored) {
-        }
+        */
+        //}
         ViewPager pu = (ViewPager) findViewById(R.id.main_view);
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
@@ -269,9 +283,6 @@ public class Question extends AppCompatActivity {
         iterate(v,ix);
     }
     protected void saveAll(){
-        try {
-            results=new JSONArray(groselha.optJSONArray("items").length());
-        } catch (JSONException e) {}
         ViewGroup vu = (ViewGroup) findViewById(R.id.main_view);
         for(int i=0;i<vu.getChildCount();i++){
             View v = vu.getChildAt(i);
@@ -305,7 +316,7 @@ public class Question extends AppCompatActivity {
                 }else if(v.getClass().getCanonicalName().equals(RadioButton.class.getCanonicalName())){
                     if(((RadioButton)v).isChecked())
                         results.optJSONObject(ix).put("value",v.getTag());
-                        //groselha.optJSONArray("items").getJSONObject(ix).put("value",v.getTag());
+                    //groselha.optJSONArray("items").getJSONObject(ix).put("value",v.getTag());
                 }else if(v.getClass().getCanonicalName().equals(AppCompatEditText.class.getCanonicalName())){
                     results.getJSONObject(ix).put("value",((TextView)v).getText());
 

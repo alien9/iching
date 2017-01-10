@@ -4,6 +4,9 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.DownloadManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -28,18 +31,22 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+import org.json.JSONArray;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.CookieJar;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -70,7 +77,8 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private RequestQueue queue;
+    private Context context;
+    private String cookies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +87,10 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
-
+        final SharedPreferences sharedpreferences=getSharedPreferences("login",MODE_PRIVATE);
+        String username = sharedpreferences.getString("username", "");
+        String password = sharedpreferences.getString("password", "");
+        ((CheckBox)findViewById(R.id.remeber_me)).setChecked(username.length()>0);
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -91,7 +102,8 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 return false;
             }
         });
-
+        mPasswordView.setText(password);
+        mEmailView.setText(username);
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -102,7 +114,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-        queue = Volley.newRequestQueue(this);
+        context=this;
     }
 
     private void populateAutoComplete() {
@@ -166,7 +178,11 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
-
+        SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = sharedpreferences.edit();
+        e.putString("username", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?email:"");
+        e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:""); // Isto aqui é temporário
+        e.commit();
         boolean cancel = false;
         View focusView = null;
 
@@ -309,6 +325,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
 
         private final String mEmail;
         private final String mPassword;
+        private CookieJar cookieJar;
 
         UserLoginTask(String email, String password) {
             mEmail = email;
@@ -318,32 +335,27 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected Boolean doInBackground(Void... params) {
             String url =getString(R.string.login_url);
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            // Display the first 500 characters of the response string.
-                            Log.d("iching","Response is: "+ response.substring(0,500));
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.d("iching","Response is error: "+ error.getMessage());
-                }
-            });
-// Add the request to the RequestQueue.
-            queue.add(stringRequest);
+            cookieJar=Util.getCookieJar(context);
+            OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+            RequestBody formBody = new FormBody.Builder()
+                    .add("USERNAME",mEmail)
+                    .add("PASSWORD",mPassword)
+                    .build();
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(formBody)
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(!response.headers("Set-Cookie").isEmpty()) {
+                    cookies = response.headers("Set-Cookie").toString();
+                    return true;
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            // TODO: register the new account here.
-            return true;
+            return false;
         }
 
         @Override
@@ -352,6 +364,9 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             showProgress(false);
 
             if (success) {
+                Intent intent=new Intent(context,Lista.class);
+                intent.putExtra("CNETSERVERLOGACAO",cookies);
+                startActivity(intent);
                 finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
