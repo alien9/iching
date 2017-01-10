@@ -82,6 +82,7 @@ public class Question extends AppCompatActivity {
         setContentView(R.layout.activity_question);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        final Context context = this;
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -96,10 +97,20 @@ public class Question extends AppCompatActivity {
                     pu.setCurrentItem(pu.getCurrentItem() + 1);
                 }else{
                     saveAll();
+                    Intent intent=new Intent(context,Lista.class);
+                    intent.putExtra("results",results.toString());
+                    startActivity(intent);
                 }
             }
         });
         //JSONOBJECT vem carregado no intent
+        Intent intent = getIntent();
+        try {
+            groselha = new JSONObject(intent.getExtras().getString("content"));
+        } catch (JSONException e) {
+            Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+        }
+        /*
         try {
             String u = "";
             Resources res = getResources();
@@ -110,7 +121,8 @@ public class Question extends AppCompatActivity {
             groselha = new JSONObject(u);
         } catch (JSONException ignored) {
         } catch (IOException ignored) {
-        }
+        */
+        //}
         ViewPager pu = (ViewPager) findViewById(R.id.main_view);
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
@@ -266,9 +278,6 @@ public class Question extends AppCompatActivity {
         iterate(v,ix);
     }
     protected void saveAll(){
-        try {
-            results=new JSONArray(groselha.optJSONArray("items").length());
-        } catch (JSONException e) {}
         ViewGroup vu = (ViewGroup) findViewById(R.id.main_view);
         for(int i=0;i<vu.getChildCount();i++){
             View v = vu.getChildAt(i);
