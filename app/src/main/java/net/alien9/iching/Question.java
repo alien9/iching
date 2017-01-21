@@ -49,9 +49,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
+
+import static okhttp3.Protocol.get;
 
 public class Question extends AppCompatActivity {
 
@@ -75,59 +80,27 @@ public class Question extends AppCompatActivity {
     private File imageFile;
     private JSONObject last_known_position;
     private JSONArray results;
+    private JSONObject polly;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!Util.hasValidSession(this)) {
-            setContentView(R.layout.activity_question);
-            Intent intent = new Intent(this, Login.class);
-            startActivity(intent);
-            finish();
+        Intent intent = getIntent();
+        if(intent.hasExtra("poll")){
+            String h = intent.getExtras().getString("poll");
+            try {
+                polly=new JSONObject(h);
+            } catch (JSONException ignore) {
+                Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+            }
         }
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         final Context context = this;
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                //        .setAction("Action", null).show();
-
-                ViewPager pu = (ViewPager) findViewById(R.id.main_view);
-                if (pu.getCurrentItem() < groselha.optJSONArray("items").length() - 1) {
-                    save();
-                    pu.setCurrentItem(pu.getCurrentItem() + 1);
-                } else {
-                    saveAll();
-                    Intent intent = new Intent(context, Lista.class);
-                    intent.putExtra("results", results.toString());
-                    startActivity(intent);
-                }
-            }
-        });
-        //JSONOBJECT vem carregado no intent
-        Intent intent = getIntent();
-        try {
-            groselha = new JSONObject(intent.getExtras().getString("content"));
-        } catch (JSONException e) {
-            Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-        }
-        /*
-        try {
-            String u = "";
-            Resources res = getResources();
-            InputStream in_s = res.openRawResource(R.raw.sample);
-            byte[] b = new byte[in_s.available()];
-            in_s.read(b);
-            u += new String(b);
-            groselha = new JSONObject(u);
-        } catch (JSONException ignored) {
-        } catch (IOException ignored) {
-        */
-        //}
+        setContentView(R.layout.activity_question);
+        setTitle(polly.optString("nom"));
         ViewPager pu = (ViewPager) findViewById(R.id.main_view);
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
@@ -144,7 +117,6 @@ public class Question extends AppCompatActivity {
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
-        cleanUp();
     }
 
     @Override
@@ -171,26 +143,31 @@ public class Question extends AppCompatActivity {
 
     private class BunchViewAdapter extends PagerAdapter {
         private final Context context;
+        private ArrayList<String> keynames;
 
         public BunchViewAdapter(Context c) {
             context = c;
         }
         @Override
         public int getCount() {
-            try {
-                return groselha.getJSONArray("items").length();
-            } catch (JSONException e) {
-                return 0;
+            JSONObject pergs = polly.optJSONObject("pergs");
+            Iterator<?> keys = pergs.keys();
+            keynames=new ArrayList<String>();
+            int n=0;
+            while( keys.hasNext() ) {
+                keynames.add((String)keys.next());
+                n++;
             }
+            return n;
         }
         @Override
         public Object instantiateItem(ViewGroup collection, int position) {
             LayoutInflater inflater = LayoutInflater.from(context);
             ViewGroup v = null;
             try {
-                JSONObject item=groselha.getJSONArray("items").getJSONObject(position);
+                JSONObject item=polly.getJSONObject("pergs").getJSONObject(keynames.get(position));
                 int t=FIELD_TYPES.get(item.optString("type","text"));
-                JSONArray a = item.optJSONArray("options");
+                JSONArray a = polly.optJSONArray("options");
                 switch(t){
                     case TYPE_RADIO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
@@ -224,7 +201,7 @@ public class Question extends AppCompatActivity {
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
-                String title=item.optString("title",null);
+                String title=item.optString("txt",null);
                 if(title!=null){
                     TextView tw = (TextView) v.findViewById(R.id.title_text);
                     if(tw!=null)
@@ -290,13 +267,6 @@ public class Question extends AppCompatActivity {
             iterate(v,ix);
         }
     }
-    private void cleanUp(){
-        results=new JSONArray();
-        for(int j=0;j<groselha.optJSONArray("items").length();j++){
-            results.put(new JSONObject());
-        }
-    };
-
 
     private void iterate(View v, int ix) {
         try {

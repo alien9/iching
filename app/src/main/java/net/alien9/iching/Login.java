@@ -3,6 +3,7 @@ package net.alien9.iching;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.Application;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
@@ -36,10 +37,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
@@ -79,6 +83,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
     private View mLoginFormView;
     private Context context;
     private String cookies;
+    private String stuff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +116,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 attemptLogin();
             }
         });
-
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
         context=this;
@@ -335,26 +339,44 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected Boolean doInBackground(Void... params) {
             String url =getString(R.string.login_url);
-            cookieJar=Util.getCookieJar(context);
+            cookieJar=((IChing)getApplicationContext()).getCookieJar(context);
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
             RequestBody formBody = new FormBody.Builder()
                     .add("USERNAME",mEmail)
                     .add("PASSWORD",mPassword)
                     .build();
-
             Request request = new Request.Builder()
                     .url(url)
                     .post(formBody)
                     .build();
+            stuff=null;
             try {
                 Response response = client.newCall(request).execute();
-                if(!response.headers("Set-Cookie").isEmpty()) {
-                    cookies = response.headers("Set-Cookie").toString();
+
+                request = new Request.Builder()
+                        .url(getString(R.string.load_url))
+                        .build();
+                response = null;
+
+                Response response_l = client.newCall(request).execute();
+                String j=response_l.body().string();
+                Pattern p = Pattern.compile("\\[\\{.*");
+                Matcher m = p.matcher(j);
+                if(m.find()) {
+                    String s = m.group();
+                    stuff = new JSONArray(s).toString();
+                    //((IChing)getApplicationContext()).setClient(client);
                     return true;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                return false;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
             }
+
+
             return false;
         }
 
@@ -366,6 +388,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             if (success) {
                 Intent intent=new Intent(context,Lista.class);
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
+                intent.putExtra("stuff",stuff);
                 startActivity(intent);
                 finish();
             } else {

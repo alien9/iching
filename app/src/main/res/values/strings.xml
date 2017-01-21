@@ -19,4 +19,5 @@
     <string name="load_url">http://ss.sb3.construnet.com.br/gw/index.php?m=load</string>
     <string name="title_activity_lista">Lista</string>
     <string name="remember_me">Lembrar nome de usuário</string>
+    <string name="reload_groselha">Recarregar</string>
 </resources>

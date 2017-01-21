@@ -4,12 +4,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.DataSetObserver;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -18,20 +30,28 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import okhttp3.CookieJar;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class Lista extends AppCompatActivity {
 
     private JSONObject groselha;
+    private String cookies;
+    private OkHttpClient client;
+    private JSONArray stuff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!Util.hasValidSession(this)) {
-            setContentView(R.layout.activity_question);
-            Intent intent = new Intent(this, Login.class);
-            startActivity(intent);
-            finish();
-        }
         setContentView(R.layout.activity_lista);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -54,13 +74,12 @@ public class Lista extends AppCompatActivity {
             journal=new JSONArray();
         }
         JSONArray results=null;
-        if(intent.hasExtra("results")) {
-            try {
-                results = new JSONArray(intent.getExtras().getString("results"));
-            } catch (JSONException e) {
-                results = null;
-            }
+        if(intent.hasExtra("CNETSERVERLOGACAO"))
+        {
+            cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
+            //reload();
         }
+
         if(results!=null) { // está trazendo json pra gravar
             journal.put(results);
             SharedPreferences.Editor editor = sharedpreferences.edit();
@@ -69,18 +88,98 @@ public class Lista extends AppCompatActivity {
         }
 
         //JSONOBJECT vem carregado no intent
-        try {
-            String u = "";
-            Resources res = getResources();
-            InputStream in_s = res.openRawResource(R.raw.sample);
-            byte[] b = new byte[in_s.available()];
-            in_s.read(b);
-            u += new String(b);
-            groselha = new JSONObject(u);
-        } catch (JSONException ignored) {
-        } catch (IOException ignored) {
+        if(intent.hasExtra("stuff")){
+            try {
+                stuff=new JSONArray(intent.getExtras().getString("stuff"));
+                show();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }else{
+            intent = new Intent(this, Login.class);
+            startActivity(intent);
+            finish();
         }
-        ((TextView)findViewById(R.id.list_summary)).setText(String.format("%s de %s",journal.length(), groselha.optJSONArray("items").length()));
+        client = IChing.getInstance().getClient();
+        ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(context, Question.class);
+                intent.putExtra("poll",stuff.optJSONObject(i).toString());
+                startActivity(intent);
+            }
+        });
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_lista, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+            case R.id.reload_groselha:
+                reload();
+                break;
+        }
+        return true;
+
     }
 
+    private void reload() {
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
+        progressBar.setVisibility(View.VISIBLE);
+        ReloadTask reloader = new ReloadTask();
+        reloader.execute((Void) null);
+    }
+
+
+    private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
+        private boolean loading=false;
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            if(loading)return false;
+            loading=true;
+            Request request = new Request.Builder()
+                    .url(getString(R.string.load_url))
+                    .build();
+            Response response = null;
+            try {
+                response = client.newCall(request).execute();
+                String j=response.body().string();
+                Pattern p = Pattern.compile("\\[\\{.*");
+                Matcher m = p.matcher(j);
+                if(m.find()) {
+                    String s = m.group();
+                    stuff = new JSONArray(s);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return true;
+        }
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            loading=false;
+            ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
+            progressBar.setVisibility(View.GONE);
+            show();
+        }
+
+    }
+
+    private void show() {
+        List<String> names=new ArrayList<>();
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_single_choice,
+                android.R.id.text1, names));
+        for(int i=0;i<stuff.length();i++){
+            names.add(stuff.optJSONObject(i).optString("nom"));
+        }
+    }
 }

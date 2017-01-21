@@ -5,21 +5,21 @@
     android:id="@+id/content_lista"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="net.alien9.iching.Lista"
     tools:showIn="@layout/activity_lista">
-
-
-    <TextView
-        android:text="TextView"
+    <ProgressBar
+        android:id="@+id/progress_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="131dp"
-        android:id="@+id/list_summary" />
+        android:layout_gravity="right"
+        android:indeterminate="true"
+        android:visibility="gone" />
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/lista_list"
+        />
 </RelativeLayout>
