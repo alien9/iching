@@ -5,10 +5,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,17 +14,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatEditText;
-import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,28 +29,20 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-
-import static okhttp3.Protocol.get;
 
 public class Question extends AppCompatActivity {
 
@@ -64,22 +50,30 @@ public class Question extends AppCompatActivity {
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
     private static final int TYPE_CAMERA = 5;
+    private static final int TYPE_UNICA = 6;
+    private static final int TYPE_DATE = 7;
+    private static final int TYPE_MULTIPLA = 8;
+    private static final int TYPE_NUMBER = 9;
+    private static final int TYPE_YESORNO = 10;
+    private static final int TYPE_MIDIA = 11;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
         put("text", TYPE_TEXT);
         put("camera", TYPE_CAMERA);
+        put("unica", TYPE_UNICA);
+        put("data", TYPE_DATE);
+        put("multipla", TYPE_MULTIPLA);
+        put("numerica", TYPE_NUMBER);
+        put("simnao", TYPE_YESORNO);
+        put("midia", TYPE_MIDIA);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int FIELD_INDEX = 99;
     public static final int POSITION_UPDATE = 0;
     private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
-
-
-    private JSONObject groselha;
     private File imageFile;
     private JSONObject last_known_position;
-    private JSONArray results;
     private JSONObject polly;
 
     @Override
@@ -96,12 +90,22 @@ public class Question extends AppCompatActivity {
         }
 
 
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         final Context context = this;
         setContentView(R.layout.activity_question);
         setTitle(polly.optString("nom"));
-        ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+        final ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+        final View te=findViewById(R.id.messenger_layout);
+        if(polly.has("msgini")){
+            pu.setVisibility(View.GONE);
+            ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgini"));
+            te.setVisibility(View.VISIBLE);
+        }else{
+            te.setVisibility(View.GONE);
+            pu.setVisibility(View.VISIBLE);
+        }
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
         pu.setAdapter(pa);
@@ -116,6 +120,15 @@ public class Question extends AppCompatActivity {
                     ICHING_REQUEST_GPS_PERMISSION);
             return;
         }
+        ((Button)findViewById(R.id.continue_button)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                te.setVisibility(View.GONE);
+                pu.setVisibility(View.VISIBLE);
+            }
+        });
+
+
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
     }
 
@@ -132,8 +145,6 @@ public class Question extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -150,6 +161,7 @@ public class Question extends AppCompatActivity {
         }
         @Override
         public int getCount() {
+            if(!polly.has("pergs")) return 0;
             JSONObject pergs = polly.optJSONObject("pergs");
             Iterator<?> keys = pergs.keys();
             keynames=new ArrayList<String>();
@@ -166,23 +178,42 @@ public class Question extends AppCompatActivity {
             ViewGroup v = null;
             try {
                 JSONObject item=polly.getJSONObject("pergs").getJSONObject(keynames.get(position));
-                int t=FIELD_TYPES.get(item.optString("type","text"));
-                JSONArray a = polly.optJSONArray("options");
+                String tip=item.optString("tipo","text");
+                int t = 0;
+                try {
+                    t = FIELD_TYPES.get(tip);
+                }catch(NullPointerException xixi){
+                    Log.d("ICHING",tip+" ********************** "+xixi.getMessage());
+                }
+                JSONObject a = item.optJSONObject("resps");
+                ArrayList<String> respskeys = new ArrayList<String>();
+                JSONObject resps = null;
+                if(item.has("resps")) {
+                    resps = item.optJSONObject("resps");
+                    Iterator<?> keys = resps.keys();
+                    int n = 0;
+                    while (keys.hasNext()) {
+                        respskeys.add((String) keys.next());
+                    }
+                }
                 switch(t){
                     case TYPE_RADIO:
+                    case TYPE_UNICA:
+                    case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
-                        for(int i=0;i<a.length();i++){
+                        for(int i=0;i<respskeys.size();i++){
                             RadioButton bu = new RadioButton(context);
-                            bu.setText(a.optString(i));
+                            bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             bu.setTag(i);
                             v.addView(bu);
                         }
                         break;
                     case TYPE_CHECKBOX:
+                    case TYPE_MULTIPLA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_checkbox_question, collection, false);
-                        for(int i=0;i<a.length();i++){
+                        for(int i=0;i<respskeys.size();i++){
                             CheckBox bu = new CheckBox(context);
-                            bu.setText(a.optJSONObject(i).optString("caption"));
+                            bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             bu.setTag(i);
                             v.addView(bu);
                         }
@@ -195,6 +226,12 @@ public class Question extends AppCompatActivity {
                                 requestCamera();
                             }
                         });
+                        break;
+                    case TYPE_DATE:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
+                        break;
+                    case TYPE_NUMBER:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         break;
                     case TYPE_TEXT:
                     default:
@@ -275,7 +312,7 @@ public class Question extends AppCompatActivity {
                 iterate(g.getChildAt(i), ix);
             }
         }catch(ClassCastException exx){
-            try {
+                /*
                 if(v.getClass().getCanonicalName().equals(CheckBox.class.getCanonicalName())){
                     JSONObject option = groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag());
                     option.put("checked",((CheckBox)v).isChecked());
@@ -303,10 +340,7 @@ public class Question extends AppCompatActivity {
                 if(groselha.getJSONArray("items").getJSONObject(ix).optBoolean("gps",false)){
                     results.getJSONObject(ix).put("location",last_known_position);
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
+                */
         }
     }
     private File createImageFile() throws IOException {

@@ -20,4 +20,5 @@
     <string name="title_activity_lista">Lista</string>
     <string name="remember_me">Lembrar nome de usuário</string>
     <string name="reload_groselha">Recarregar</string>
+    <string name="action_continue">Avançar</string>
 </resources>

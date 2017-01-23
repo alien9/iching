@@ -176,7 +176,7 @@ public class Lista extends AppCompatActivity {
     private void show() {
         List<String> names=new ArrayList<>();
         ((ListView)findViewById(R.id.lista_list)).setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_single_choice,
+                android.R.layout.simple_selectable_list_item,
                 android.R.id.text1, names));
         for(int i=0;i<stuff.length();i++){
             names.add(stuff.optJSONObject(i).optString("nom"));
