@@ -6,8 +6,8 @@
         android:title="@string/action_settings"
         android:orderInCategory="100"
         app:showAsAction="never" />
-    <item android:id="@+id/reload_groselha"
-        android:title="@string/reload_groselha"
+    <item android:id="@+id/action_quit"
+        android:title="@string/action_quit"
         android:orderInCategory="100"
         app:showAsAction="never" />
 </menu>

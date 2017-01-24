@@ -1,6 +1,7 @@
 package net.alien9.iching;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -59,7 +60,7 @@ public class Question extends AppCompatActivity {
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
-        put("text", TYPE_TEXT);
+        put("textual", TYPE_TEXT);
         put("camera", TYPE_CAMERA);
         put("unica", TYPE_UNICA);
         put("data", TYPE_DATE);
@@ -89,12 +90,11 @@ public class Question extends AppCompatActivity {
             }
         }
 
-
-
+        setContentView(R.layout.activity_question);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbar.setTitle(polly.optString("nom"));
         final Context context = this;
-        setContentView(R.layout.activity_question);
         setTitle(polly.optString("nom"));
         final ViewPager pu = (ViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
@@ -127,8 +127,6 @@ public class Question extends AppCompatActivity {
                 pu.setVisibility(View.VISIBLE);
             }
         });
-
-
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
     }
 
@@ -144,9 +142,10 @@ public class Question extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+        switch(item.getItemId()){
+            case R.id.action_quit:
+                save();
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -162,7 +161,12 @@ public class Question extends AppCompatActivity {
         @Override
         public int getCount() {
             if(!polly.has("pergs")) return 0;
-            JSONObject pergs = polly.optJSONObject("pergs");
+            JSONObject pergs = null;
+            try {
+                pergs = polly.getJSONObject("pergs");
+            } catch (JSONException e) {
+                pergs=new JSONObject();
+            }
             Iterator<?> keys = pergs.keys();
             keynames=new ArrayList<String>();
             int n=0;
