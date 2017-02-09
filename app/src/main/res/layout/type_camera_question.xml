@@ -24,5 +24,10 @@
         android:layout_height="wrap_content"
         android:id="@+id/camera_image_view"
         android:layout_gravity="center_horizontal" />
-
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="id da pergunta"
+        android:id="@+id/perg_id"
+        />
 </LinearLayout>

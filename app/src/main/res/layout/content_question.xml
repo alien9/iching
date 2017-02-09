@@ -29,9 +29,11 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/message_textView" />
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:text="@string/action_continue"
+            android:layout_gravity="center_horizontal"
             android:id="@+id/continue_button"
             />
     </LinearLayout>

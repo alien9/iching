@@ -3,11 +3,13 @@ package net.alien9.iching;
 import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,35 +17,48 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
+
+import static android.R.attr.tag;
 
 public class Question extends AppCompatActivity {
 
@@ -74,8 +89,10 @@ public class Question extends AppCompatActivity {
     public static final int POSITION_UPDATE = 0;
     private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
     private File imageFile;
-    private JSONObject last_known_position;
     private JSONObject polly;
+    private JSONObject last_known_position;
+    private boolean turning=false;
+    private DatePickerDialog datepicker;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -108,6 +125,14 @@ public class Question extends AppCompatActivity {
         }
         PagerAdapter pa = new BunchViewAdapter(this);
         pu.setOffscreenPageLimit(pa.getCount());
+        pu.setOnTouchListener(new View.OnTouchListener()
+        {
+            @Override
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                return true;
+            }
+        });
         pu.setAdapter(pa);
         final Handler locator = new Chandler();
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -127,6 +152,53 @@ public class Question extends AppCompatActivity {
                 pu.setVisibility(View.VISIBLE);
             }
         });
+        ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                save();
+                ((IChing)getApplication()).resetUndo();
+                int cu = pu.getCurrentItem();
+                if(cu<pu.getAdapter().getCount()-1) {
+                    pu.setCurrentItem(pu.getCurrentItem() + 1, true);
+                }
+            }
+        });
+        ((FloatingActionButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                save();
+                if(!((IChing)getApplication()).hasUndo()){
+                    int cu = pu.getCurrentItem();
+                    if (cu > 0)
+                        pu.setCurrentItem(cu - 1, true);
+
+                }
+                ((IChing)getApplication()).setUndo();
+            }
+        });
+        pu.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                Log.d("iching Coisa",""+positionOffset);
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                findViewById(R.id.next).setVisibility(View.VISIBLE);
+                if(position==0){
+                    findViewById(R.id.previous).setVisibility(View.GONE);
+                }
+                if(position==pu.getAdapter().getCount()-1)
+                    findViewById(R.id.next).setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                Log.d("iching page scroll",""+state);
+            }
+        });
+
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
     }
 
@@ -180,8 +252,10 @@ public class Question extends AppCompatActivity {
         public Object instantiateItem(ViewGroup collection, int position) {
             LayoutInflater inflater = LayoutInflater.from(context);
             ViewGroup v = null;
+            JSONObject respuestas = ((IChing) getApplication()).getRespostas();
             try {
-                JSONObject item=polly.getJSONObject("pergs").getJSONObject(keynames.get(position));
+                String perg_id=keynames.get(position);
+                JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
                 String tip=item.optString("tipo","text");
                 int t = 0;
                 try {
@@ -208,17 +282,25 @@ public class Question extends AppCompatActivity {
                         for(int i=0;i<respskeys.size();i++){
                             RadioButton bu = new RadioButton(context);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
-                            bu.setTag(i);
-                            v.addView(bu);
+                            String tag=respskeys.get(i);
+                            bu.setTag(tag);
+                            if(respuestas.optString(perg_id).equals(tag)){
+                                bu.setChecked(true);
+                            }
+                            ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
                         }
                         break;
                     case TYPE_CHECKBOX:
                     case TYPE_MULTIPLA:
+                        JSONObject r = respuestas.optJSONObject(perg_id);
+                        if(r==null)r=new JSONObject();
                         v = (ViewGroup) inflater.inflate(R.layout.type_checkbox_question, collection, false);
                         for(int i=0;i<respskeys.size();i++){
                             CheckBox bu = new CheckBox(context);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
-                            bu.setTag(i);
+                            bu.setTag(respskeys.get(i));
+                            if(r.optBoolean(respskeys.get(i)))
+                                bu.setChecked(true);
                             v.addView(bu);
                         }
                         break;
@@ -233,11 +315,38 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
+                        final ViewGroup finalV = v;
+                        ((ImageButton)v.findViewById(R.id.datepicker_butt)).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                DatePickerDialog.OnDateSetListener datePickerListener=new DatePickerDialog.OnDateSetListener() {
+                                    @Override
+                                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
+                                        ((EditText) finalV.findViewById(R.id.datepicker_text)).setText(String.format("%02d/%02d/%04d",i2,1+i1,i));
+                                        datepicker.dismiss();
+                                    }
+                                };
+                                Calendar cal = Calendar.getInstance();
+                                int day = cal.get(Calendar.DAY_OF_MONTH);
+                                int month = cal.get(Calendar.MONTH);
+                                int year = cal.get(Calendar.YEAR);
+                                datepicker = new DatePickerDialog(context, datePickerListener, year, month, day);
+                                datepicker.show();
+                            }
+                        });
+                        ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_NUMBER:
-                        v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
+                        if(!item.has("maximo")){
+                            v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
+                        }else {
+                            v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                        }
+                        ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_TEXT:
+                        ((EditText)v.findViewById(R.id.textao_editText)).setText(respuestas.optString(perg_id));
+                        break;
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
@@ -248,7 +357,8 @@ public class Question extends AppCompatActivity {
                     if(tw!=null)
                         tw.setText(title);
                 }
-                v.setTag(position);
+                ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
+                v.setTag(keynames.get(position));
             } catch (JSONException e) {
             }
             collection.addView(v);
@@ -297,28 +407,69 @@ public class Question extends AppCompatActivity {
         ViewPager vu= (ViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
-        int ix= (int) v.getTag();
-        iterate(v,ix);
+        String perg_id = (String) ((TextView)v.findViewById(R.id.perg_id)).getText();
+        iterate(v,perg_id);
     }
     protected void saveAll(){
         ViewGroup vu = (ViewGroup) findViewById(R.id.main_view);
         for(int i=0;i<vu.getChildCount();i++){
             View v = vu.getChildAt(i);
-            int ix= (int) v.getTag();
-            iterate(v,ix);
+            //int ix= (int) v.getTag();
+            //iterate(v,ix);
         }
     }
+    protected boolean verify(){
+        return true;
+    }
 
-    private void iterate(View v, int ix) {
+    private void iterate(View v, String ix) {
+        TextView pergfield = (TextView) v.findViewById(R.id.perg_id);
+        if(pergfield!=null) {
+            String perg_id = (String) pergfield.getText();
+            IChing ching = ((IChing) getApplication());
+            JSONObject respuestas = ching.getRespostas();
+            try {
+                if (v.findViewById(R.id.textao_editText) != null) {
+                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
+                }
+                if (v.findViewById(R.id.number_edittext) != null) {
+                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.number_edittext)).getText());
+                }
+            } catch (JSONException e) {
+            }
+            ching.setRespostas(respuestas);
+            return;
+        }
         try {
             ViewGroup g = (ViewGroup) v;
             for (int i = 0; i < g.getChildCount(); i++) {
                 iterate(g.getChildAt(i), ix);
             }
-        }catch(ClassCastException exx){
-                /*
-                if(v.getClass().getCanonicalName().equals(CheckBox.class.getCanonicalName())){
-                    JSONObject option = groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag());
+        } catch (ClassCastException exx) {
+            try{
+                IChing ching = ((IChing) getApplication());
+                JSONObject respuestas = ching.getRespostas();
+                if (v.getClass().getCanonicalName().equals(CheckBox.class.getCanonicalName())) {
+
+                    JSONObject j = respuestas.optJSONObject(ix);
+                    if (j == null) j = new JSONObject();
+                    String resp_id = (String) v.getTag();
+                    j.put(resp_id, ((CheckBox) v).isChecked());
+                    respuestas.put(ix, j);
+
+                }
+                if(v.getClass().getCanonicalName().equals(AppCompatEditText.class.getCanonicalName())){
+                    respuestas.put(ix,((EditText)v).getText());
+                }
+                if(v.getClass().getCanonicalName().equals(RadioButton.class.getCanonicalName())){
+                    if(((RadioButton)v).isChecked())
+                        respuestas.put(ix,((RadioButton)v).getTag());
+                }
+
+                ching.setRespostas(respuestas);
+
+
+                    /*
                     option.put("checked",((CheckBox)v).isChecked());
                     JSONArray vs = results.optJSONObject(ix).optJSONArray("value");
                     if(vs==null) results.optJSONObject(ix).put("value",new JSONArray());
@@ -345,6 +496,11 @@ public class Question extends AppCompatActivity {
                     results.getJSONObject(ix).put("location",last_known_position);
                 }
                 */
+
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
     private File createImageFile() throws IOException {

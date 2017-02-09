@@ -91,7 +91,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-        populateAutoComplete();
+        //populateAutoComplete();
         final SharedPreferences sharedpreferences=getSharedPreferences("login",MODE_PRIVATE);
         String username = sharedpreferences.getString("username", "");
         String password = sharedpreferences.getString("password", "");
@@ -330,6 +330,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         private final String mEmail;
         private final String mPassword;
         private CookieJar cookieJar;
+        private String mess;
 
         UserLoginTask(String email, String password) {
             mEmail = email;
@@ -369,13 +370,10 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     return true;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-                return false;
+                mess=e.getLocalizedMessage();
             } catch (JSONException e) {
-                e.printStackTrace();
-                return false;
+                mess=e.getLocalizedMessage();
             }
-
 
             return false;
         }
@@ -392,8 +390,14 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 startActivity(intent);
                 finish();
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+
+                if(mess.equals(null)) {
+                    mess = getString(R.string.error_incorrect_password);
+                    mPasswordView.setError(mess);
+                    mPasswordView.requestFocus();
+                }else {
+                    Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                }
             }
         }
 
