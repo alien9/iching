@@ -7,6 +7,7 @@ import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -42,6 +43,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -58,6 +60,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import static android.R.attr.numbersInnerTextColor;
 import static android.R.attr.tag;
 
 public class Question extends AppCompatActivity {
@@ -93,6 +96,7 @@ public class Question extends AppCompatActivity {
     private JSONObject last_known_position;
     private boolean turning=false;
     private DatePickerDialog datepicker;
+    private String cookies;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -102,9 +106,13 @@ public class Question extends AppCompatActivity {
             String h = intent.getExtras().getString("poll");
             try {
                 polly=new JSONObject(h);
+                ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
             } catch (JSONException ignore) {
                 Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
+        }
+        if(intent.hasExtra("CNETSERVERLOGACAO")){
+            cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
         }
 
         setContentView(R.layout.activity_question);
@@ -160,6 +168,8 @@ public class Question extends AppCompatActivity {
                 int cu = pu.getCurrentItem();
                 if(cu<pu.getAdapter().getCount()-1) {
                     pu.setCurrentItem(pu.getCurrentItem() + 1, true);
+                }else{
+                    termina();
                 }
             }
         });
@@ -189,8 +199,8 @@ public class Question extends AppCompatActivity {
                 if(position==0){
                     findViewById(R.id.previous).setVisibility(View.GONE);
                 }
-                if(position==pu.getAdapter().getCount()-1)
-                    findViewById(R.id.next).setVisibility(View.GONE);
+                //if(position==pu.getAdapter().getCount()-1)
+                //    findViewById(R.id.next).setVisibility(View.GONE);
             }
 
             @Override
@@ -200,6 +210,17 @@ public class Question extends AppCompatActivity {
         });
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+    }
+
+    private void termina() {
+        IChing iching = (IChing) getApplicationContext();
+        JSONObject respuestas = iching.getRespostas();
+        Intent intent = new Intent(this, Lista.class);
+        intent.putExtra("result",respuestas.toString());
+        intent.putExtra("cod",iching.getCod());
+        intent.putExtra("CNETSERVERLOGACAO",cookies);
+        iching.setRespostas(new JSONObject());
+        startActivity(intent);
     }
 
     @Override
@@ -301,7 +322,7 @@ public class Question extends AppCompatActivity {
                             bu.setTag(respskeys.get(i));
                             if(r.optBoolean(respskeys.get(i)))
                                 bu.setChecked(true);
-                            v.addView(bu);
+                            ((ViewGroup)v.findViewById(R.id.checkbox_container)).addView(bu);
                         }
                         break;
                     case TYPE_CAMERA:
@@ -345,6 +366,7 @@ public class Question extends AppCompatActivity {
                         ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_TEXT:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         ((EditText)v.findViewById(R.id.textao_editText)).setText(respuestas.optString(perg_id));
                         break;
                     default:
@@ -435,6 +457,24 @@ public class Question extends AppCompatActivity {
                 if (v.findViewById(R.id.number_edittext) != null) {
                     respuestas.put(perg_id, ((TextView) v.findViewById(R.id.number_edittext)).getText());
                 }
+                if (v.findViewById(R.id.datepicker_text) != null) {
+                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
+                }
+                if (v.findViewById(R.id.multipla_radio) != null) {
+                    int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
+                    RadioButton u = (RadioButton) v.findViewById(selectedId);
+                    if(u!=null)
+                        respuestas.put(perg_id, u.getTag());
+                }
+                if(v.findViewById(R.id.checkbox_container)!=null){
+                    respuestas.put(perg_id,new JSONObject());
+                    ViewGroup g = (ViewGroup) v.findViewById(R.id.checkbox_container);
+                    for (int i = 0; i < g.getChildCount(); i++) {
+                        CheckBox c= (CheckBox) g.getChildAt(i);
+                        String resp_id = (String) c.getTag();
+                        respuestas.optJSONObject(perg_id).put(resp_id,c.isChecked());
+                    }
+                }
             } catch (JSONException e) {
             }
             ching.setRespostas(respuestas);
@@ -469,33 +509,6 @@ public class Question extends AppCompatActivity {
                 ching.setRespostas(respuestas);
 
 
-                    /*
-                    option.put("checked",((CheckBox)v).isChecked());
-                    JSONArray vs = results.optJSONObject(ix).optJSONArray("value");
-                    if(vs==null) results.optJSONObject(ix).put("value",new JSONArray());
-                    results.optJSONObject(ix).optJSONArray("value").put(option);
-//                    groselha.getJSONArray("items").getJSONObject(ix).getJSONArray("options").getJSONObject((Integer) v.getTag()).put("checked",((CheckBox)v).isChecked());
-                }else if(v.getClass().getCanonicalName().equals(RadioButton.class.getCanonicalName())){
-                    if(((RadioButton)v).isChecked())
-                        results.optJSONObject(ix).put("value",v.getTag());
-                    //groselha.optJSONArray("items").getJSONObject(ix).put("value",v.getTag());
-                }else if(v.getClass().getCanonicalName().equals(AppCompatEditText.class.getCanonicalName())){
-                    results.getJSONObject(ix).put("value",((TextView)v).getText());
-
-                }else if(v.getClass().getCanonicalName().equals(AppCompatImageView.class.getCanonicalName())){
-                    BitmapDrawable drawable = (BitmapDrawable) ((ImageView)v).getDrawable();
-                    if(drawable!=null) {
-                        Bitmap bitmap = drawable.getBitmap();
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-                        byte[] byteArray = byteArrayOutputStream.toByteArray();
-                        results.getJSONObject(ix).put("value", Base64.encodeToString(byteArray, Base64.DEFAULT));
-                    }
-                }
-                if(groselha.getJSONArray("items").getJSONObject(ix).optBoolean("gps",false)){
-                    results.getJSONObject(ix).put("location",last_known_position);
-                }
-                */
 
 
             } catch (JSONException e) {
@@ -530,5 +543,10 @@ public class Question extends AppCompatActivity {
 
             }
         }
+    }
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        save();
+        super.onConfigurationChanged(newConfig);
     }
 }

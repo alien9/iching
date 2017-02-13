@@ -3,6 +3,7 @@ package net.alien9.iching;
 import android.app.Application;
 import android.content.Context;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ public class IChing extends Application {
     private static OkHttpClient client;
     private JSONObject respostas;
     private int undid;
+    private JSONArray stuff;
+    private String cod;
 
     public static IChing getInstance(){
         return singleton;
@@ -64,6 +67,22 @@ public class IChing extends Application {
 
     public void setUndo() {
         undid++;
+    }
+
+    public void setStuff(JSONArray s) {
+        stuff = s;
+    }
+
+    public JSONArray getStuff() {
+        return stuff;
+    }
+
+    public void setCod(String c) {
+        cod = c;
+    }
+
+    public String getCod() {
+        return cod;
     }
 
     private static class CookiePot implements CookieJar {

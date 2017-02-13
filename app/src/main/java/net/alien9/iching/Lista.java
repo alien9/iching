@@ -48,6 +48,7 @@ public class Lista extends AppCompatActivity {
     private String cookies;
     private OkHttpClient client;
     private JSONArray stuff;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,51 +56,51 @@ public class Lista extends AppCompatActivity {
         setContentView(R.layout.activity_lista);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        final Context context=this;
+        context=this;
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(context, Question.class);
+                intent.putExtra("CNETSERVERLOGACAO",cookies);
                 intent.putExtra("content",groselha.toString());
                 startActivity(intent);
             }
         });
         Intent intent=getIntent();
-        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
-        JSONArray journal;
-        try {
-            journal=new JSONArray(sharedpreferences.getString("journal","[]"));
-        } catch (JSONException e) {
-            journal=new JSONArray();
-        }
-        JSONArray results=null;
-        if(intent.hasExtra("CNETSERVERLOGACAO"))
-        {
+        if(intent.hasExtra("CNETSERVERLOGACAO")){
             cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
-            //reload();
+        }else{
+            requestLogin();
+            return;
         }
-
-        if(results!=null) { // está trazendo json pra gravar
-            journal.put(results);
+        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+        JSONObject journal;
+        try {
+            journal=new JSONObject(sharedpreferences.getString("journal","{}"));
+        } catch (JSONException e) {
+            journal=new JSONObject();
+        }
+        if(intent.hasExtra("result")){ // está trazendo json pra gravar
             SharedPreferences.Editor editor = sharedpreferences.edit();
+            try {
+                JSONObject resultado=new JSONObject(intent.getExtras().getString("result"));
+                String cod=intent.getExtras().getString("cod");
+                if(!journal.has(cod)) journal.put(cod,new JSONArray());
+                journal.optJSONArray(cod).put(resultado);
+
+            } catch (JSONException ignored) {}
             editor.putString("journal", journal.toString());
             editor.commit();
         }
 
-        //JSONOBJECT vem carregado no intent
-        if(intent.hasExtra("stuff")){
-            try {
-                stuff=new JSONArray(intent.getExtras().getString("stuff"));
-                show();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }else{
-            intent = new Intent(this, Login.class);
-            startActivity(intent);
-            finish();
+        stuff=((IChing)getApplicationContext()).getStuff();
+        if(stuff==null){
+            requestLogin();
+            return;
         }
+        show();
+
         client = IChing.getInstance().getClient();
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +111,13 @@ public class Lista extends AppCompatActivity {
             }
         });
     }
+
+    private void requestLogin() {
+        Intent intent = new Intent(this, Login.class);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -146,6 +154,9 @@ public class Lista extends AppCompatActivity {
                     .build();
             Response response = null;
             try {
+
+                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
+                OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
                 response = client.newCall(request).execute();
                 String j=response.body().string();
                 Pattern p = Pattern.compile("\\[\\{.*");

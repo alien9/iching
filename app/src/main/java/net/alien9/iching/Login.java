@@ -83,7 +83,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
     private View mLoginFormView;
     private Context context;
     private String cookies;
-    private String stuff;
+    private JSONArray stuff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -353,6 +353,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             stuff=null;
             try {
                 Response response = client.newCall(request).execute();
+                // TODO: verificar se o login é válido
 
                 request = new Request.Builder()
                         .url(getString(R.string.load_url))
@@ -365,8 +366,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 Matcher m = p.matcher(j);
                 if(m.find()) {
                     String s = m.group();
-                    stuff = new JSONArray(s).toString();
-                    //((IChing)getApplicationContext()).setClient(client);
+                    stuff = new JSONArray(s);
                     return true;
                 }
             } catch (IOException e) {
@@ -386,12 +386,12 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             if (success) {
                 Intent intent=new Intent(context,Lista.class);
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
-                intent.putExtra("stuff",stuff);
+                ((IChing)getApplicationContext()).setStuff(stuff);
                 startActivity(intent);
                 finish();
             } else {
 
-                if(mess.equals(null)) {
+                if(mess==null) {
                     mess = getString(R.string.error_incorrect_password);
                     mPasswordView.setError(mess);
                     mPasswordView.requestFocus();
