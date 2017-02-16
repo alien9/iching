@@ -38,6 +38,7 @@ import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -342,13 +344,17 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             String url =getString(R.string.login_url);
             cookieJar=((IChing)getApplicationContext()).getCookieJar(context);
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
-            RequestBody formBody = new FormBody.Builder()
-                    .add("USERNAME",mEmail)
-                    .add("PASSWORD",mPassword)
-                    .build();
+            JSONObject parameter = new JSONObject();
+            try {
+                parameter.put("USERNAME",mEmail);
+                parameter.put("PASSWORD",mPassword);
+            } catch (JSONException e) {
+                }
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody bode = RequestBody.create(JSON, parameter.toString());
             Request request = new Request.Builder()
                     .url(url)
-                    .post(formBody)
+                    .post(bode)
                     .build();
             stuff=null;
             try {

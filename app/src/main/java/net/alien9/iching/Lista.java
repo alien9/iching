@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -149,12 +150,14 @@ public class Lista extends AppCompatActivity {
         protected Boolean doInBackground(Void... voids) {
             if(loading)return false;
             loading=true;
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
             Request request = new Request.Builder()
                     .url(getString(R.string.load_url))
+                    .post(bode)
                     .build();
             Response response = null;
             try {
-
                 CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
                 response = client.newCall(request).execute();
@@ -181,7 +184,6 @@ public class Lista extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
             show();
         }
-
     }
 
     private void show() {
