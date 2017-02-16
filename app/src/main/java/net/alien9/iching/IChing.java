@@ -27,6 +27,7 @@ public class IChing extends Application {
     private int undid;
     private JSONArray stuff;
     private String cod;
+    private String pesqId;
 
     public static IChing getInstance(){
         return singleton;
@@ -84,6 +85,15 @@ public class IChing extends Application {
     public String getCod() {
         return cod;
     }
+
+    public void setPesqId(String p) {
+        pesqId = p;
+    }
+
+    public String getPesqId() {
+        return pesqId;
+    }
+
 
     private static class CookiePot implements CookieJar {
         private List<Cookie> cookies;

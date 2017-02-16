@@ -47,6 +47,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -342,30 +343,45 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             String url =getString(R.string.login_url);
             cookieJar=((IChing)getApplicationContext()).getCookieJar(context);
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
-            RequestBody formBody = new FormBody.Builder()
-                    .add("USERNAME",mEmail)
-                    .add("PASSWORD",mPassword)
+
+            RequestBody formBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("u",mEmail)
+                    .addFormDataPart("p",mPassword)
+                    .addFormDataPart("m","login")
                     .build();
 
             Request request = new Request.Builder()
                     .url(url)
+                    .method("POST", RequestBody.create(null, new byte[0]))
                     .post(formBody)
                     .build();
             stuff=null;
             try {
                 Response response = client.newCall(request).execute();
                 String t=response.body().string();
+                Pattern pat=Pattern.compile("SAVEREADY\\|(\\d+)");
+                Matcher m = pat.matcher(t);
+                if(m.find()) {
+                    ((IChing) getApplicationContext()).setPesqId(m.group(1));
+                }
                 // TODO: verificar se o login é válido
-
+                formBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
+                        .addFormDataPart("m","load")
+                        .build();
                 request = new Request.Builder()
-                        .url(getString(R.string.load_url))
+                        .url(getString(R.string.login_url))
+                        .method("POST", RequestBody.create(null, new byte[0]))
+                        .post(formBody)
                         .build();
                 response = null;
 
                 Response response_l = client.newCall(request).execute();
                 String j=response_l.body().string();
                 Pattern p = Pattern.compile("\\[\\{.*");
-                Matcher m = p.matcher(j);
+                m = p.matcher(j);
                 if(m.find()) {
                     String s = m.group();
                     stuff = new JSONArray(s);

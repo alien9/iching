@@ -15,8 +15,8 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
-    <string name="login_url">http://ss.sb3.construnet.com.br/index.php</string>
-    <string name="load_url">http://ss.sb3.construnet.com.br/gw/index.php?m=load</string>
+    <string name="login_url">http://ss.sb3.construnet.com.br/gw/index.php</string>
+    <string name="load_url">http://ss.sb3.construnet.com.br/gw/index.php</string>
     <string name="title_activity_lista">Lista</string>
     <string name="remember_me">Lembrar nome de usuário</string>
     <string name="reload_groselha">Recarregar</string>
