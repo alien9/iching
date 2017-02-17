@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -151,10 +152,18 @@ public class Lista extends AppCompatActivity {
             if(loading)return false;
             loading=true;
             MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-            RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
+            //RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
+            RequestBody bode = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
+                    .addFormDataPart("d",((IChing)getApplicationContext()).getRespostas().toString())
+                    .addFormDataPart("m","save")
+                    .build();
+
             Request request = new Request.Builder()
-                    .url(getString(R.string.load_url))
+                    .url(getString(R.string.save_url))
                     .post(bode)
+                    .method("POST", RequestBody.create(null, new byte[0]))
                     .build();
             Response response = null;
             try {
