@@ -399,6 +399,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
+            findViewById(R.id.login_form).setVisibility(View.GONE);
             showProgress(false);
 
             if (success) {
@@ -408,7 +409,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 startActivity(intent);
                 finish();
             } else {
-
+                findViewById(R.id.login_form).setVisibility(View.VISIBLE);
                 if(mess==null) {
                     mess = getString(R.string.error_incorrect_password);
                     mPasswordView.setError(mess);
