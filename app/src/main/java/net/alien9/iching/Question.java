@@ -44,6 +44,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -358,10 +359,15 @@ public class Question extends AppCompatActivity {
                         ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_NUMBER:
-                        if(!item.has("maximo")){
+                        //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
+                        if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         }else {
                             v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
+                            ((SeekBar)v.findViewById(R.id.seek)).setMax(jake.optInt("maiorval"));
+                            //((SeekBar)v.findViewById(R.id.seek)).mini(jake.optInt("menorval"));
+
                         }
                         ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
                         break;
