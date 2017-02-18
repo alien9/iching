@@ -364,6 +364,10 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 Matcher m = pat.matcher(t);
                 if(m.find()) {
                     ((IChing) getApplicationContext()).setPesqId(m.group(1));
+                }else{ //SERVER GONE WRONG
+                    mess=t;
+                    //Snackbar.make(findViewById(R.id.email_login_form),t,Snackbar.LENGTH_LONG).setAction("NOP",null).show();
+                    return false;
                 }
                 // TODO: verificar se o login é válido
                 formBody = new MultipartBody.Builder()

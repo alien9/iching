@@ -44,6 +44,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -167,7 +168,7 @@ public class Question extends AppCompatActivity {
                 ((IChing)getApplication()).resetUndo();
                 int cu = pu.getCurrentItem();
                 if(cu<pu.getAdapter().getCount()-1) {
-                    pu.setCurrentItem(pu.getCurrentItem() + 1, true);
+                    pu.setCurrentItem(cu + 1, true);
                 }else{
                     termina();
                 }
@@ -381,9 +382,39 @@ public class Question extends AppCompatActivity {
                 }
                 ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
                 v.setTag(keynames.get(position));
+                collection.addView(v);
+                //inserção dos callbacks na página
+                switch(t){
+                    case TYPE_NUMBER:
+                        SeekBar s = (SeekBar) v.findViewById(R.id.rangeset);
+                        final View v2=v;
+                        if(s!=null){
+                            s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                                @Override
+                                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                                    ((TextView)v2.findViewById(R.id.number_edittext)).setText(i);
+                                }
+
+                                @Override
+                                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                                }
+
+                                @Override
+                                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                                }
+                            });
+                        }
+                        break;
+                }
             } catch (JSONException e) {
             }
-            collection.addView(v);
+
+
+
+
+
             return v;
         }
         @Override
@@ -479,41 +510,6 @@ public class Question extends AppCompatActivity {
             }
             ching.setRespostas(respuestas);
             return;
-        }
-        try {
-            ViewGroup g = (ViewGroup) v;
-            for (int i = 0; i < g.getChildCount(); i++) {
-                iterate(g.getChildAt(i), ix);
-            }
-        } catch (ClassCastException exx) {
-            try{
-                IChing ching = ((IChing) getApplication());
-                JSONObject respuestas = ching.getRespostas();
-                if (v.getClass().getCanonicalName().equals(CheckBox.class.getCanonicalName())) {
-
-                    JSONObject j = respuestas.optJSONObject(ix);
-                    if (j == null) j = new JSONObject();
-                    String resp_id = (String) v.getTag();
-                    j.put(resp_id, ((CheckBox) v).isChecked());
-                    respuestas.put(ix, j);
-
-                }
-                if(v.getClass().getCanonicalName().equals(AppCompatEditText.class.getCanonicalName())){
-                    respuestas.put(ix,((EditText)v).getText());
-                }
-                if(v.getClass().getCanonicalName().equals(RadioButton.class.getCanonicalName())){
-                    if(((RadioButton)v).isChecked())
-                        respuestas.put(ix,((RadioButton)v).getTag());
-                }
-
-                ching.setRespostas(respuestas);
-
-
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
     }
     private File createImageFile() throws IOException {

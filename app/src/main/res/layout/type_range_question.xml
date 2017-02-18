@@ -16,6 +16,7 @@
         android:ems="10"
         android:id="@+id/number_edittext" />
     <SeekBar
+        android:id="@+id/rangeset"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
     <TextView
