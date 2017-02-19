@@ -1,7 +1,6 @@
 package net.alien9.iching;
 
 import android.Manifest;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -10,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,10 +23,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatEditText;
-import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -47,11 +42,9 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -61,11 +54,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import static android.R.attr.numbersInnerTextColor;
-import static android.R.attr.tag;
-
 public class Question extends AppCompatActivity {
-
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
@@ -164,7 +153,8 @@ public class Question extends AppCompatActivity {
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                save();
+                if(!validate())
+                    return;
                 ((IChing)getApplication()).resetUndo();
                 int cu = pu.getCurrentItem();
                 if(cu<pu.getAdapter().getCount()-1) {
@@ -177,7 +167,7 @@ public class Question extends AppCompatActivity {
         ((FloatingActionButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                save();
+                validate();
                 if(!((IChing)getApplication()).hasUndo()){
                     int cu = pu.getCurrentItem();
                     if (cu > 0)
@@ -238,7 +228,7 @@ public class Question extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()){
             case R.id.action_quit:
-                save();
+                validate();
                 break;
         }
 
@@ -359,16 +349,50 @@ public class Question extends AppCompatActivity {
                         ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_NUMBER:
-                        if(!item.has("maximo")){
+                        //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
+                        if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         }else {
                             v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
+                            ((SeekBar)v.findViewById(R.id.seek)).setMax(jake.optInt("maiorval"));
+                            final int minimum = jake.optInt("menorval",0);
+                            int maximum= jake.optInt("maiorval",10)-minimum;
+                            SeekBar s = (SeekBar) v.findViewById(R.id.seek);
+                            final View v2=v;
+                            final TextView tv = (TextView) v2.findViewById(R.id.number_edittext);
+                            if(s!=null){
+                                s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                                    @Override
+                                    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                                        tv.setText(""+(minimum+i));
+                                    }
+
+                                    @Override
+                                    public void onStartTrackingTouch(SeekBar seekBar) {
+
+                                    }
+
+                                    @Override
+                                    public void onStopTrackingTouch(SeekBar seekBar) {
+
+                                    }
+                                });
+                                int n = minimum + maximum / 2;
+                                s.setProgress(n);
+                                tv.setText(""+n);
+                            }
                         }
                         ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         ((EditText)v.findViewById(R.id.textao_editText)).setText(respuestas.optString(perg_id));
+                        break;
+                    case TYPE_MIDIA:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
+                        Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+item.optJSONObject("resps").optJSONObject("1").optString("midia"));
+                        ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         break;
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
@@ -383,31 +407,6 @@ public class Question extends AppCompatActivity {
                 ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
                 v.setTag(keynames.get(position));
                 collection.addView(v);
-                //inserção dos callbacks na página
-                switch(t){
-                    case TYPE_NUMBER:
-                        SeekBar s = (SeekBar) v.findViewById(R.id.rangeset);
-                        final View v2=v;
-                        if(s!=null){
-                            s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                                @Override
-                                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                                    ((TextView)v2.findViewById(R.id.number_edittext)).setText(i);
-                                }
-
-                                @Override
-                                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                                }
-
-                                @Override
-                                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                                }
-                            });
-                        }
-                        break;
-                }
             } catch (JSONException e) {
             }
 
@@ -456,26 +455,10 @@ public class Question extends AppCompatActivity {
                 iw.setImageBitmap(imageBitmap);
         }
     }
-    protected void save(){
+    protected boolean validate(){
         ViewPager vu= (ViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
-        String perg_id = (String) ((TextView)v.findViewById(R.id.perg_id)).getText();
-        iterate(v,perg_id);
-    }
-    protected void saveAll(){
-        ViewGroup vu = (ViewGroup) findViewById(R.id.main_view);
-        for(int i=0;i<vu.getChildCount();i++){
-            View v = vu.getChildAt(i);
-            //int ix= (int) v.getTag();
-            //iterate(v,ix);
-        }
-    }
-    protected boolean verify(){
-        return true;
-    }
-
-    private void iterate(View v, String ix) {
         TextView pergfield = (TextView) v.findViewById(R.id.perg_id);
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
@@ -506,11 +489,20 @@ public class Question extends AppCompatActivity {
                         respuestas.optJSONObject(perg_id).put(resp_id,c.isChecked());
                     }
                 }
+
             } catch (JSONException e) {
             }
             ching.setRespostas(respuestas);
-            return;
+            return respuestas.has(perg_id);
         }
+        return false;
+    }
+    protected boolean verify(){
+        return true;
+    }
+
+    private void iterate(View v, String ix) {
+
     }
     private File createImageFile() throws IOException {
         // Create an image file name
@@ -542,7 +534,7 @@ public class Question extends AppCompatActivity {
     }
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        save();
+        validate();
         super.onConfigurationChanged(newConfig);
     }
 }

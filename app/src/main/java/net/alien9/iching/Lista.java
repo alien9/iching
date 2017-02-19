@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -28,6 +29,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ import java.util.regex.Pattern;
 import okhttp3.CookieJar;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -100,6 +104,7 @@ public class Lista extends AppCompatActivity {
             requestLogin();
             return;
         }
+
         show();
 
         client = IChing.getInstance().getClient();
@@ -151,10 +156,18 @@ public class Lista extends AppCompatActivity {
             if(loading)return false;
             loading=true;
             MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-            RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
+            //RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
+            RequestBody bode = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
+                    .addFormDataPart("d",((IChing)getApplicationContext()).getRespostas().toString())
+                    .addFormDataPart("m","save")
+                    .build();
+
             Request request = new Request.Builder()
-                    .url(getString(R.string.load_url))
+                    .url(getString(R.string.save_url))
                     .post(bode)
+                    .method("POST", RequestBody.create(null, new byte[0]))
                     .build();
             Response response = null;
             try {
@@ -192,7 +205,58 @@ public class Lista extends AppCompatActivity {
                 android.R.layout.simple_selectable_list_item,
                 android.R.id.text1, names));
         for(int i=0;i<stuff.length();i++){
-            names.add(stuff.optJSONObject(i).optString("nom"));
+            JSONObject it = stuff.optJSONObject(i);
+            names.add(it.optString("nom"));
+            if(it.has("midia")){
+                new MediaLoader(it.optString("midia")).execute();
+            }
+        }
+    }
+
+    private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
+        private final String filename;
+
+        public MediaLoader(String f) {
+            filename=f;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            String url =getString(R.string.login_url);
+            CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
+            OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+            RequestBody formBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
+                    .addFormDataPart("midia",filename)
+                    .addFormDataPart("m","midia")
+                    .build();
+            File directory = new File(getExternalCacheDir(),"midia");
+            if(!directory.exists()) {
+                directory.mkdirs();
+            }
+            File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
+            if(!destination.exists()) {
+                Request request = new Request.Builder()
+                        .url(url)
+                        .method("POST", RequestBody.create(null, new byte[0]))
+                        .post(formBody)
+                        .build();
+                Response response = null;
+                try {
+                    response = client.newCall(request).execute();
+                    FileOutputStream fos = new FileOutputStream(getExternalCacheDir() + File.separator + "midia" + File.separator + filename);
+                    fos.write(response.body().bytes());
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Util.unzip(getExternalCacheDir()+File.separator+"midia",filename);
+            }
+            return true;
+        }
+        @Override
+        protected void onPostExecute(final Boolean success) {
         }
     }
 }

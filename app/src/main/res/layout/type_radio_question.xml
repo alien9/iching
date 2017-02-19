@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:text="id da pergunta"
         android:id="@+id/perg_id"
+        android:visibility="gone"
         />
     <RadioGroup android:layout_height="wrap_content"
         android:layout_width="match_parent"
