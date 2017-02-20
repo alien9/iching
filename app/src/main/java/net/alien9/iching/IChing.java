@@ -23,6 +23,7 @@ import static android.R.id.undo;
 public class IChing extends Application {
     private static IChing singleton;
     private static OkHttpClient client;
+    private static CookiePot cookieJar;
     private JSONObject respostas;
     private int undid;
     private JSONArray stuff;
@@ -46,8 +47,10 @@ public class IChing extends Application {
     public static OkHttpClient getClient(){
         return getInstance().client;
     }
-    public static CookieJar getCookieJar(Context context) {
-        return new IChing.CookiePot();
+    public static CookieJar getCookieJar() {
+        if(cookieJar==null)
+            cookieJar=new CookiePot();
+        return cookieJar;
     }
 
     public void setRespostas(JSONObject resps) {
@@ -92,6 +95,10 @@ public class IChing extends Application {
 
     public String getPesqId() {
         return pesqId;
+    }
+
+    public void setCookieJar(CookieJar c) {
+        cookieJar = (CookiePot) c;
     }
 
 

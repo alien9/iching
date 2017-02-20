@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +56,7 @@ public class Lista extends AppCompatActivity {
     private OkHttpClient client;
     private JSONArray stuff;
     private Context context;
+    private boolean reloading=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,21 +135,19 @@ public class Lista extends AppCompatActivity {
     }
 
     private void reload() {
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
-        progressBar.setVisibility(View.VISIBLE);
-        ReloadTask reloader = new ReloadTask();
-        reloader.execute((Void) null);
+        if(!reloading) {
+            reloading=true;
+            ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
+            progressBar.setVisibility(View.VISIBLE);
+            ReloadTask reloader = new ReloadTask();
+            reloader.execute((Void) null);
+        }
     }
 
 
     private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
-        private boolean loading=false;
         @Override
         protected Boolean doInBackground(Void... voids) {
-            if(loading)return false;
-            loading=true;
-            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-            //RequestBody bode = RequestBody.create(JSON, ((IChing)getApplicationContext()).getRespostas().toString());
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
@@ -162,16 +162,15 @@ public class Lista extends AppCompatActivity {
                     .build();
             Response response = null;
             try {
-                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
+                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+                //String r = ((IChing) getApplicationContext()).getRespostas().toString();
+                //request=new Request.Builder().url(String.format("%s?c=%sm=save&d=%s", new String[]{getString(R.string.save_url),((IChing)getApplicationContext()).getPesqId(), URLEncoder.encode(r,"UTF-8")})).build();
+
                 response = client.newCall(request).execute();
                 String j=response.body().string();
-                Pattern p = Pattern.compile("\\[\\{.*");
-                Matcher m = p.matcher(j);
-                if(m.find()) {
-                    String s = m.group();
-                    stuff = new JSONArray(s);
-                }
+                JSONObject resp=new JSONObject(j);
+                stuff = resp.optJSONArray("pesqs");
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -183,7 +182,7 @@ public class Lista extends AppCompatActivity {
         }
         @Override
         protected void onPostExecute(final Boolean success) {
-            loading=false;
+            reloading=false;
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
             show();
@@ -221,7 +220,7 @@ public class Lista extends AppCompatActivity {
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
             if(!destination.exists()) {
                 String url =getString(R.string.login_url);
-                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
+                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
                 RequestBody formBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)

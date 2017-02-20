@@ -341,7 +341,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected Boolean doInBackground(Void... params) {
             String url =getString(R.string.login_url);
-            cookieJar=((IChing)getApplicationContext()).getCookieJar(context);
+            cookieJar=((IChing)getApplicationContext()).getCookieJar();
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
 
             RequestBody formBody = new MultipartBody.Builder()
@@ -389,6 +389,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 if(m.find()) {
                     String s = m.group();
                     stuff = new JSONArray(s);
+                    ((IChing)getApplicationContext()).setCookieJar(cookieJar);
                     return true;
                 }
             } catch (IOException e) {
