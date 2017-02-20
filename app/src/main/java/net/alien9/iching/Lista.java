@@ -171,6 +171,11 @@ public class Lista extends AppCompatActivity {
                 String j=response.body().string();
                 JSONObject resp=new JSONObject(j);
                 stuff = resp.optJSONArray("pesqs");
+                if(resp.has("saved")){
+                    if(resp.optBoolean("saved")){
+                        ((IChing)getApplicationContext()).setRespostas(new JSONObject());
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
