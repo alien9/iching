@@ -305,6 +305,7 @@ public class Question extends AppCompatActivity {
                                         vu.setVisibility(View.VISIBLE);
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
+                                        ((TextView)findViewById(R.id.ask_for_comment)).setText("");
                                         vu.setVisibility(View.GONE);
                                     }
                                 }
@@ -348,7 +349,7 @@ public class Question extends AppCompatActivity {
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
                         final ViewGroup finalV = v;
-                        ((ImageButton)v.findViewById(R.id.datepicker_butt)).setOnClickListener(new View.OnClickListener() {
+                        ((EditText)v.findViewById(R.id.datepicker_text)).setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 DatePickerDialog.OnDateSetListener datePickerListener=new DatePickerDialog.OnDateSetListener() {
@@ -492,7 +493,10 @@ public class Question extends AppCompatActivity {
                     respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
                 }
                 if (v.findViewById(R.id.number_edittext) != null) {
-                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.number_edittext)).getText());
+                    CharSequence t = ((TextView) v.findViewById(R.id.number_edittext)).getText();
+                    if(t.length()==0)
+                        return false;
+                    respuestas.put(perg_id, t);
                 }
                 if (v.findViewById(R.id.datepicker_text) != null) {
                     respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());

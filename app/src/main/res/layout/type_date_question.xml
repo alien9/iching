@@ -17,13 +17,8 @@
             android:layout_width="0dp"
             android:layout_weight="8"
             android:gravity="fill_horizontal"
+            android:hint="dd/mm/aaaa"
             android:id="@+id/datepicker_text" />
-        <ImageButton
-            android:src="@android:drawable/ic_menu_agenda"
-            android:layout_width="wrap_content"
-            android:layout_weight="2"
-            android:layout_height="wrap_content"
-            android:id="@+id/datepicker_butt" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

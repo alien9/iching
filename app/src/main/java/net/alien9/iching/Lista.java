@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -194,6 +195,7 @@ public class Lista extends AppCompatActivity {
         ((ListView)findViewById(R.id.lista_list)).setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_selectable_list_item,
                 android.R.id.text1, names));
+        cleanUp();
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
@@ -212,21 +214,21 @@ public class Lista extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            String url =getString(R.string.login_url);
-            CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
-            OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
-            RequestBody formBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
-                    .addFormDataPart("midia",filename)
-                    .addFormDataPart("m","midia")
-                    .build();
             File directory = new File(getExternalCacheDir(),"midia");
             if(!directory.exists()) {
                 directory.mkdirs();
             }
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
             if(!destination.exists()) {
+                String url =getString(R.string.login_url);
+                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar(context);
+                OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+                RequestBody formBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
+                        .addFormDataPart("midia",filename)
+                        .addFormDataPart("m","midia")
+                        .build();
                 Request request = new Request.Builder()
                         .url(url)
                         .method("POST", RequestBody.create(null, new byte[0]))
@@ -247,6 +249,41 @@ public class Lista extends AppCompatActivity {
         }
         @Override
         protected void onPostExecute(final Boolean success) {
+        }
+    }
+    private void cleanUp(){
+        JSONObject filenames = new JSONObject();
+        try {
+            for(int i=0;i<stuff.length();i++) {
+                JSONObject json = stuff.optJSONObject(i);
+                String file = json.optString("midia", "");
+                if(file.length()>0){
+                    filenames.put(file,true);
+                }
+                JSONObject pergs = json.optJSONObject("pergs");
+                Iterator<String> iter = pergs.keys();
+                while (iter.hasNext()) {
+                    String key = iter.next();
+                    if(pergs.optJSONObject(key).has("resps")){
+                        JSONObject jk = pergs.optJSONObject(key).optJSONObject("resps");
+                        Iterator<String> biter = jk.keys();
+                        while(biter.hasNext()){
+                            String bey = biter.next();
+                            if(jk.optJSONObject(bey).has("midia"))
+                                filenames.put(jk.optJSONObject(bey).optString("midia"),false);
+                        }
+                    }
+                }
+            }
+            File directory = new File(getExternalCacheDir()+File.separator+"midia");
+            File[] files = directory.listFiles();
+            for(int i=0;i<files.length;i++){
+                if(!filenames.has(files[i].getName())){
+                    files[i].delete();
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }
