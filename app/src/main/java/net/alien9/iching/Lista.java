@@ -276,9 +276,11 @@ public class Lista extends AppCompatActivity {
             }
             File directory = new File(getExternalCacheDir()+File.separator+"midia");
             File[] files = directory.listFiles();
-            for(int i=0;i<files.length;i++){
-                if(!filenames.has(files[i].getName())){
-                    files[i].delete();
+            if(files!=null) {
+                for (int i = 0; i < files.length; i++) {
+                    if (!filenames.has(files[i].getName())) {
+                        files[i].delete();
+                    }
                 }
             }
         } catch (JSONException e) {
