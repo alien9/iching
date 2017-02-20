@@ -157,8 +157,8 @@ public class Lista extends AppCompatActivity {
 
             Request request = new Request.Builder()
                     .url(getString(R.string.save_url))
-                    .post(bode)
                     .method("POST", RequestBody.create(null, new byte[0]))
+                    .post(bode)
                     .build();
             Response response = null;
             try {
