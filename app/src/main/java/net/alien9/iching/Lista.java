@@ -62,16 +62,6 @@ public class Lista extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         context=this;
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(context, Question.class);
-                intent.putExtra("CNETSERVERLOGACAO",cookies);
-                intent.putExtra("content",groselha.toString());
-                startActivity(intent);
-            }
-        });
         Intent intent=getIntent();
         if(intent.hasExtra("CNETSERVERLOGACAO")){
             cookies = intent.getExtras().getString("CNETSERVERLOGACAO");

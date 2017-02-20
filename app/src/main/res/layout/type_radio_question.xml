@@ -20,4 +20,5 @@
         android:layout_width="match_parent"
         android:id="@+id/multipla_radio"/>
 
+<include layout="@layout/comments_request"/>
 </LinearLayout>

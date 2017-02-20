@@ -33,6 +33,7 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -291,11 +292,30 @@ public class Question extends AppCompatActivity {
                     case TYPE_UNICA:
                     case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
+
+
+                        final JSONObject finalResps = resps;
+                        CompoundButton.OnCheckedChangeListener l=new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                String quem= (String) compoundButton.getTag();
+                                View vu = findViewById(R.id.comments_request);
+                                if(compoundButton.isChecked()){
+                                    if(finalResps.optJSONObject(quem).has("expl")){
+                                        vu.setVisibility(View.VISIBLE);
+                                        ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
+                                    }else{
+                                        vu.setVisibility(View.GONE);
+                                    }
+                                }
+                            }
+                        };
                         for(int i=0;i<respskeys.size();i++){
                             RadioButton bu = new RadioButton(context);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
+                            bu.setOnCheckedChangeListener(l);
                             if(respuestas.optString(perg_id).equals(tag)){
                                 bu.setChecked(true);
                             }
@@ -392,6 +412,9 @@ public class Question extends AppCompatActivity {
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
                         Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+item.optJSONObject("resps").optJSONObject("1").optString("midia"));
+                        if(b==null){
+
+                        }
                         ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         break;
                     default:
