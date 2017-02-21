@@ -349,9 +349,9 @@ public class Question extends AppCompatActivity {
                         });
                         break;
                     case TYPE_DATE:
-                        v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
-                        ArrayAdapter<String> a=new
-                        ((Spinner)v.findViewById(R.id.spinner_year)).setAdapter(a);
+                        //v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
+                        //ArrayAdapter<String> a=new
+                        //((Spinner)v.findViewById(R.id.spinner_year)).setAdapter(a);
 
 
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
