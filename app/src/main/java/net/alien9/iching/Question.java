@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.LocationManager;
@@ -31,6 +32,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -41,6 +43,8 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -292,8 +296,6 @@ public class Question extends AppCompatActivity {
                     case TYPE_UNICA:
                     case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
-
-
                         final JSONObject finalResps = resps;
                         CompoundButton.OnCheckedChangeListener l=new CompoundButton.OnCheckedChangeListener() {
                             @Override
@@ -347,6 +349,11 @@ public class Question extends AppCompatActivity {
                         });
                         break;
                     case TYPE_DATE:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
+                        ArrayAdapter<String> a=new
+                        ((Spinner)v.findViewById(R.id.spinner_year)).setAdapter(a);
+
+
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
                         final ViewGroup finalV = v;
                         ((EditText)v.findViewById(R.id.datepicker_text)).setOnClickListener(new View.OnClickListener() {
