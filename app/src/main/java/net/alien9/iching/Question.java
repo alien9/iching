@@ -32,6 +32,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -58,6 +59,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 
 public class Question extends AppCompatActivity {
     private static final int TYPE_TEXT = 2;
@@ -92,6 +94,7 @@ public class Question extends AppCompatActivity {
     private boolean turning=false;
     private DatePickerDialog datepicker;
     private String cookies;
+    private boolean jadeu;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -119,10 +122,14 @@ public class Question extends AppCompatActivity {
         final ViewPager pu = (ViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
+            findViewById(R.id.next).setVisibility(View.GONE);
+            findViewById(R.id.previous).setVisibility(View.GONE);
             pu.setVisibility(View.GONE);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgini"));
             te.setVisibility(View.VISIBLE);
         }else{
+            findViewById(R.id.next).setVisibility(View.GONE);
+            findViewById(R.id.previous).setVisibility(View.GONE);
             te.setVisibility(View.GONE);
             pu.setVisibility(View.VISIBLE);
         }
@@ -137,10 +144,6 @@ public class Question extends AppCompatActivity {
             }
         });
         pu.setAdapter(pa);
-        final Handler locator = new Chandler();
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        LocationListenerDourado l = new LocationListenerDourado(locator);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Activity budega = (Activity) this;
             ActivityCompat.requestPermissions(budega,
@@ -148,11 +151,16 @@ public class Question extends AppCompatActivity {
                     ICHING_REQUEST_GPS_PERMISSION);
             return;
         }
+        jadeu=false;
         ((Button)findViewById(R.id.continue_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 te.setVisibility(View.GONE);
                 pu.setVisibility(View.VISIBLE);
+                if(jadeu)
+                    encerra();
+                findViewById(R.id.next).setVisibility(View.VISIBLE);
+                findViewById(R.id.previous).setVisibility(View.VISIBLE);
             }
         });
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
@@ -205,10 +213,37 @@ public class Question extends AppCompatActivity {
             }
         });
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+        JSONObject respuestas = ((IChing)getApplicationContext()).getRespostas();
+        Calendar c=Calendar.getInstance();
+        try {
+            if(!respuestas.has("dataehora")){
+                respuestas.put("dataehora",Math.round(c.getTimeInMillis()/1000));
+            }
+            if(!respuestas.has("gps")){
+                respuestas.put("gps",((IChing)getApplicationContext()).getLastKnownPosition());
+            }// "gps":"latitude longitude","gpsprec":[precisao em metros]
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void termina() {
+        jadeu=true;
+        if(polly.has("msgfim")){
+            ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+            findViewById(R.id.next).setVisibility(View.GONE);
+            findViewById(R.id.previous).setVisibility(View.GONE);
+            pu.setVisibility(View.GONE);
+            View te=findViewById(R.id.messenger_layout);
+            ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
+            te.setVisibility(View.VISIBLE);
+            return;
+        }
+        encerra();
+    }
+
+    private void encerra() {
         IChing iching = (IChing) getApplicationContext();
         JSONObject respuestas = iching.getRespostas();
         Intent intent = new Intent(this, Lista.class);
@@ -304,6 +339,7 @@ public class Question extends AppCompatActivity {
                                 View vu = findViewById(R.id.comments_request);
                                 if(compoundButton.isChecked()){
                                     if(finalResps.optJSONObject(quem).has("expl")){
+
                                         vu.setVisibility(View.VISIBLE);
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
@@ -349,10 +385,45 @@ public class Question extends AppCompatActivity {
                         });
                         break;
                     case TYPE_DATE:
-                        //v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
-                        //ArrayAdapter<String> a=new
-                        //((Spinner)v.findViewById(R.id.spinner_year)).setAdapter(a);
+                        v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
+                        List<String> dias=new ArrayList<String>();
+                        for(int i=1;i<32;i++){
+                            dias.add(""+i);
+                        }
+                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, dias);
+                        Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
+                        dup.setAdapter(ass);
+                        List<String> anos=new ArrayList<String>();
+                        for(int i=1800;i<2200;i++){
+                            anos.add(""+i);
+                        }
+                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, anos);
+                        Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
+                        yup.setAdapter(ssa);
+                        yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                            @Override
+                            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                fixDays();
+                            }
 
+                            @Override
+                            public void onNothingSelected(AdapterView<?> adapterView) {
+
+                            }
+                        });
+
+
+                        ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                            @Override
+                            public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
+                                fixDays();
+                            }
+                            @Override
+                            public void onNothingSelected(AdapterView<?> adapterView) {
+
+                            }
+                        });
+/*
 
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
                         final ViewGroup finalV = v;
@@ -375,6 +446,7 @@ public class Question extends AppCompatActivity {
                             }
                         });
                         ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
+                        */
                         break;
                     case TYPE_NUMBER:
                         //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
@@ -440,11 +512,6 @@ public class Question extends AppCompatActivity {
                 collection.addView(v);
             } catch (JSONException e) {
             }
-
-
-
-
-
             return v;
         }
         @Override
@@ -455,6 +522,45 @@ public class Question extends AppCompatActivity {
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
         }
+    }
+
+    private void fixDays() {
+        Spinner dup = (Spinner) findViewById(R.id.spinner_day);
+        int pit=dup.getSelectedItemPosition();
+        int daisy=31;
+        switch(((Spinner)findViewById(R.id.spinner_month)).getSelectedItemPosition()){
+            case 0://jan
+            case 2://mar
+            case 4://mai
+            case 6://jul
+            case 8://set
+            case 11://dez
+                daisy=31;
+                break;
+            case 3://abr
+            case 5://jun
+            case 7://ago
+            case 9://out
+            case 10://nov
+                daisy=30;
+                break;
+            case 1://fev
+                int year=Integer.parseInt(((Spinner) findViewById(R.id.spinner_year)).getSelectedItem().toString());
+                if((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0))
+                    daisy=29;
+                else
+                    daisy=28;
+                break;
+        }
+        List<String> ds=new ArrayList<String>();
+        for(int i=1;i<daisy+1;i++){
+            ds.add(""+i);
+        }
+        ArrayAdapter<String> ass = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, ds);
+        dup.setAdapter(ass);
+        if(dup.getCount()>pit)
+            dup.setSelection(pit);
+
     }
 
     private void requestCamera() {
@@ -505,8 +611,10 @@ public class Question extends AppCompatActivity {
                         return false;
                     respuestas.put(perg_id, t);
                 }
-                if (v.findViewById(R.id.datepicker_text) != null) {
-                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
+//                if (v.findViewById(R.id.datepicker_text) != null) {
+                if (v.findViewById(R.id.spinner_month) != null) {
+                    //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
+                    respuestas.put(perg_id, String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
                     int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
@@ -554,18 +662,7 @@ public class Question extends AppCompatActivity {
         return image;
     }
 
-    private class Chandler extends Handler {
-        public void handleMessage (Message msg){
-            if(msg.what==POSITION_UPDATE){
-                try {
-                    last_known_position = new JSONObject(msg.getData().getString("location"));
-                } catch (JSONException e) {
 
-                }
-
-            }
-        }
-    }
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         validate();

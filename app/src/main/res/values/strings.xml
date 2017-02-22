@@ -23,4 +23,18 @@
     <string name="action_continue">Avançar</string>
     <string name="action_quit">Encerrar</string>
     <string name="save_url">http://ss.sb3.construnet.com.br/gw/index.php</string>
+    <string-array name="meses">
+        <item>Janeiro</item>
+        <item>Fevereiro</item>
+        <item>Março</item>
+        <item>Abril</item>
+        <item>Maio</item>
+        <item>Junho</item>
+        <item>Julho</item>
+        <item>Agosto</item>
+        <item>Setembro</item>
+        <item>Outubro</item>
+        <item>Novembro</item>
+    </string-array>
+    <string name="month">Mês</string>
 </resources>

@@ -93,6 +93,7 @@ public class Lista extends AppCompatActivity {
         }
 
         stuff=((IChing)getApplicationContext()).getStuff();
+        ((IChing)getApplicationContext()).startGPS(this);
         if(stuff==null){
             requestLogin();
             return;

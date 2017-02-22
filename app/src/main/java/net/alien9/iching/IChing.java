@@ -1,9 +1,18 @@
 package net.alien9.iching;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.ActivityCompat;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -21,6 +30,7 @@ import static android.R.id.undo;
  */
 
 public class IChing extends Application {
+    private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
     private static IChing singleton;
     private static OkHttpClient client;
     private static CookiePot cookieJar;
@@ -29,17 +39,40 @@ public class IChing extends Application {
     private JSONArray stuff;
     private String cod;
     private String pesqId;
+    public static final int POSITION_UPDATE = 0;
+    private JSONObject last_known_position;
+    private LocationManager locationManager;
 
-    public static IChing getInstance(){
+    public static IChing getInstance() {
         return singleton;
     }
+
     @Override
     public void onCreate() {
         super.onCreate();
-        respostas=new JSONObject();
-        undid=0;
+        respostas = new JSONObject();
+        undid = 0;
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         singleton = this;
     }
+    public void startGPS(Activity a){
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.AppTask> tasks = activityManager.getAppTasks();
+            tasks.get(0);
+
+            ActivityCompat.requestPermissions(a,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    ICHING_REQUEST_GPS_PERMISSION);
+            return;
+        }
+        final Handler locator = new Chandler();
+        LocationListenerDourado l = new LocationListenerDourado(locator);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+    }
+
+
     public static void setClient(OkHttpClient c){
         getInstance().client=c;
     }
@@ -101,6 +134,10 @@ public class IChing extends Application {
         cookieJar = (CookiePot) c;
     }
 
+    public JSONObject getLastKnownPosition() {
+        return last_known_position;
+    }
+
 
     private static class CookiePot implements CookieJar {
         private List<Cookie> cookies;
@@ -122,6 +159,15 @@ public class IChing extends Application {
         }
         public String getCookie(String name){
             return cookies.toString();
+        }
+    }
+    private class Chandler extends Handler {
+        public void handleMessage (Message msg){
+            if(msg.what==POSITION_UPDATE){
+                try {
+                    last_known_position = new JSONObject(msg.getData().getString("location"));
+                } catch (JSONException ignore) {}
+            }
         }
     }
 }
