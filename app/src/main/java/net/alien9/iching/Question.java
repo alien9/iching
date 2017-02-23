@@ -32,6 +32,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -386,6 +387,14 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
+
+                        String du;
+                        if(respuestas.has(perg_id))
+                            du= respuestas.optString(perg_id);
+                        else{
+                            Calendar c = Calendar.getInstance();
+                            du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
+                        }
                         List<String> dias=new ArrayList<String>();
                         for(int i=1;i<32;i++){
                             dias.add(""+i);
@@ -411,8 +420,6 @@ public class Question extends AppCompatActivity {
 
                             }
                         });
-
-
                         ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
@@ -423,6 +430,15 @@ public class Question extends AppCompatActivity {
 
                             }
                         });
+                        if(!du.equals(null)){
+                            String[] dat=du.split("\\/");
+                            if(dat.length==3){
+                                dup.setSelection(ass.getPosition(dat[0]));
+                                Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+                                mup.setSelection(Integer.parseInt(dat[1])-1);
+                                yup.setSelection(ssa.getPosition(dat[2]));
+                            }
+                        }
 /*
 
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);

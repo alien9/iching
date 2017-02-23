@@ -218,6 +218,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             // perform the user login attempt.
             showProgress(true);
             mAuthTask = new UserLoginTask(email, password);
+            findViewById(R.id.login_form).setVisibility(View.GONE);
             mAuthTask.execute((Void) null);
         }
     }
@@ -404,7 +405,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
-            findViewById(R.id.login_form).setVisibility(View.GONE);
             showProgress(false);
 
             if (success) {
