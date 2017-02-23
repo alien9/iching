@@ -91,9 +91,6 @@ public class Question extends AppCompatActivity {
     private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
     private File imageFile;
     private JSONObject polly;
-    private JSONObject last_known_position;
-    private boolean turning=false;
-    private DatePickerDialog datepicker;
     private String cookies;
     private boolean jadeu;
 
@@ -221,7 +218,14 @@ public class Question extends AppCompatActivity {
                 respuestas.put("dataehora",Math.round(c.getTimeInMillis()/1000));
             }
             if(!respuestas.has("gps")){
-                respuestas.put("gps",((IChing)getApplicationContext()).getLastKnownPosition());
+                JSONObject g = ((IChing) getApplicationContext()).getLastKnownPosition();
+                if(g!=null) {
+                    if (g.has("latitude")) {
+                        respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
+                        respuestas.put("gpsprec", g.optString("accuracy"));
+                    }
+                }
+
             }// "gps":"latitude longitude","gpsprec":[precisao em metros]
         } catch (JSONException e) {
             e.printStackTrace();

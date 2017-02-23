@@ -138,7 +138,6 @@ public class IChing extends Application {
         return last_known_position;
     }
 
-
     private static class CookiePot implements CookieJar {
         private List<Cookie> cookies;
 
