@@ -93,6 +93,7 @@ public class Lista extends AppCompatActivity {
         }
 
         stuff=((IChing)getApplicationContext()).getStuff();
+        ((IChing)getApplicationContext()).startGPS(this);
         if(stuff==null){
             requestLogin();
             return;
@@ -157,8 +158,8 @@ public class Lista extends AppCompatActivity {
 
             Request request = new Request.Builder()
                     .url(getString(R.string.save_url))
-                    .post(bode)
                     .method("POST", RequestBody.create(null, new byte[0]))
+                    .post(bode)
                     .build();
             Response response = null;
             try {
@@ -171,6 +172,11 @@ public class Lista extends AppCompatActivity {
                 String j=response.body().string();
                 JSONObject resp=new JSONObject(j);
                 stuff = resp.optJSONArray("pesqs");
+                if(resp.has("saved")){
+                    if(resp.optBoolean("saved")){
+                        ((IChing)getApplicationContext()).setRespostas(new JSONObject());
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
