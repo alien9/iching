@@ -145,6 +145,16 @@ public class Lista extends AppCompatActivity {
         }
     }
 
+    private JSONObject getJournal() {
+        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+        JSONObject journal;
+        try {
+            journal = new JSONObject(sharedpreferences.getString("journal", "{}"));
+        } catch (JSONException e) {
+            journal = new JSONObject();
+        }
+        return journal;
+    }
 
     private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
         @Override
@@ -152,7 +162,7 @@ public class Lista extends AppCompatActivity {
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
-                    .addFormDataPart("d",((IChing)getApplicationContext()).getRespostas().toString())
+                    .addFormDataPart("d",getJournal().toString())
                     .addFormDataPart("m","save")
                     .build();
 
@@ -174,7 +184,7 @@ public class Lista extends AppCompatActivity {
                 stuff = resp.optJSONArray("pesqs");
                 if(resp.has("saved")){
                     if(resp.optBoolean("saved")){
-                        ((IChing)getApplicationContext()).setRespostas(new JSONObject());
+                        resetJournal("{}");
                     }
                 }
             } catch (IOException e) {
@@ -193,6 +203,13 @@ public class Lista extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
             show();
         }
+    }
+
+    private void resetJournal(String j) {
+        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("journal", j);
+        editor.commit();
     }
 
     private void show() {
