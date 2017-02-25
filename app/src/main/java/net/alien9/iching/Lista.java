@@ -155,7 +155,6 @@ public class Lista extends AppCompatActivity {
                     .addFormDataPart("d",((IChing)getApplicationContext()).getRespostas().toString())
                     .addFormDataPart("m","save")
                     .build();
-
             Request request = new Request.Builder()
                     .url(getString(R.string.save_url))
                     .method("POST", RequestBody.create(null, new byte[0]))

@@ -344,7 +344,6 @@ public class Question extends AppCompatActivity {
                                 View vu = findViewById(R.id.comments_request);
                                 if(compoundButton.isChecked()){
                                     if(finalResps.optJSONObject(quem).has("expl")){
-
                                         vu.setVisibility(View.VISIBLE);
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
@@ -616,6 +615,7 @@ public class Question extends AppCompatActivity {
         ViewPager vu= (ViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
+        if(v==null)return false;
         TextView pergfield = (TextView) v.findViewById(R.id.perg_id);
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
@@ -639,8 +639,15 @@ public class Question extends AppCompatActivity {
                 if (v.findViewById(R.id.multipla_radio) != null) {
                     int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
                     RadioButton u = (RadioButton) v.findViewById(selectedId);
-                    if(u!=null)
-                        respuestas.put(perg_id, u.getTag());
+                    if(u!=null) {
+                        JSONObject j = new JSONObject();
+                        j.put("valor",u.getTag());
+                        View vc = findViewById(R.id.comments_request);
+                        if(vc.getVisibility()==View.VISIBLE){
+                            j.put("comment",((EditText)vc.findViewById(R.id.comments)).getText());
+                        }
+                        respuestas.put(perg_id, j);
+                    }
                 }
                 if(v.findViewById(R.id.checkbox_container)!=null){
                     respuestas.put(perg_id,new JSONObject());
