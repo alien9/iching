@@ -93,6 +93,7 @@ public class Question extends AppCompatActivity {
     private JSONObject polly;
     private String cookies;
     private boolean jadeu;
+    private boolean encerrabody;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -126,8 +127,7 @@ public class Question extends AppCompatActivity {
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgini"));
             te.setVisibility(View.VISIBLE);
         }else{
-            findViewById(R.id.next).setVisibility(View.GONE);
-            findViewById(R.id.previous).setVisibility(View.GONE);
+            findViewById(R.id.next).setVisibility(View.VISIBLE);
             te.setVisibility(View.GONE);
             pu.setVisibility(View.VISIBLE);
         }
@@ -168,7 +168,7 @@ public class Question extends AppCompatActivity {
                     return;
                 ((IChing)getApplication()).resetUndo();
                 int cu = pu.getCurrentItem();
-                if(cu<pu.getAdapter().getCount()-1) {
+                if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
                     pu.setCurrentItem(cu + 1, true);
                 }else{
                     termina();
@@ -198,9 +198,12 @@ public class Question extends AppCompatActivity {
             public void onPageSelected(int position) {
                 findViewById(R.id.previous).setVisibility(View.VISIBLE);
                 findViewById(R.id.next).setVisibility(View.VISIBLE);
-                if(position==0){
+                if(position==0) {
                     findViewById(R.id.previous).setVisibility(View.GONE);
                 }
+                //ViewGroup.LayoutParams params = pu.getLayoutParams();
+                //params.height = 1000;
+                //pu.setLayoutParams(params);
                 //if(position==pu.getAdapter().getCount()-1)
                 //    findViewById(R.id.next).setVisibility(View.GONE);
             }
@@ -349,6 +352,11 @@ public class Question extends AppCompatActivity {
                                     }else{
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText("");
                                         vu.setVisibility(View.GONE);
+                                    }
+                                    if(finalResps.optJSONObject(quem).optString("fim","0").equals("1")){
+                                        encerrabody=true;
+                                    }else{
+                                        encerrabody=false;
                                     }
                                 }
                             }
