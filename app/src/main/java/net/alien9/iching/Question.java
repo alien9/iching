@@ -367,8 +367,10 @@ public class Question extends AppCompatActivity {
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
                             bu.setOnCheckedChangeListener(l);
-                            if(respuestas.optString(perg_id).equals(tag)){
-                                bu.setChecked(true);
+                            if(respuestas.has(perg_id)) {
+                                if (respuestas.optJSONObject(perg_id).optString("v").equals(tag)) {
+                                    bu.setChecked(true);
+                                }
                             }
                             ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
                         }
@@ -401,7 +403,7 @@ public class Question extends AppCompatActivity {
 
                         String du;
                         if(respuestas.has(perg_id))
-                            du= respuestas.optString(perg_id);
+                            du=respuestas.optJSONObject(perg_id).optString("v");
                         else{
                             Calendar c = Calendar.getInstance();
                             du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
@@ -450,30 +452,13 @@ public class Question extends AppCompatActivity {
                                 yup.setSelection(ssa.getPosition(dat[2]));
                             }
                         }
-/*
-
-                        v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
-                        final ViewGroup finalV = v;
-                        ((EditText)v.findViewById(R.id.datepicker_text)).setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                DatePickerDialog.OnDateSetListener datePickerListener=new DatePickerDialog.OnDateSetListener() {
-                                    @Override
-                                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-                                        ((EditText) finalV.findViewById(R.id.datepicker_text)).setText(String.format("%02d/%02d/%04d",i2,1+i1,i));
-                                        datepicker.dismiss();
-                                    }
-                                };
-                                Calendar cal = Calendar.getInstance();
-                                int day = cal.get(Calendar.DAY_OF_MONTH);
-                                int month = cal.get(Calendar.MONTH);
-                                int year = cal.get(Calendar.YEAR);
-                                datepicker = new DatePickerDialog(context, datePickerListener, year, month, day);
-                                datepicker.show();
+                        if(item.has("resps")){
+                            if(item.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
+                                v.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
+                            }else{
+                                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
                             }
-                        });
-                        ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
-                        */
+                        }
                         break;
                     case TYPE_NUMBER:
                         //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
@@ -642,17 +627,23 @@ public class Question extends AppCompatActivity {
 //                if (v.findViewById(R.id.datepicker_text) != null) {
                 if (v.findViewById(R.id.spinner_month) != null) {
                     //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
-                    respuestas.put(perg_id, String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    JSONObject e = new JSONObject();
+                    e.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    View vc = v.findViewById(R.id.comments_request);
+                    if(vc.getVisibility()==View.VISIBLE){
+                        e.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
+                    }
+                    respuestas.put(perg_id, e);
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
                     int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
                     RadioButton u = (RadioButton) v.findViewById(selectedId);
                     if(u!=null) {
                         JSONObject j = new JSONObject();
-                        j.put("valor",u.getTag());
-                        View vc = findViewById(R.id.comments_request);
+                        j.put("v",u.getTag());
+                        View vc = v.findViewById(R.id.comments_request);
                         if(vc.getVisibility()==View.VISIBLE){
-                            j.put("comment",((EditText)vc.findViewById(R.id.comments)).getText());
+                            j.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                         }
                         respuestas.put(perg_id, j);
                     }
