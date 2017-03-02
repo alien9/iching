@@ -20,8 +20,9 @@
         android:text="id da pergunta"
         android:id="@+id/perg_id"
         android:visibility="gone"
-        />    <ImageView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/imageView" />
+        />
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView" />
 </LinearLayout>

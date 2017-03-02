@@ -159,6 +159,7 @@ public class Lista extends AppCompatActivity {
     private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
         @Override
         protected Boolean doInBackground(Void... voids) {
+            String j = null;
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
@@ -178,7 +179,7 @@ public class Lista extends AppCompatActivity {
                 //request=new Request.Builder().url(String.format("%s?c=%sm=save&d=%s", new String[]{getString(R.string.save_url),((IChing)getApplicationContext()).getPesqId(), URLEncoder.encode(r,"UTF-8")})).build();
 
                 response = client.newCall(request).execute();
-                String j=response.body().string();
+                j=response.body().string();
                 JSONObject resp=new JSONObject(j);
                 stuff = resp.optJSONArray("pesqs");
                 if(resp.has("saved")){
@@ -187,10 +188,11 @@ public class Lista extends AppCompatActivity {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Snackbar.make(findViewById(R.id.content_lista),String.format(e.getLocalizedMessage()),Snackbar.LENGTH_LONG).show();
                 return false;
             } catch (JSONException e) {
                 e.printStackTrace();
+                Snackbar.make(findViewById(R.id.content_lista),String.format("Problema de Comunicação. Mensagem do servidor: %s",j),Snackbar.LENGTH_LONG).show();
                 return false;
             }
             return true;

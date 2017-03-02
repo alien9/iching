@@ -93,7 +93,7 @@ public class Question extends AppCompatActivity {
     private JSONObject polly;
     private String cookies;
     private boolean jadeu;
-    private boolean encerrabody;
+    private boolean encerrabody=false;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -477,6 +477,7 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_NUMBER:
                         //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
+                        int n=0;
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         }else {
@@ -505,12 +506,12 @@ public class Question extends AppCompatActivity {
 
                                     }
                                 });
-                                int n = minimum + maximum / 2;
+                                n = minimum + maximum / 2;
                                 s.setProgress(n);
                                 tv.setText(""+n);
                             }
                         }
-                        ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
+                        ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
