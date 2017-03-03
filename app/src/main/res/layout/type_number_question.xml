@@ -32,4 +32,5 @@
         android:gravity="center_vertical|center_horizontal"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
+    <include layout="@layout/decline"/>
 </LinearLayout>

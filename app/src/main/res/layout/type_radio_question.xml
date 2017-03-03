@@ -18,7 +18,8 @@
         />
     <RadioGroup android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:padding="25dp"
         android:id="@+id/multipla_radio"/>
-
-<include layout="@layout/comments_request"/>
+    <include layout="@layout/comments_request"/>
+    <include layout="@layout/decline"/>
 </LinearLayout>

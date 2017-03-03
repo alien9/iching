@@ -2,14 +2,21 @@ package net.alien9.iching;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -93,7 +100,7 @@ public class Question extends AppCompatActivity {
     private JSONObject polly;
     private String cookies;
     private boolean jadeu;
-    private boolean encerrabody;
+    private boolean encerrabody=false;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -118,7 +125,7 @@ public class Question extends AppCompatActivity {
         toolbar.setTitle(polly.optString("nom"));
         final Context context = this;
         setTitle(polly.optString("nom"));
-        final ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+        final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
             findViewById(R.id.next).setVisibility(View.GONE);
@@ -154,11 +161,14 @@ public class Question extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 te.setVisibility(View.GONE);
-                pu.setVisibility(View.VISIBLE);
+
                 if(jadeu)
                     encerra();
-                findViewById(R.id.next).setVisibility(View.VISIBLE);
-                findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                else {
+                    pu.setVisibility(View.VISIBLE);
+                    findViewById(R.id.next).setVisibility(View.VISIBLE);
+                    findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                }
             }
         });
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
@@ -188,7 +198,7 @@ public class Question extends AppCompatActivity {
                 ((IChing)getApplication()).setUndo();
             }
         });
-        pu.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        pu.addOnPageChangeListener(new IChingViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 Log.d("iching Coisa",""+positionOffset);
@@ -222,14 +232,21 @@ public class Question extends AppCompatActivity {
             }
             if(!respuestas.has("gps")){
                 JSONObject g = ((IChing) getApplicationContext()).getLastKnownPosition();
+                final SharedPreferences sharedpreferences=getSharedPreferences("position",MODE_PRIVATE);
+                if(g==null){
+                    g = new JSONObject(sharedpreferences.getString("gps","{}"));
+                }else{
+                    SharedPreferences.Editor e = sharedpreferences.edit();
+                    e.putString("gps", g.toString());
+                    e.commit();
+                }
                 if(g!=null) {
                     if (g.has("latitude")) {
                         respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
                         respuestas.put("gpsprec", g.optString("accuracy"));
                     }
                 }
-
-            }// "gps":"latitude longitude","gpsprec":[precisao em metros]
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -239,13 +256,14 @@ public class Question extends AppCompatActivity {
     private void termina() {
         jadeu=true;
         if(polly.has("msgfim")){
-            ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+            IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
             findViewById(R.id.next).setVisibility(View.GONE);
             findViewById(R.id.previous).setVisibility(View.GONE);
             pu.setVisibility(View.GONE);
             View te=findViewById(R.id.messenger_layout);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
             te.setVisibility(View.VISIBLE);
+            findViewById(R.id.main_view).setVisibility(View.GONE);
             return;
         }
         encerra();
@@ -277,10 +295,40 @@ public class Question extends AppCompatActivity {
         switch(item.getItemId()){
             case R.id.action_quit:
                 validate();
+                interrompe();
                 break;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void interrompe() {
+        LayoutInflater li = LayoutInflater.from(this);
+        final View promptsView = li.inflate(R.layout.encerrar_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(promptsView);
+        alertDialogBuilder
+                .setCancelable(false)
+                .setTitle("Cancelamento")
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                JSONObject resps = ((IChing) getApplicationContext()).getRespostas();
+                                try {
+                                    resps.put("motivo_cancelamento",((TextView)promptsView.findViewById(R.id.motivo_cancelamento)).getText());
+                                } catch (JSONException ignored) {}
+                                ((IChing) getApplicationContext()).setRespostas(resps);
+                                encerra();
+                            }
+                        })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                            }
+                        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 
     private class BunchViewAdapter extends PagerAdapter {
@@ -367,8 +415,10 @@ public class Question extends AppCompatActivity {
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
                             bu.setOnCheckedChangeListener(l);
-                            if(respuestas.optString(perg_id).equals(tag)){
-                                bu.setChecked(true);
+                            if(respuestas.has(perg_id)) {
+                                if (respuestas.optJSONObject(perg_id).optString("v").equals(tag)) {
+                                    bu.setChecked(true);
+                                }
                             }
                             ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
                         }
@@ -401,7 +451,7 @@ public class Question extends AppCompatActivity {
 
                         String du;
                         if(respuestas.has(perg_id))
-                            du= respuestas.optString(perg_id);
+                            du=respuestas.optJSONObject(perg_id).optString("v");
                         else{
                             Calendar c = Calendar.getInstance();
                             du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
@@ -450,33 +500,17 @@ public class Question extends AppCompatActivity {
                                 yup.setSelection(ssa.getPosition(dat[2]));
                             }
                         }
-/*
-
-                        v = (ViewGroup) inflater.inflate(R.layout.type_date_question, collection, false);
-                        final ViewGroup finalV = v;
-                        ((EditText)v.findViewById(R.id.datepicker_text)).setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                DatePickerDialog.OnDateSetListener datePickerListener=new DatePickerDialog.OnDateSetListener() {
-                                    @Override
-                                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-                                        ((EditText) finalV.findViewById(R.id.datepicker_text)).setText(String.format("%02d/%02d/%04d",i2,1+i1,i));
-                                        datepicker.dismiss();
-                                    }
-                                };
-                                Calendar cal = Calendar.getInstance();
-                                int day = cal.get(Calendar.DAY_OF_MONTH);
-                                int month = cal.get(Calendar.MONTH);
-                                int year = cal.get(Calendar.YEAR);
-                                datepicker = new DatePickerDialog(context, datePickerListener, year, month, day);
-                                datepicker.show();
+                        if(item.has("resps")){
+                            if(item.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
+                                v.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
+                            }else{
+                                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
                             }
-                        });
-                        ((EditText)v.findViewById(R.id.datepicker_text)).setText(respuestas.optString(perg_id));
-                        */
+                        }
                         break;
                     case TYPE_NUMBER:
                         //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
+                        int n=0;
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         }else {
@@ -505,12 +539,23 @@ public class Question extends AppCompatActivity {
 
                                     }
                                 });
-                                int n = minimum + maximum / 2;
+                                n = minimum + maximum / 2;
                                 s.setProgress(n);
                                 tv.setText(""+n);
                             }
+                            ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
+                            Bitmap bm = Bitmap.createBitmap(1168,172,Bitmap.Config.ARGB_8888);
+                            Paint paint = new Paint();
+                            paint.setStyle(Paint.Style.FILL);
+                            paint.setColor(Color.BLACK);
+                            paint.setTextSize(82);
+                            Canvas canvas = new Canvas(bm);
+                            canvas.drawText(""+minimum, 5, 160, paint);
+                            paint.setTextAlign(Paint.Align.RIGHT);
+                            canvas.drawText(""+maximum, 1163, 160, paint);
+                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(),bm));
                         }
-                        ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id));
+
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
@@ -527,6 +572,33 @@ public class Question extends AppCompatActivity {
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
+                }
+                if(item.optBoolean("naosei",false)){
+                    v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
+                    v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
+                }
+                if(item.optBoolean("naoresp",false)){
+                    v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
+                    v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
+                }
+                if(v.findViewById(R.id.decline_layout)!=null) {
+                    if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
+                        final ViewGroup finalV = v;
+                        ((CheckBox) v.findViewById(R.id.naosei)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                if (b)
+                                    ((CheckBox) finalV.findViewById(R.id.naoresp)).setChecked(false);
+                            }
+                        });
+                        ((CheckBox) v.findViewById(R.id.naoresp)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                if (b)
+                                    ((CheckBox) finalV.findViewById(R.id.naosei)).setChecked(false);
+                            }
+                        });
+                    }
                 }
                 String title=item.optString("txt",null);
                 if(title!=null){
@@ -620,7 +692,7 @@ public class Question extends AppCompatActivity {
         }
     }
     protected boolean validate(){
-        ViewPager vu= (ViewPager) findViewById(R.id.main_view);
+        IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
         if(v==null)return false;
@@ -630,6 +702,18 @@ public class Question extends AppCompatActivity {
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
+                if(v.findViewById(R.id.decline_layout).getVisibility()==View.VISIBLE){
+                    if((v.findViewById(R.id.naosei).getVisibility()==View.VISIBLE)&&(((CheckBox)v.findViewById(R.id.naosei)).isChecked())){
+                        respuestas.put(perg_id,"ns");
+                        ching.setRespostas(respuestas);
+                        return true;
+                    }
+                    if((v.findViewById(R.id.naoresp).getVisibility()==View.VISIBLE)&&(((CheckBox)v.findViewById(R.id.naoresp)).isChecked())){
+                        respuestas.put(perg_id,"nr");
+                        ching.setRespostas(respuestas);
+                        return true;
+                    }
+                }
                 if (v.findViewById(R.id.textao_editText) != null) {
                     respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
                 }
@@ -642,17 +726,23 @@ public class Question extends AppCompatActivity {
 //                if (v.findViewById(R.id.datepicker_text) != null) {
                 if (v.findViewById(R.id.spinner_month) != null) {
                     //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
-                    respuestas.put(perg_id, String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    JSONObject e = new JSONObject();
+                    e.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    View vc = v.findViewById(R.id.comments_request);
+                    if(vc.getVisibility()==View.VISIBLE){
+                        e.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
+                    }
+                    respuestas.put(perg_id, e);
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
                     int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
                     RadioButton u = (RadioButton) v.findViewById(selectedId);
                     if(u!=null) {
                         JSONObject j = new JSONObject();
-                        j.put("valor",u.getTag());
-                        View vc = findViewById(R.id.comments_request);
+                        j.put("v",u.getTag());
+                        View vc = v.findViewById(R.id.comments_request);
                         if(vc.getVisibility()==View.VISIBLE){
-                            j.put("comment",((EditText)vc.findViewById(R.id.comments)).getText());
+                            j.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                         }
                         respuestas.put(perg_id, j);
                     }

@@ -1,0 +1,31 @@
+todo
+
+-interromper pesquisa - incluir motivo -- ok (FALTAM MOTIVOS POSSIVEIS)
+-foco diz o tipo de destinatário da pesquisa (habi - fa-user, ende - fa-home)
+-obrig diz se a pesquisa tem, obrigatoriamente, o destinatário definido ou não: true - tem de estar definido e vem com lista; false - nunca é definido e não vem com lista; ausente (null) é indiferente e pode vir com lista
+-campos vem com o nome, sem hierarquia entre habi e ende (v. abaixo)
+-listar endereços das aplicações por ordem de proximidade da posição atual (controlável por variável de configuração/menu)
+-Implementar "não sei" e "não quero responder" como alternativas adicionais de todas as questões - quando selecionados, desativa respostas 
+-Fazer régua na numérica
+-não guardar senha no final!
+-Para permitir a escolha da cidade no app:
+	-primeiro login mostra lista de cidades baixada de home.newt.com.br/index.php?m=getcidades - resposta é um objeto no formato {"<nome da cidade>":"<host da cidade>","<nome de outra cidade>":"<host de outra cidade>"}
+	-monta um drop down com as cidades sobre os campos de login e senha
+	-gajo faz login na cidade - se entrar, memoriza a cidade e o seu host e segue...
+	-nos logins subsequentes, não mostra o drop down, e aparece um ícone de menu com Configurações, que permite exibir o drop down de novo
+
+-fazer apk
+-fazer print das telas de login, abertura e dos diferentes tipos de pesquisa e mandar
+
+
+[{"cod":5,"foco":"habi","obrig":(true/false),"habi":[{"habi1_cod":44,habi1_nom":"maria das dores","habi1_nom_mae":"lindalva","ende1_logr":"rua um","ende1_num":" sn","ende1_bai":"brejal",ende1_lat:-23.333,ende1_lng:-45.333},{habi1_cod:22,"josé maria","habi1_cns":"523452345243"}],pergs: ]
+
+
+
+DA RESPOSTA DO TABLET
+-Raíz é um objeto cujos atributos são os códigos das edições carregadas
+-Cada atributo tem como valor um array de respostas
+-Cada resposta é um objeto contendo: dataehora (unix ts), gps (lat lng), prec (int) e demais atributos são códigos das perguntas
+-O valor do atributo <perg1_cod> é um objeto contendo "v" (valor) e "c" (comments) - se "não sei" o valor é "ns" e se "não quero responder" o valor é "nr"
+
+{"<edpe1_cod>":[{"dataehora":1487995392,"gps":"<lat> <lng>","prec": <precisao em metros>,<cód de pergunta>:{"v":"<valor>","c":""<comments>},<cód de outra pergunta>:{"v":"ns"}},{ } ]

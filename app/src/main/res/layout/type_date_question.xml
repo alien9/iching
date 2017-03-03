@@ -27,4 +27,5 @@
         android:visibility="gone"
             />
     </LinearLayout>
+    <include layout="@layout/decline"/>
 </LinearLayout>

@@ -42,6 +42,7 @@ public class IChing extends Application {
     public static final int POSITION_UPDATE = 0;
     private JSONObject last_known_position;
     private LocationManager locationManager;
+    private String domain;
 
     public static IChing getInstance() {
         return singleton;
@@ -136,6 +137,13 @@ public class IChing extends Application {
 
     public JSONObject getLastKnownPosition() {
         return last_known_position;
+    }
+
+    public void setDomain(String d) {
+        domain = d;
+    }
+    public String getDomain(){
+        return domain;
     }
 
     private static class CookiePot implements CookieJar {

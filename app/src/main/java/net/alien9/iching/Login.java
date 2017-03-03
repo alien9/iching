@@ -34,13 +34,16 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,6 +88,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
     private Context context;
     private String cookies;
     private JSONArray stuff;
+    private JSONObject cidades;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +123,10 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         });
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+        CityTask citytask = new CityTask();
+        showProgress(true);
+        findViewById(R.id.login_form).setVisibility(View.GONE);
+        citytask.execute();
         context=this;
     }
 
@@ -176,6 +184,8 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             return;
         }
 
+        SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+
         // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -183,10 +193,12 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
-        SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+        String cidade = ((Spinner)findViewById(R.id.city_spinner)).getSelectedItem().toString();
+        ((IChing)getApplicationContext()).setDomain(cidades.optString(cidade));
         SharedPreferences.Editor e = sharedpreferences.edit();
         e.putString("username", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?email:"");
         e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:""); // Isto aqui é temporário
+        e.putString("cidade", cidade);
         e.commit();
         boolean cancel = false;
         View focusView = null;
@@ -332,8 +344,9 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            String url =getString(R.string.login_url);
-            cookieJar=((IChing)getApplicationContext()).getCookieJar();
+            IChing c = (IChing) getApplicationContext();
+            String url =String.format("http://%s%s",c.getDomain(),getString(R.string.login_url));
+            cookieJar=c.getCookieJar();
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
 
             RequestBody formBody = new MultipartBody.Builder()
@@ -368,7 +381,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                         .addFormDataPart("m","load")
                         .build();
                 request = new Request.Builder()
-                        .url(getString(R.string.login_url))
+                        .url(String.format("http://%s%s",c.getDomain(),getString(R.string.login_url)))
                         .method("POST", RequestBody.create(null, new byte[0]))
                         .post(formBody)
                         .build();
@@ -421,6 +434,59 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             mAuthTask = null;
             showProgress(false);
         }
+    }
+
+    private class CityTask extends AsyncTask<String, String, Boolean> {
+        private String mess;
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            OkHttpClient client = new OkHttpClient.Builder().build();
+            Request request = new Request.Builder()
+                    .url(getString(R.string.cidades_url))
+                    .build();
+            Response response_l = null;
+            try {
+                response_l = client.newCall(request).execute();
+                String j = response_l.body().string();
+                cidades = new JSONObject(j);
+                return true;
+            }
+            catch (IOException e) {
+                mess=e.getLocalizedMessage();
+            } catch (JSONException e) {
+                mess=e.getLocalizedMessage();
+            }
+            return false;
+
+        }
+
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            mAuthTask = null;
+            showProgress(false);
+            if (success) {
+                findViewById(R.id.login_form).setVisibility(View.VISIBLE);
+                List<String> lic= new ArrayList<>();
+                Iterator<String> ky = cidades.keys();
+                while (ky.hasNext())
+                {
+                    lic.add((String)ky.next());
+                }
+                ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, lic);
+                ((Spinner)findViewById(R.id.city_spinner)).setAdapter(ass);
+                SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+                String cidade=sharedpreferences.getString("cidade","");
+                if(!cidade.equals("")){
+                    int spinnerPosition = ass.getPosition(cidade);
+                    ((Spinner)findViewById(R.id.city_spinner)).setSelection(spinnerPosition);
+                }
+            } else {
+                Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
+            }
+        }
+
     }
 }
 
