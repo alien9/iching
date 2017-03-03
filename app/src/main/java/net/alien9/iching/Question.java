@@ -2,14 +2,21 @@ package net.alien9.iching;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -118,7 +125,7 @@ public class Question extends AppCompatActivity {
         toolbar.setTitle(polly.optString("nom"));
         final Context context = this;
         setTitle(polly.optString("nom"));
-        final ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+        final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
             findViewById(R.id.next).setVisibility(View.GONE);
@@ -154,11 +161,14 @@ public class Question extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 te.setVisibility(View.GONE);
-                pu.setVisibility(View.VISIBLE);
+
                 if(jadeu)
                     encerra();
-                findViewById(R.id.next).setVisibility(View.VISIBLE);
-                findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                else {
+                    pu.setVisibility(View.VISIBLE);
+                    findViewById(R.id.next).setVisibility(View.VISIBLE);
+                    findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                }
             }
         });
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
@@ -188,7 +198,7 @@ public class Question extends AppCompatActivity {
                 ((IChing)getApplication()).setUndo();
             }
         });
-        pu.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        pu.addOnPageChangeListener(new IChingViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 Log.d("iching Coisa",""+positionOffset);
@@ -222,14 +232,21 @@ public class Question extends AppCompatActivity {
             }
             if(!respuestas.has("gps")){
                 JSONObject g = ((IChing) getApplicationContext()).getLastKnownPosition();
+                final SharedPreferences sharedpreferences=getSharedPreferences("position",MODE_PRIVATE);
+                if(g==null){
+                    g = new JSONObject(sharedpreferences.getString("gps","{}"));
+                }else{
+                    SharedPreferences.Editor e = sharedpreferences.edit();
+                    e.putString("gps", g.toString());
+                    e.commit();
+                }
                 if(g!=null) {
                     if (g.has("latitude")) {
                         respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
                         respuestas.put("gpsprec", g.optString("accuracy"));
                     }
                 }
-
-            }// "gps":"latitude longitude","gpsprec":[precisao em metros]
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -239,13 +256,14 @@ public class Question extends AppCompatActivity {
     private void termina() {
         jadeu=true;
         if(polly.has("msgfim")){
-            ViewPager pu = (ViewPager) findViewById(R.id.main_view);
+            IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
             findViewById(R.id.next).setVisibility(View.GONE);
             findViewById(R.id.previous).setVisibility(View.GONE);
             pu.setVisibility(View.GONE);
             View te=findViewById(R.id.messenger_layout);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
             te.setVisibility(View.VISIBLE);
+            findViewById(R.id.main_view).setVisibility(View.GONE);
             return;
         }
         encerra();
@@ -277,10 +295,40 @@ public class Question extends AppCompatActivity {
         switch(item.getItemId()){
             case R.id.action_quit:
                 validate();
+                interrompe();
                 break;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void interrompe() {
+        LayoutInflater li = LayoutInflater.from(this);
+        final View promptsView = li.inflate(R.layout.encerrar_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(promptsView);
+        alertDialogBuilder
+                .setCancelable(false)
+                .setTitle("Cancelamento")
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                JSONObject resps = ((IChing) getApplicationContext()).getRespostas();
+                                try {
+                                    resps.put("motivo_cancelamento",((TextView)promptsView.findViewById(R.id.motivo_cancelamento)).getText());
+                                } catch (JSONException ignored) {}
+                                ((IChing) getApplicationContext()).setRespostas(resps);
+                                encerra();
+                            }
+                        })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                            }
+                        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 
     private class BunchViewAdapter extends PagerAdapter {
@@ -495,8 +543,19 @@ public class Question extends AppCompatActivity {
                                 s.setProgress(n);
                                 tv.setText(""+n);
                             }
+                            ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
+                            Bitmap bm = Bitmap.createBitmap(1168,172,Bitmap.Config.ARGB_8888);
+                            Paint paint = new Paint();
+                            paint.setStyle(Paint.Style.FILL);
+                            paint.setColor(Color.BLACK);
+                            paint.setTextSize(82);
+                            Canvas canvas = new Canvas(bm);
+                            canvas.drawText(""+minimum, 5, 160, paint);
+                            paint.setTextAlign(Paint.Align.RIGHT);
+                            canvas.drawText(""+maximum, 1163, 160, paint);
+                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(),bm));
                         }
-                        ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
+
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
@@ -513,6 +572,33 @@ public class Question extends AppCompatActivity {
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
+                }
+                if(item.optBoolean("naosei",false)){
+                    v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
+                    v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
+                }
+                if(item.optBoolean("naoresp",false)){
+                    v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
+                    v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
+                }
+                if(v.findViewById(R.id.decline_layout)!=null) {
+                    if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
+                        final ViewGroup finalV = v;
+                        ((CheckBox) v.findViewById(R.id.naosei)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                if (b)
+                                    ((CheckBox) finalV.findViewById(R.id.naoresp)).setChecked(false);
+                            }
+                        });
+                        ((CheckBox) v.findViewById(R.id.naoresp)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                if (b)
+                                    ((CheckBox) finalV.findViewById(R.id.naosei)).setChecked(false);
+                            }
+                        });
+                    }
                 }
                 String title=item.optString("txt",null);
                 if(title!=null){
@@ -606,7 +692,7 @@ public class Question extends AppCompatActivity {
         }
     }
     protected boolean validate(){
-        ViewPager vu= (ViewPager) findViewById(R.id.main_view);
+        IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
         if(v==null)return false;
@@ -616,6 +702,18 @@ public class Question extends AppCompatActivity {
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
+                if(v.findViewById(R.id.decline_layout).getVisibility()==View.VISIBLE){
+                    if((v.findViewById(R.id.naosei).getVisibility()==View.VISIBLE)&&(((CheckBox)v.findViewById(R.id.naosei)).isChecked())){
+                        respuestas.put(perg_id,"ns");
+                        ching.setRespostas(respuestas);
+                        return true;
+                    }
+                    if((v.findViewById(R.id.naoresp).getVisibility()==View.VISIBLE)&&(((CheckBox)v.findViewById(R.id.naoresp)).isChecked())){
+                        respuestas.put(perg_id,"nr");
+                        ching.setRespostas(respuestas);
+                        return true;
+                    }
+                }
                 if (v.findViewById(R.id.textao_editText) != null) {
                     respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
                 }

@@ -28,4 +28,5 @@
         android:id="@+id/perg_id"
         android:visibility="gone"
         />
+    <include layout="@layout/decline"/>
 </LinearLayout>

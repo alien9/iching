@@ -35,6 +35,7 @@
         </provider>
 
         <activity
+            android:screenOrientation="landscape"
             android:name=".Login"
             android:label="@string/title_activity_login">
         </activity>
