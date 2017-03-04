@@ -27,5 +27,5 @@
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
         android:id="@+id/imageView" />
-    <include layout="@layout/decline"/>
+    <include layout="@layout/comments_request"/>
 </LinearLayout>

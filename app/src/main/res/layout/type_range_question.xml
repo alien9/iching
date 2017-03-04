@@ -20,12 +20,10 @@
     <LinearLayout
         android:id="@+id/seek_layout"
         android:layout_width="match_parent"
-        android:background="@color/red"
         android:paddingBottom="40dp"
         android:layout_margin="30dp"
         android:layout_height="wrap_content">
         <SeekBar
-            android:background="@color/green"
             android:id="@+id/seek"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -37,5 +35,5 @@
         android:id="@+id/perg_id"
         android:visibility="gone"
         />
-    <include layout="@layout/decline"/>
+    <include layout="@layout/comments_request"/>
 </LinearLayout>

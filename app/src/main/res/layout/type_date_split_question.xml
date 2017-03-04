@@ -35,5 +35,4 @@
         android:visibility="gone"
         />
     <include layout="@layout/comments_request"/>
-    <include layout="@layout/decline"/>
 </LinearLayout>

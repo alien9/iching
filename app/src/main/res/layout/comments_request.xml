@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/comments_request"
-    android:padding="25dp"
-    android:visibility="gone">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Requer Explicação"
-        android:textSize="20dp"
-        android:id="@+id/ask_for_comment"
-        />
-    <EditText
+    android:layout_height="match_parent">
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
-        android:hint="Comentários"
-        android:ems="10"
-        android:textSize="20dp"
-        android:id="@+id/comments" />
+        android:id="@+id/comments_request"
+        android:orientation="vertical"
+        android:padding="25dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Requer Explicação"
+            android:textSize="20dp"
+            android:id="@+id/ask_for_comment"
+            />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:hint="Comentários"
+            android:ems="10"
+            android:textSize="20dp"
+            android:id="@+id/comments" />
+    </LinearLayout>
+    <include layout="@layout/decline"/>
 </LinearLayout>

@@ -388,18 +388,18 @@ public class Question extends AppCompatActivity {
                     case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
                         final JSONObject finalResps = resps;
+                        final View vuc = v.findViewById(R.id.comments_request);
                         CompoundButton.OnCheckedChangeListener l=new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                                 String quem= (String) compoundButton.getTag();
-                                View vu = findViewById(R.id.comments_request);
                                 if(compoundButton.isChecked()){
                                     if(finalResps.optJSONObject(quem).has("expl")){
-                                        vu.setVisibility(View.VISIBLE);
+                                        vuc.setVisibility(View.VISIBLE);
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
                                         ((TextView)findViewById(R.id.ask_for_comment)).setText("");
-                                        vu.setVisibility(View.GONE);
+                                        vuc.setVisibility(View.GONE);
                                     }
                                     if(finalResps.optJSONObject(quem).optString("fim","0").equals("1")){
                                         encerrabody=true;
@@ -573,13 +573,19 @@ public class Question extends AppCompatActivity {
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
+                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                v.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
+                }else{
+                    v.findViewById(R.id.naosei).setVisibility(View.GONE);
                 }
                 if(item.optBoolean("naoresp",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
+                }else{
+                    v.findViewById(R.id.naoresp).setVisibility(View.GONE);
                 }
                 if(v.findViewById(R.id.decline_layout)!=null) {
                     if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
@@ -587,15 +593,25 @@ public class Question extends AppCompatActivity {
                         ((CheckBox) v.findViewById(R.id.naosei)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                                if (b)
+                                if (b) {
                                     ((CheckBox) finalV.findViewById(R.id.naoresp)).setChecked(false);
+                                    FormControl.freeze(finalV);
+                                    FormControl.thaw(finalV.findViewById(R.id.decline_layout));
+                                }else if(!((CheckBox)finalV.findViewById(R.id.naoresp)).isChecked()){
+                                    FormControl.thaw(finalV);
+                                }
                             }
                         });
                         ((CheckBox) v.findViewById(R.id.naoresp)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                                if (b)
+                                if (b) {
                                     ((CheckBox) finalV.findViewById(R.id.naosei)).setChecked(false);
+                                    FormControl.freeze(finalV);
+                                    FormControl.thaw(finalV.findViewById(R.id.decline_layout));
+                                }else if(!((CheckBox)finalV.findViewById(R.id.naosei)).isChecked()){
+                                    FormControl.thaw(finalV);
+                                }
                             }
                         });
                     }
@@ -723,12 +739,12 @@ public class Question extends AppCompatActivity {
                         return false;
                     respuestas.put(perg_id, t);
                 }
+                View vc = v.findViewById(R.id.comments_request);
 //                if (v.findViewById(R.id.datepicker_text) != null) {
                 if (v.findViewById(R.id.spinner_month) != null) {
                     //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
                     JSONObject e = new JSONObject();
                     e.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
-                    View vc = v.findViewById(R.id.comments_request);
                     if(vc.getVisibility()==View.VISIBLE){
                         e.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                     }
@@ -740,7 +756,6 @@ public class Question extends AppCompatActivity {
                     if(u!=null) {
                         JSONObject j = new JSONObject();
                         j.put("v",u.getTag());
-                        View vc = v.findViewById(R.id.comments_request);
                         if(vc.getVisibility()==View.VISIBLE){
                             j.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                         }
@@ -748,13 +763,14 @@ public class Question extends AppCompatActivity {
                     }
                 }
                 if(v.findViewById(R.id.checkbox_container)!=null){
-                    respuestas.put(perg_id,new JSONObject());
+                    JSONObject what = new JSONObject();
                     ViewGroup g = (ViewGroup) v.findViewById(R.id.checkbox_container);
+                    JSONObject ju=new JSONObject();
                     for (int i = 0; i < g.getChildCount(); i++) {
                         CheckBox c= (CheckBox) g.getChildAt(i);
-                        String resp_id = (String) c.getTag();
-                        respuestas.optJSONObject(perg_id).put(resp_id,c.isChecked());
+                        what.put((String) c.getTag(),c.isChecked());
                     }
+                    respuestas.put(perg_id,what);
                 }
 
             } catch (JSONException e) {
@@ -781,9 +797,6 @@ public class Question extends AppCompatActivity {
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        //mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
 

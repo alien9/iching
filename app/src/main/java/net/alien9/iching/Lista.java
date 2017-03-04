@@ -167,7 +167,7 @@ public class Lista extends AppCompatActivity {
                     .addFormDataPart("m","save")
                     .build();
             Request request = new Request.Builder()
-                    .url(String.format("http://%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.save_url)))
+                    .url(String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.save_url)))
                     .method("POST", RequestBody.create(null, new byte[0]))
                     .post(bode)
                     .build();
@@ -243,7 +243,7 @@ public class Lista extends AppCompatActivity {
             }
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
             if(!destination.exists()) {
-                String url =String.format("http://%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
+                String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
                 CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
                 RequestBody formBody = new MultipartBody.Builder()

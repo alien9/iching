@@ -3,21 +3,18 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/decline_layout"
-    android:padding="25dp"
-    android:visibility="gone">
+    android:padding="25dp">
     <CheckBox
         android:text="Não sabe"
         android:textSize="18dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/naosei"
-        android:visibility="gone"
         />
     <CheckBox
         android:text="Não quer responder"
         android:textSize="18dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/naoresp"
-        android:visibility="gone"/>
+        android:id="@+id/naoresp"/>
 </LinearLayout>

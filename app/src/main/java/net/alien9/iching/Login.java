@@ -345,7 +345,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected Boolean doInBackground(Void... params) {
             IChing c = (IChing) getApplicationContext();
-            String url =String.format("http://%s%s",c.getDomain(),getString(R.string.login_url));
+            String url =String.format("%s%s",c.getDomain(),getString(R.string.login_url));
             cookieJar=c.getCookieJar();
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
 
@@ -381,7 +381,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                         .addFormDataPart("m","load")
                         .build();
                 request = new Request.Builder()
-                        .url(String.format("http://%s%s",c.getDomain(),getString(R.string.login_url)))
+                        .url(String.format("%s%s",c.getDomain(),getString(R.string.login_url)))
                         .method("POST", RequestBody.create(null, new byte[0]))
                         .post(formBody)
                         .build();
