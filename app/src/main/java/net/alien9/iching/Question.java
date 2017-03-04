@@ -806,4 +806,7 @@ public class Question extends AppCompatActivity {
         validate();
         super.onConfigurationChanged(newConfig);
     }
+    @Override
+    public void onBackPressed() {
+    }
 }
