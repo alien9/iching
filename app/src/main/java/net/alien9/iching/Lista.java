@@ -72,6 +72,11 @@ public class Lista extends AppCompatActivity {
             requestLogin();
             return;
         }
+        stuff=((IChing)getApplicationContext()).getStuff();
+        if(stuff==null){
+            requestLogin();
+            return;
+        }
         SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
         JSONObject journal;
         try {
@@ -92,15 +97,8 @@ public class Lista extends AppCompatActivity {
             editor.commit();
         }
 
-        stuff=((IChing)getApplicationContext()).getStuff();
-        ((IChing)getApplicationContext()).startGPS(this);
-        if(stuff==null){
-            requestLogin();
-            return;
-        }
-
         show();
-
+        ((IChing)getApplicationContext()).startGPS(this);
         client = IChing.getInstance().getClient();
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +108,8 @@ public class Lista extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        if(intent.hasExtra("result"))reload();
     }
 
     private void requestLogin() {
