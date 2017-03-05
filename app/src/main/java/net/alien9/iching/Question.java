@@ -32,7 +32,10 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -410,7 +413,7 @@ public class Question extends AppCompatActivity {
                             }
                         };
                         for(int i=0;i<respskeys.size();i++){
-                            RadioButton bu = new RadioButton(context);
+                            RadioButton bu = new RadioButton(context);//,null,R.style.checkstyle);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
@@ -448,26 +451,26 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
-
                         String du;
+                        Calendar c = Calendar.getInstance();
                         if(respuestas.has(perg_id))
                             du=respuestas.optJSONObject(perg_id).optString("v");
                         else{
-                            Calendar c = Calendar.getInstance();
                             du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                         }
                         List<String> dias=new ArrayList<String>();
                         for(int i=1;i<32;i++){
                             dias.add(""+i);
                         }
-                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, dias);
+                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,R.layout.spinner_item, dias);
                         Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
                         dup.setAdapter(ass);
                         List<String> anos=new ArrayList<String>();
-                        for(int i=1800;i<2200;i++){
+                        int am = item.optInt("anomax", c.get(Calendar.YEAR));
+                        for(int i=1800;i<=am;i++){
                             anos.add(""+i);
                         }
-                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, anos);
+                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
                         Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
                         yup.setAdapter(ssa);
                         yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -514,19 +517,37 @@ public class Question extends AppCompatActivity {
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                         }else {
-                            v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            String max = item.optString("rotmax");
+                            String med = item.optString("rotmed");
+                            String min = item.optString("rotmin");
                             JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
-                            ((SeekBar)v.findViewById(R.id.seek)).setMax(jake.optInt("maiorval"));
                             final int minimum = jake.optInt("menorval",0);
-                            int maximum= jake.optInt("maiorval",10)-minimum;
+                            final int maximum= jake.optInt("maiorval",10);
+                            /*
+                            if ((min != null) || (med != null) || (max != null))
+                                v = (ViewGroup) inflater.inflate(R.layout.type_range_labeled, collection, false);
+                            else{*/
+                            v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            Bitmap bm = Bitmap.createBitmap(1168, 172, Bitmap.Config.ARGB_8888);
+                            Paint paint = new Paint();
+                            paint.setStyle(Paint.Style.FILL);
+                            paint.setColor(Color.BLACK);
+                            paint.setTextSize(82);
+                            Canvas canvas = new Canvas(bm);
+                            canvas.drawText("" + minimum, 5, 160, paint);
+                            paint.setTextAlign(Paint.Align.RIGHT);
+                            canvas.drawText("" + maximum, 1163, 160, paint);
+                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(), bm));
+                            //}
                             SeekBar s = (SeekBar) v.findViewById(R.id.seek);
                             final View v2=v;
-                            final TextView tv = (TextView) v2.findViewById(R.id.number_edittext);
+                            EditText seeker = (EditText) v.findViewById(R.id.number_edittext);
                             if(s!=null){
+                                s.setMax(maximum-minimum);
                                 s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                                     @Override
                                     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                                        tv.setText(""+(minimum+i));
+                                        ((EditText) v2.findViewById(R.id.number_edittext)).setText(""+(minimum+i));
                                     }
 
                                     @Override
@@ -539,21 +560,37 @@ public class Question extends AppCompatActivity {
 
                                     }
                                 });
-                                n = minimum + maximum / 2;
+                                n = (maximum-minimum) / 2;
                                 s.setProgress(n);
-                                tv.setText(""+n);
                             }
-                            ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
-                            Bitmap bm = Bitmap.createBitmap(1168,172,Bitmap.Config.ARGB_8888);
-                            Paint paint = new Paint();
-                            paint.setStyle(Paint.Style.FILL);
-                            paint.setColor(Color.BLACK);
-                            paint.setTextSize(82);
-                            Canvas canvas = new Canvas(bm);
-                            canvas.drawText(""+minimum, 5, 160, paint);
-                            paint.setTextAlign(Paint.Align.RIGHT);
-                            canvas.drawText(""+maximum, 1163, 160, paint);
-                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(),bm));
+                            seeker.addTextChangedListener(new TextWatcher() {
+                                @Override
+                                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                                }
+
+                                @Override
+                                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                                }
+
+                                @Override
+                                public void afterTextChanged(Editable editable) {
+                                    int where;
+                                    try {
+                                        where = Integer.parseInt(editable.toString());
+                                    }catch (NumberFormatException ex){
+                                        return;
+                                    }
+                                    if(where>maximum)
+                                        where=maximum;
+                                    if(where<minimum)
+                                        where=minimum;
+                                    ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where-minimum);
+                                }
+                            });
+
+
                         }
 
                         break;

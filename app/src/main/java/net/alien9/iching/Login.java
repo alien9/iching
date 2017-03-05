@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Debug;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -112,7 +113,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 return false;
             }
         });
-        mPasswordView.setText(password);
+        if(Debug.isDebuggerConnected())mPasswordView.setText(password);
         mEmailView.setText(username);
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -197,7 +198,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         ((IChing)getApplicationContext()).setDomain(cidades.optString(cidade));
         SharedPreferences.Editor e = sharedpreferences.edit();
         e.putString("username", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?email:"");
-        e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:""); // Isto aqui é temporário
+        if(Debug.isDebuggerConnected()) e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:"");
         e.putString("cidade", cidade);
         e.commit();
         boolean cancel = false;
@@ -385,8 +386,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                         .method("POST", RequestBody.create(null, new byte[0]))
                         .post(formBody)
                         .build();
-                response = null;
-
                 Response response_l = client.newCall(request).execute();
                 String j=response_l.body().string();
                 Pattern p = Pattern.compile("\\[\\{.*");
@@ -461,7 +460,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
 
         }
 
-
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
@@ -486,7 +484,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         }
-
     }
 }
 

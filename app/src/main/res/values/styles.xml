@@ -1,25 +1,49 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:spinnerDropDownItemStyle">@style/mySpinnerItemStyle</item>
+        <item name="android:checkboxStyle">@style/checkstyle</item>
+        <item name="android:radioButtonStyle">@style/radiostyle</item>
+
+        <item name="android:spinnerStyle">@style/spinnerStyle</item>
+        <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItem</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:checkboxStyle">@style/checkstyle</item>
+        <item name="android:radioButtonStyle">@style/checkstyle</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="mySpinnerItemStyle" parent="@android:style/Widget.Holo.DropDownItem.Spinner">
+    <style name="mySpinnerItemStyle" parent="@android:style/Widget.DropDownItem">
         <item name="android:textColor">@color/red</item>
     </style>
+    <style name="checkstyle" parent="@android:style/Widget.CompoundButton.CheckBox">
+        <item name="android:textSize">28dp</item>
+        <item name="android:padding">8dp</item>
+    </style>
+    <style name="radiostyle" parent="@android:style/Widget.CompoundButton.RadioButton">
+        <item name="android:textSize">28dp</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="spinnerStyle" parent="@android:style/Widget.Spinner"><item name="android:textColor">@color/red</item></style>
+
+    <style name="SpinnerItem" parent="@android:style/Widget.TextView.SpinnerItem">
+        <item name="android:textSize">28dp</item>
+    </style>
+
+    <style name="SpinnerDropDownItem" parent="@android:style/Widget.TextView.SpinnerItem">
+        <item name="android:textColor">@color/blue</item>
+    </style>
+
 
 </resources>
