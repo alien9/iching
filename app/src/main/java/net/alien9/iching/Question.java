@@ -30,6 +30,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -42,6 +43,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -54,6 +56,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
@@ -179,6 +182,8 @@ public class Question extends AppCompatActivity {
             public void onClick(View view) {
                 if(!validate())
                     return;
+                NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+                sv.scrollTo(0, 0);
                 ((IChing)getApplication()).resetUndo();
                 int cu = pu.getCurrentItem();
                 if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
@@ -465,6 +470,14 @@ public class Question extends AppCompatActivity {
                         ArrayAdapter<String> ass = new ArrayAdapter<String>(context,R.layout.spinner_item, dias);
                         Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
                         dup.setAdapter(ass);
+
+
+                        String[] months = getResources().getStringArray(R.array.meses);
+                        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, months);
+                        Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+                        mup.setAdapter(mss);
+
+
                         List<String> anos=new ArrayList<String>();
                         int am = item.optInt("anomax", c.get(Calendar.YEAR));
                         for(int i=1800;i<=am;i++){
@@ -473,6 +486,7 @@ public class Question extends AppCompatActivity {
                         ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
                         Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
                         yup.setAdapter(ssa);
+
                         yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -484,6 +498,7 @@ public class Question extends AppCompatActivity {
 
                             }
                         });
+
                         ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
@@ -498,11 +513,12 @@ public class Question extends AppCompatActivity {
                             String[] dat=du.split("\\/");
                             if(dat.length==3){
                                 dup.setSelection(ass.getPosition(dat[0]));
-                                Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+                                mup = (Spinner) v.findViewById(R.id.spinner_month);
                                 mup.setSelection(Integer.parseInt(dat[1])-1);
                                 yup.setSelection(ssa.getPosition(dat[2]));
                             }
                         }
+
                         if(item.has("resps")){
                             if(item.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
                                 v.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
@@ -532,7 +548,7 @@ public class Question extends AppCompatActivity {
                             Paint paint = new Paint();
                             paint.setStyle(Paint.Style.FILL);
                             paint.setColor(Color.BLACK);
-                            paint.setTextSize(82);
+                            paint.setTextSize(62);
                             Canvas canvas = new Canvas(bm);
                             canvas.drawText("" + minimum, 5, 160, paint);
                             paint.setTextAlign(Paint.Align.RIGHT);
@@ -563,34 +579,31 @@ public class Question extends AppCompatActivity {
                                 n = (maximum-minimum) / 2;
                                 s.setProgress(n);
                             }
-                            seeker.addTextChangedListener(new TextWatcher() {
+
+                            seeker.setOnEditorActionListener(new EditText.OnEditorActionListener() {
                                 @Override
-                                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                                    if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                                            actionId == EditorInfo.IME_ACTION_DONE ||
+                                            event.getAction() == KeyEvent.ACTION_DOWN &&
+                                                    event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                                                int where;
+                                                try {
+                                                    where = Integer.parseInt(v.getText().toString());
+                                                } catch (NumberFormatException ex) {
+                                                    return true;
+                                                }
+                                                if (where > maximum)
+                                                    where = maximum;
+                                                if (where < minimum)
+                                                    where = minimum;
+                                                ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where - minimum);
+                                                return false;
+                                        }
 
-                                }
-
-                                @Override
-                                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                                }
-
-                                @Override
-                                public void afterTextChanged(Editable editable) {
-                                    int where;
-                                    try {
-                                        where = Integer.parseInt(editable.toString());
-                                    }catch (NumberFormatException ex){
-                                        return;
-                                    }
-                                    if(where>maximum)
-                                        where=maximum;
-                                    if(where<minimum)
-                                        where=minimum;
-                                    ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where-minimum);
+                                    return false;
                                 }
                             });
-
-
                         }
 
                         break;
@@ -708,7 +721,7 @@ public class Question extends AppCompatActivity {
         for(int i=1;i<daisy+1;i++){
             ds.add(""+i);
         }
-        ArrayAdapter<String> ass = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, ds);
+        ArrayAdapter<String> ass = new ArrayAdapter<String>(this,R.layout.spinner_item, ds);
         dup.setAdapter(ass);
         if(dup.getCount()>pit)
             dup.setSelection(pit);

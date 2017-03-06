@@ -5,11 +5,13 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,8 +59,9 @@ public class IChing extends Application {
         singleton = this;
     }
     public void startGPS(Activity a){
+        Log.d("ICHING SERVICE","should start");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            Log.d("ICHING SERVICE","permission nort granted");
             ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
             List<ActivityManager.AppTask> tasks = activityManager.getAppTasks();
             tasks.get(0);
@@ -68,9 +71,13 @@ public class IChing extends Application {
                     ICHING_REQUEST_GPS_PERMISSION);
             return;
         }
-        final Handler locator = new Chandler();
-        LocationListenerDourado l = new LocationListenerDourado(locator);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+        Log.d("ICHING SERVICE","start now");
+        Intent intent = new Intent();
+        intent.setClass(getApplicationContext(), LocationService.class);
+        startService(intent);
+        //final Handler locator = new Chandler();
+        //LocationListenerDourado l = new LocationListenerDourado(locator);
+        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
     }
 
 
@@ -146,6 +153,10 @@ public class IChing extends Application {
         return domain;
     }
 
+    public void setLastKnownPosition(JSONObject lastKnownPosition) {
+        this.last_known_position = lastKnownPosition;
+    }
+
     private static class CookiePot implements CookieJar {
         private List<Cookie> cookies;
 
@@ -159,22 +170,6 @@ public class IChing extends Application {
             if (cookies != null)
                 return cookies;
             return new ArrayList<Cookie>();
-        }
-
-        public List<Cookie> getCookies(){
-            return cookies;
-        }
-        public String getCookie(String name){
-            return cookies.toString();
-        }
-    }
-    private class Chandler extends Handler {
-        public void handleMessage (Message msg){
-            if(msg.what==POSITION_UPDATE){
-                try {
-                    last_known_position = new JSONObject(msg.getData().getString("location"));
-                } catch (JSONException ignore) {}
-            }
         }
     }
 }

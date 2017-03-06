@@ -12,6 +12,7 @@
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true"
+    android:id="@+id/content_scroller"
     >
     <LinearLayout
         android:id="@+id/parent_layout"
