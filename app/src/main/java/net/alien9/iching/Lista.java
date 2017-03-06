@@ -1,5 +1,7 @@
 package net.alien9.iching;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +14,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -51,12 +55,14 @@ import okhttp3.Response;
 
 public class Lista extends AppCompatActivity {
 
+    private static final int EXIT = 0;
     private JSONObject groselha;
     private String cookies;
     private OkHttpClient client;
     private JSONArray stuff;
     private Context context;
     private boolean reloading=false;
+    private boolean exiting=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,9 +136,22 @@ public class Lista extends AppCompatActivity {
             case R.id.reload_groselha:
                 reload();
                 break;
+            case R.id.logout:
+                logout();
+                break;
         }
         return true;
 
+    }
+
+    private void logout() {
+if(!exiting){
+    exiting=true;
+}
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
+        progressBar.setVisibility(View.VISIBLE);
+        ReloadTask reloader = new ReloadTask();
+        reloader.execute(EXIT);
     }
 
     private void reload() {
@@ -141,7 +160,7 @@ public class Lista extends AppCompatActivity {
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.VISIBLE);
             ReloadTask reloader = new ReloadTask();
-            reloader.execute((Void) null);
+            reloader.execute();
         }
     }
 
@@ -156,9 +175,14 @@ public class Lista extends AppCompatActivity {
         return journal;
     }
 
-    private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
+    private class ReloadTask extends AsyncTask<Integer,Integer,Boolean>{
+        private Integer todo;
+
         @Override
-        protected Boolean doInBackground(Void... voids) {
+        protected Boolean doInBackground(Integer... integers) {
+            if(integers.length>0) {
+                todo = integers[0];
+            }
             String j = null;
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
@@ -197,12 +221,26 @@ public class Lista extends AppCompatActivity {
             }
             return true;
         }
+
         @Override
         protected void onPostExecute(final Boolean success) {
             reloading=false;
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
-            show();
+            if(todo!=null){
+                switch(todo){
+                    case EXIT:
+                        ((IChing)getApplicationContext()).setCookieJar(null);
+                        requestLogin();
+                        break;
+                }
+
+            }else {
+                show();
+            }
+        }
+
+        public void execute(Void aVoid, int exit) {
         }
     }
 
@@ -215,9 +253,6 @@ public class Lista extends AppCompatActivity {
 
     private void show() {
         List<String> names=new ArrayList<>();
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_selectable_list_item,
-                android.R.id.text1, names));
         cleanUp();
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
@@ -226,6 +261,7 @@ public class Lista extends AppCompatActivity {
                 new MediaLoader(it.optString("midia")).execute();
             }
         }
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names));
     }
 
     private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
@@ -309,6 +345,29 @@ public class Lista extends AppCompatActivity {
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    private class StuffAdapter<String> extends ArrayAdapter {
+        private final List<String> names;
+        private final int resourceId;
+
+
+        public StuffAdapter(Context context, int resource, List<String> n){
+            super(context, resource, n);
+            resourceId=resource;
+            names=n;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
+            if (v == null) {
+                LayoutInflater vi;
+                vi = LayoutInflater.from(context);
+                v = vi.inflate(resourceId, null);
+            }
+            ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
+            return v;
         }
     }
 }

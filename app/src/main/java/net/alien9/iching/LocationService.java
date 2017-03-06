@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -21,27 +22,24 @@ import org.json.JSONObject;
  */
 
 public class LocationService extends Service {
+    private static final long MIN_TIME_BW_UPDATES = 10;
+    private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 10;
     private LocationManager locationManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("ICHING SERVICE", "cresated service");
-//whatever else you have to to here...
-        android.os.Debug.waitForDebugger();  // this line is key
+        //android.os.Debug.waitForDebugger();
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d("ICHING SERVICE", "binded service");
-
         return null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("ICHING SERVICE", "start service");
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         final Handler locator = new Chandler();
         LocationListenerDourado l = new LocationListenerDourado(locator);
@@ -49,8 +47,8 @@ public class LocationService extends Service {
             Log.d("ICHING SERVICE", "permission estercated");
             return START_REDELIVER_INTENT;
         }else {
-            Log.d("ICHING SERVICE", "go");
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, l);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, l);
             return START_NOT_STICKY;
         }
     }
@@ -58,7 +56,6 @@ public class LocationService extends Service {
         public void handleMessage (Message msg){
             if(msg.what==IChing.POSITION_UPDATE){
                 try {
-                    Log.d("ICHING SERVICE", "position");
                     ((IChing)getApplicationContext()).setLastKnownPosition(new JSONObject(msg.getData().getString("location")));
                 } catch (JSONException ignore) {
                     Log.d("ICHING SERVICE", "position error");

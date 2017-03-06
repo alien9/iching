@@ -17,6 +17,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -248,6 +249,7 @@ public class Question extends AppCompatActivity {
                     e.putString("gps", g.toString());
                     e.commit();
                 }
+
                 if(g!=null) {
                     if (g.has("latitude")) {
                         respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));

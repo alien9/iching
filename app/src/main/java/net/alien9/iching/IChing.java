@@ -7,6 +7,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Message;
@@ -142,9 +143,7 @@ public class IChing extends Application {
         cookieJar = (CookiePot) c;
     }
 
-    public JSONObject getLastKnownPosition() {
-        return last_known_position;
-    }
+
 
     public void setDomain(String d) {
         domain = d;
@@ -154,7 +153,19 @@ public class IChing extends Application {
     }
 
     public void setLastKnownPosition(JSONObject lastKnownPosition) {
-        this.last_known_position = lastKnownPosition;
+        last_known_position = lastKnownPosition;
+    }
+    public JSONObject getLastKnownPosition() {
+        if(last_known_position==null)last_known_position=new JSONObject();
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        try {
+            Location loca = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if(loca!=null){
+                last_known_position.put("gps", String.format("%s %s", loca.getLatitude(), loca.getLongitude()));
+                last_known_position.put("gpsprec", loca.getAccuracy());
+            }
+        }catch(SecurityException sx){} catch (JSONException ignore) {}
+        return last_known_position;
     }
 
     private static class CookiePot implements CookieJar {
