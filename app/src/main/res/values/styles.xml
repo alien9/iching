@@ -6,7 +6,7 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:checkboxStyle">@style/checkstyle</item>
-        <item name="android:radioButtonStyle">@style/radiostyle</item>
+        <item name="android:radioButtonStyle">@style/BigRadioButtonStyle</item>
         <item name="android:spinnerStyle">@style/spinnerStyle</item>
         <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
         <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItem</item>
@@ -26,12 +26,9 @@
         <item name="android:textColor">@color/red</item>
     </style>
     <style name="checkstyle" parent="@android:style/Widget.CompoundButton.CheckBox">
-        <item name="android:textSize">22dp</item>
-        <item name="android:padding">8dp</item>
     </style>
     <style name="radiostyle" parent="@android:style/Widget.CompoundButton.RadioButton">
-        <item name="android:textSize">22dp</item>
-        <item name="android:padding">8dp</item>
+
     </style>
 
     <style name="spinnerStyle" parent="@android:style/Widget.Spinner"><item name="android:textColor">@color/red</item></style>
@@ -44,5 +41,9 @@
         <item name="android:textColor">@color/blue</item>
     </style>
 
-
+    <style name="BigRadioButtonStyle" parent="@android:style/Widget.CompoundButton.RadioButton">
+        <item name="android:button">@drawable/custom_btn_radio</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textSize">28dp</item>
+    </style>
 </resources>

@@ -55,6 +55,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
@@ -76,6 +77,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
+import static net.alien9.iching.R.id.perg_id;
+import static net.alien9.iching.R.id.subperg_id;
+
 public class Question extends AppCompatActivity {
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
@@ -87,6 +91,7 @@ public class Question extends AppCompatActivity {
     private static final int TYPE_NUMBER = 9;
     private static final int TYPE_YESORNO = 10;
     private static final int TYPE_MIDIA = 11;
+    private static final int TYPE_TABLE = 12;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
@@ -98,6 +103,7 @@ public class Question extends AppCompatActivity {
         put("numerica", TYPE_NUMBER);
         put("simnao", TYPE_YESORNO);
         put("midia", TYPE_MIDIA);
+        put("tabela", TYPE_TABLE);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int FIELD_INDEX = 99;
@@ -374,6 +380,9 @@ public class Question extends AppCompatActivity {
             try {
                 String perg_id=keynames.get(position);
                 JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
+                if(item.has("pergs")){ // tipo multiplas pergs
+                    item.put("tipo","tabela");
+                }
                 String tip=item.optString("tipo","text");
                 int t = 0;
                 try {
@@ -404,11 +413,12 @@ public class Question extends AppCompatActivity {
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                                 String quem= (String) compoundButton.getTag();
                                 if(compoundButton.isChecked()){
+                                    TextView fu = (TextView) findViewById(R.id.ask_for_comment);
                                     if(finalResps.optJSONObject(quem).has("expl")){
                                         vuc.setVisibility(View.VISIBLE);
-                                        ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
+                                        if(fu!=null) fu.setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
-                                        ((TextView)findViewById(R.id.ask_for_comment)).setText("");
+                                        if(fu!=null) fu.setText("");
                                         vuc.setVisibility(View.GONE);
                                     }
                                     if(finalResps.optJSONObject(quem).optString("fim","0").equals("1")){
@@ -420,7 +430,9 @@ public class Question extends AppCompatActivity {
                             }
                         };
                         for(int i=0;i<respskeys.size();i++){
-                            RadioButton bu = new RadioButton(context);//,null,R.style.checkstyle);
+                            LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                            RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
+                            //RadioButton bu = new RadioButton(context);//,null,R.style.checkstyle);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
@@ -431,6 +443,62 @@ public class Question extends AppCompatActivity {
                                 }
                             }
                             ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
+                        }
+                        break;
+                    case TYPE_TABLE:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_table_question, collection, false);
+                        LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                        JSONObject subpergs = item.optJSONObject("pergs");
+                        Iterator<?> keys = subpergs.keys();
+                        while (keys.hasNext()) {
+                            String subitem_key = keys.next().toString();
+                            JSONObject subitem = subpergs.optJSONObject(subitem_key);
+                            int tipy;
+                            try {
+                                tipy = FIELD_TYPES.get(subitem.optString("tipo"));
+                            }catch(NullPointerException xixi){
+                                tipy=TYPE_TEXT;
+                            }
+                            LinearLayout lu;
+                            switch(tipy){
+                                case TYPE_RADIO:
+                                case TYPE_UNICA:
+                                case TYPE_YESORNO:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_radio_mini, null);
+                                    ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
+                                    RadioGroup gu = (RadioGroup) lu.findViewById(R.id.radio_mini_group);
+                                    ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
+                                    JSONObject subresps = subitem.optJSONObject("resps");
+                                    Iterator<?> subkeys = subresps.keys();
+                                    while (subkeys.hasNext()) {
+                                        String k = (String) subkeys.next();
+                                        JSONObject resp = subresps.optJSONObject(k);
+                                        RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
+                                        bu.setText(resp.optString("txt"));
+                                        bu.setTag(k);
+                                        gu.addView(bu);
+                                    }
+                                    break;
+                                case TYPE_TEXT:
+                                default:
+                                    lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, collection, false);
+                                    ((TextView)lu.findViewById(R.id.title_text)).setText(subitem.optString("txt"));
+
+                            }
+                            // isto com certeza está ruim
+                            lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
+                            lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                            if(subitem.has("resps")){
+                                if(subitem.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
+                                    lu.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
+                                }else{
+                                    lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                                }
+                            }
+                            ((ViewGroup)v.findViewById(R.id.suport_table_layout)).addView(lu);
+                            ((TextView)v.findViewById(R.id.perg_id)).setText(perg_id);
+
+
                         }
                         break;
                     case TYPE_CHECKBOX:
@@ -589,19 +657,19 @@ public class Question extends AppCompatActivity {
                                             actionId == EditorInfo.IME_ACTION_DONE ||
                                             event.getAction() == KeyEvent.ACTION_DOWN &&
                                                     event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                                                int where;
-                                                try {
-                                                    where = Integer.parseInt(v.getText().toString());
-                                                } catch (NumberFormatException ex) {
-                                                    return true;
-                                                }
-                                                if (where > maximum)
-                                                    where = maximum;
-                                                if (where < minimum)
-                                                    where = minimum;
-                                                ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where - minimum);
-                                                return false;
+                                        int where;
+                                        try {
+                                            where = Integer.parseInt(v.getText().toString());
+                                        } catch (NumberFormatException ex) {
+                                            return true;
                                         }
+                                        if (where > maximum)
+                                            where = maximum;
+                                        if (where < minimum)
+                                            where = minimum;
+                                        ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where - minimum);
+                                        return false;
+                                    }
 
                                     return false;
                                 }
@@ -764,7 +832,7 @@ public class Question extends AppCompatActivity {
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
         if(v==null)return false;
-        TextView pergfield = (TextView) v.findViewById(R.id.perg_id);
+        TextView pergfield = (TextView) v.findViewById(perg_id);
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
             IChing ching = ((IChing) getApplication());
@@ -803,16 +871,8 @@ public class Question extends AppCompatActivity {
                     respuestas.put(perg_id, e);
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
-                    int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
-                    RadioButton u = (RadioButton) v.findViewById(selectedId);
-                    if(u!=null) {
-                        JSONObject j = new JSONObject();
-                        j.put("v",u.getTag());
-                        if(vc.getVisibility()==View.VISIBLE){
-                            j.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
-                        }
-                        respuestas.put(perg_id, j);
-                    }
+                    JSONObject jradio=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
+                    respuestas.put(perg_id, jradio);
                 }
                 if(v.findViewById(R.id.checkbox_container)!=null){
                     JSONObject what = new JSONObject();
@@ -824,6 +884,37 @@ public class Question extends AppCompatActivity {
                     }
                     respuestas.put(perg_id,what);
                 }
+                if(v.findViewById(R.id.suport_table_layout)!=null){ // tipo table
+                    JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
+                    // detectar o subtipo
+                    LinearLayout tabela= (LinearLayout) v.findViewById(R.id.suport_table_layout);
+                    JSONObject resposta_multi = new JSONObject();
+                    for(int o=0;o<tabela.getChildCount();o++){
+                        int subtipo;
+                        View g = tabela.getChildAt(o);
+                        try{
+                            subtipo=FIELD_TYPES.get(item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo"));
+                        }catch(NullPointerException xixi){
+                            subtipo=TYPE_TEXT;
+                        }
+                        JSONObject juk = null;
+                        switch(subtipo){
+                            case TYPE_RADIO:
+                            case TYPE_UNICA:
+                            case TYPE_YESORNO:
+                                juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
+                                if(juk==null){
+                                    g.findViewById(R.id.radio_mini_group).requestFocus();
+                                    return false;
+                                }
+                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                break;
+                        }
+                    }
+                    respuestas.put(perg_id,resposta_multi);
+                    return true;
+                }
+
 
             } catch (JSONException e) {
             }
@@ -832,6 +923,26 @@ public class Question extends AppCompatActivity {
         }
         return false;
     }
+
+    private JSONObject getRadioValue(ViewGroup g) {
+        int selectedId = ((RadioGroup)g).getCheckedRadioButtonId();
+        RadioButton u = (RadioButton) g.findViewById(selectedId);
+        View vc = ((ViewGroup)g.getParent()).findViewById(R.id.comments_request);
+        if(u!=null) {
+            JSONObject j = new JSONObject();
+            try {
+                j.put("v",u.getTag());
+                if(vc!=null) {
+                    if (vc.getVisibility() == View.VISIBLE) {
+                        j.put("c", ((EditText) vc.findViewById(R.id.comments)).getText());
+                    }
+                }
+                return j;
+            } catch (JSONException e) {}
+        }
+        return null;
+    }
+
     protected boolean verify(){
         return true;
     }
