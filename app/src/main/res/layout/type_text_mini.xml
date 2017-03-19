@@ -13,13 +13,13 @@
         android:layout_height="wrap_content"
         android:inputType="textMultiLine"
         android:ems="10"
-        android:id="@+id/textao_editText" />
+        android:id="@+id/value_edittext" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="id da pergunta"
         android:id="@+id/subperg_id"
-        android:visibility="gone"
+        android:visibility="visible"
         />
     <include layout="@layout/comments_request"/>
 </LinearLayout>

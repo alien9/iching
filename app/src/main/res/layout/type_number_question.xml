@@ -22,13 +22,19 @@
         android:id="@+id/perg_id"
         android:visibility="gone"
         />
-
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="id da pergunta"
+        android:id="@+id/subperg_id"
+        android:visibility="gone"
+        />
     <EditText
         android:layout_width="123dp"
         android:layout_height="wrap_content"
         android:inputType="numberSigned"
         android:ems="10"
-        android:id="@+id/number_edittext"
+        android:id="@+id/value_edittext"
         android:gravity="center_vertical|center_horizontal"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />

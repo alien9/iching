@@ -3,39 +3,30 @@ package net.alien9.iching;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -45,23 +36,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -78,7 +64,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static net.alien9.iching.R.id.perg_id;
-import static net.alien9.iching.R.id.subperg_id;
 
 public class Question extends AppCompatActivity {
     private static final int TYPE_TEXT = 2;
@@ -465,7 +450,6 @@ public class Question extends AppCompatActivity {
                                 case TYPE_UNICA:
                                 case TYPE_YESORNO:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_radio_mini, null);
-                                    ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
                                     RadioGroup gu = (RadioGroup) lu.findViewById(R.id.radio_mini_group);
                                     ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
                                     JSONObject subresps = subitem.optJSONObject("resps");
@@ -479,13 +463,18 @@ public class Question extends AppCompatActivity {
                                         gu.addView(bu);
                                     }
                                     break;
+                                case TYPE_NUMBER:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_number_question, null);
+                                    break;
                                 case TYPE_TEXT:
                                 default:
-                                    lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, collection, false);
-                                    ((TextView)lu.findViewById(R.id.title_text)).setText(subitem.optString("txt"));
+                                    lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
 
                             }
-                            // isto com certeza está ruim
+                            ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
+                            TextView tit = (TextView) lu.findViewById(R.id.title_text);
+                            if(tit!=null) tit.setText(subitem.optString("txt"));
+                            // isto com certeza está ruim - não mostramos os campos
                             lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                             lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
                             if(subitem.has("resps")){
@@ -598,22 +587,16 @@ public class Question extends AppCompatActivity {
                         }
                         break;
                     case TYPE_NUMBER:
-                        //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
                         int n=0;
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
+                            ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         }else {
-                            String max = item.optString("rotmax");
-                            String med = item.optString("rotmed");
-                            String min = item.optString("rotmin");
                             JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
                             final int minimum = jake.optInt("menorval",0);
                             final int maximum= jake.optInt("maiorval",10);
-                            /*
-                            if ((min != null) || (med != null) || (max != null))
-                                v = (ViewGroup) inflater.inflate(R.layout.type_range_labeled, collection, false);
-                            else{*/
                             v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                             Bitmap bm = Bitmap.createBitmap(1168, 172, Bitmap.Config.ARGB_8888);
                             Paint paint = new Paint();
                             paint.setStyle(Paint.Style.FILL);
@@ -624,16 +607,15 @@ public class Question extends AppCompatActivity {
                             paint.setTextAlign(Paint.Align.RIGHT);
                             canvas.drawText("" + maximum, 1163, 160, paint);
                             v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(), bm));
-                            //}
                             SeekBar s = (SeekBar) v.findViewById(R.id.seek);
                             final View v2=v;
-                            EditText seeker = (EditText) v.findViewById(R.id.number_edittext);
+                            EditText seeker = (EditText) v.findViewById(R.id.value_edittext);
                             if(s!=null){
                                 s.setMax(maximum-minimum);
                                 s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                                     @Override
                                     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                                        ((EditText) v2.findViewById(R.id.number_edittext)).setText(""+(minimum+i));
+                                        ((EditText) v2.findViewById(R.id.value_edittext)).setText(""+(minimum+i));
                                     }
 
                                     @Override
@@ -675,11 +657,10 @@ public class Question extends AppCompatActivity {
                                 }
                             });
                         }
-
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
-                        ((EditText)v.findViewById(R.id.textao_editText)).setText(respuestas.optString(perg_id));
+                        ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
@@ -850,11 +831,11 @@ public class Question extends AppCompatActivity {
                         return true;
                     }
                 }
-                if (v.findViewById(R.id.textao_editText) != null) {
-                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
+                if (v.findViewById(R.id.value_edittext) != null) {
+                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.value_edittext)).getText());
                 }
-                if (v.findViewById(R.id.number_edittext) != null) {
-                    CharSequence t = ((TextView) v.findViewById(R.id.number_edittext)).getText();
+                if (v.findViewById(R.id.value_edittext) != null) {
+                    CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
                     if(t.length()==0)
                         return false;
                     respuestas.put(perg_id, t);
@@ -909,6 +890,13 @@ public class Question extends AppCompatActivity {
                                 }
                                 resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                 break;
+                            case TYPE_TEXT:
+                            default:
+                                juk=new JSONObject();
+                                juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
+                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                break;
+
                         }
                     }
                     respuestas.put(perg_id,resposta_multi);
