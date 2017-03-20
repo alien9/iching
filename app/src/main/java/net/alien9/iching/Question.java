@@ -99,6 +99,8 @@ public class Question extends AppCompatActivity {
     private String cookies;
     private boolean jadeu;
     private boolean encerrabody=false;
+    private String prox="";
+    private int previous_index=-1;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -178,8 +180,23 @@ public class Question extends AppCompatActivity {
                 sv.scrollTo(0, 0);
                 ((IChing)getApplication()).resetUndo();
                 int cu = pu.getCurrentItem();
+                previous_index=cu;
                 if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
-                    pu.setCurrentItem(cu + 1, true);
+                    if(!prox.equals("")){
+                        int i=0;
+                        JSONObject pergs = polly.optJSONObject("pergs");
+                        Iterator<?> keys = pergs.keys();
+                        int n=0;
+                        while( keys.hasNext() ) {
+                            String k=pergs.optJSONObject((String)keys.next()).optString("ord");
+                            if(k.equals(prox)){
+                                pu.setCurrentItem(n);
+                            }
+                            n++;
+                        }
+                    }else {
+                        pu.setCurrentItem(cu + 1, true);
+                    }
                 }else{
                     termina();
                 }
@@ -189,11 +206,17 @@ public class Question extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 validate();
+                NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+                sv.scrollTo(0, 0);
                 if(!((IChing)getApplication()).hasUndo()){
                     int cu = pu.getCurrentItem();
-                    if (cu > 0)
-                        pu.setCurrentItem(cu - 1, true);
-
+                    if(previous_index>=0){
+                        pu.setCurrentItem(previous_index);
+                        previous_index=-1;
+                    }else {
+                        if (cu > 0)
+                            pu.setCurrentItem(cu - 1, true);
+                    }
                 }
                 ((IChing)getApplication()).setUndo();
             }
@@ -832,9 +855,6 @@ public class Question extends AppCompatActivity {
                     }
                 }
                 if (v.findViewById(R.id.value_edittext) != null) {
-                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.value_edittext)).getText());
-                }
-                if (v.findViewById(R.id.value_edittext) != null) {
                     CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
                     if(t.length()==0)
                         return false;
@@ -853,6 +873,8 @@ public class Question extends AppCompatActivity {
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
                     JSONObject jradio=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
+                    JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
+                    prox=item.optJSONObject("resps").optJSONObject(jradio.optString("v")).optString("prox");
                     respuestas.put(perg_id, jradio);
                 }
                 if(v.findViewById(R.id.checkbox_container)!=null){
@@ -927,6 +949,7 @@ public class Question extends AppCompatActivity {
                 }
                 return j;
             } catch (JSONException e) {}
+
         }
         return null;
     }
