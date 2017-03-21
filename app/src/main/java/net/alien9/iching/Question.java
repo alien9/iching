@@ -15,6 +15,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -31,6 +32,8 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -42,6 +45,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -65,7 +69,7 @@ import java.util.List;
 
 import static net.alien9.iching.R.id.perg_id;
 
-public class Question extends AppCompatActivity {
+public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
@@ -101,6 +105,8 @@ public class Question extends AppCompatActivity {
     private boolean encerrabody=false;
     private String prox="";
     private int previous_index=-1;
+    private MediaPlayer mp;
+    private SurfaceHolder sh;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -274,7 +280,16 @@ public class Question extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        mp=new MediaPlayer();
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                findViewById(R.id.surface_view).setVisibility(View.GONE);
+                findViewById(R.id.main_view).setVisibility(View.VISIBLE);
+            }
+        });
+        sh=((SurfaceView)findViewById(R.id.surface_view)).getHolder();
+        sh.addCallback(Question.this);
     }
 
     private void termina() {
@@ -353,6 +368,27 @@ public class Question extends AppCompatActivity {
                         });
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        mp.start();
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        mp.setDisplay(sh);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        mp.stop();
+        mp.reset();
     }
 
     private class BunchViewAdapter extends PagerAdapter {
@@ -687,11 +723,36 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
-                        Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+item.optJSONObject("resps").optJSONObject("1").optString("midia"));
-                        if(b==null){
+                        final String filename = item.optJSONObject("resps").optJSONObject("1").optString("midia");
+                        if(filename.matches(".*\\.mp4")){
+                            v.findViewById(R.id.play).setVisibility(View.VISIBLE);
+                            v.findViewById(R.id.imageView).setVisibility(View.GONE);
+                            final ViewGroup finalV1 = v;
+                            ((ImageButton)v.findViewById(R.id.play)).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
 
+                                    View sv = findViewById(R.id.surface_view);
+                                    sv.setVisibility(View.VISIBLE);
+                                    findViewById(R.id.main_view).setVisibility(View.GONE);
+                                    try {
+                                        mp.setDataSource(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                                        mp.prepare();
+                                        mp.setOnPreparedListener(Question.this);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                        }else{
+                            v.findViewById(R.id.play).setVisibility(View.GONE);
+                            v.findViewById(R.id.imageView).setVisibility(View.VISIBLE);
+                            Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                            if(b==null){
+                                Snackbar.make(findViewById(R.id.main_view),"Arquivo não encontrado",Snackbar.LENGTH_LONG).show();
+                            }
+                            ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         }
-                        ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         break;
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);

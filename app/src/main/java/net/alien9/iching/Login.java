@@ -467,8 +467,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 findViewById(R.id.login_form).setVisibility(View.VISIBLE);
                 List<String> lic= new ArrayList<>();
                 Iterator<String> ky = cidades.keys();
-                while (ky.hasNext())
-                {
+                while (ky.hasNext()){
                     lic.add((String)ky.next());
                 }
                 ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, lic);
