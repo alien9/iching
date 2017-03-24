@@ -1,5 +1,9 @@
 package net.alien9.iching;
 
+import android.app.Activity;
+import android.app.Application;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +16,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -51,12 +57,16 @@ import okhttp3.Response;
 
 public class Lista extends AppCompatActivity {
 
+    private static final int EXIT = 0;
     private JSONObject groselha;
     private String cookies;
     private OkHttpClient client;
     private JSONArray stuff;
     private Context context;
     private boolean reloading=false;
+    private boolean exiting=false;
+    private ProgressDialog prog;
+    private List<String> media;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +82,7 @@ public class Lista extends AppCompatActivity {
             requestLogin();
             return;
         }
+        stuff=((IChing)getApplicationContext()).getStuff();
         SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
         JSONObject journal;
         try {
@@ -92,15 +103,8 @@ public class Lista extends AppCompatActivity {
             editor.commit();
         }
 
-        stuff=((IChing)getApplicationContext()).getStuff();
-        ((IChing)getApplicationContext()).startGPS(this);
-        if(stuff==null){
-            requestLogin();
-            return;
-        }
-
         show();
-
+        ((IChing)getApplicationContext()).startGPS(this);
         client = IChing.getInstance().getClient();
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +114,9 @@ public class Lista extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        //if(intent.hasExtra("result"))
+        reload();
     }
 
     private void requestLogin() {
@@ -130,18 +137,36 @@ public class Lista extends AppCompatActivity {
             case R.id.reload_groselha:
                 reload();
                 break;
+            case R.id.logout:
+                logout();
+                break;
         }
         return true;
 
     }
 
+    private void logout() {
+        if(!exiting){
+            exiting=true;
+        }
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
+        progressBar.setVisibility(View.VISIBLE);
+        ReloadTask reloader = new ReloadTask();
+        reloader.execute(EXIT);
+    }
+
     private void reload() {
         if(!reloading) {
             reloading=true;
+            prog = new ProgressDialog(this);
+            prog.setCancelable(false);
+            prog.setMessage(getString(R.string.carregando));
+            prog.setTitle(getString(R.string.aguarde));
+            prog.show();
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.VISIBLE);
             ReloadTask reloader = new ReloadTask();
-            reloader.execute((Void) null);
+            reloader.execute();
         }
     }
 
@@ -156,18 +181,23 @@ public class Lista extends AppCompatActivity {
         return journal;
     }
 
-    private class ReloadTask extends AsyncTask<Void,Void,Boolean>{
+    private class ReloadTask extends AsyncTask<Integer,Integer,Boolean>{
+        private Integer todo;
+
         @Override
-        protected Boolean doInBackground(Void... voids) {
+        protected Boolean doInBackground(Integer... integers) {
+            if (integers.length > 0) {
+                todo = integers[0];
+            }
             String j = null;
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("c",((IChing)getApplicationContext()).getPesqId())
-                    .addFormDataPart("d",getJournal().toString())
-                    .addFormDataPart("m","save")
+                    .addFormDataPart("c", ((IChing) getApplicationContext()).getPesqId())
+                    .addFormDataPart("d", "{}") //                    .addFormDataPart("d",getJournal().toString())
+                    .addFormDataPart("m", "save")
                     .build();
             Request request = new Request.Builder()
-                    .url(String.format("http://%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.save_url)))
+                    .url(String.format("%s%s", ((IChing) getApplicationContext()).getDomain(), getString(R.string.save_url)))
                     .method("POST", RequestBody.create(null, new byte[0]))
                     .post(bode)
                     .build();
@@ -179,30 +209,45 @@ public class Lista extends AppCompatActivity {
                 //request=new Request.Builder().url(String.format("%s?c=%sm=save&d=%s", new String[]{getString(R.string.save_url),((IChing)getApplicationContext()).getPesqId(), URLEncoder.encode(r,"UTF-8")})).build();
 
                 response = client.newCall(request).execute();
-                j=response.body().string();
-                JSONObject resp=new JSONObject(j);
+                j = response.body().string();
+
+                JSONObject resp = new JSONObject(j);
                 stuff = resp.optJSONArray("pesqs");
-                if(resp.has("saved")){
-                    if(resp.optBoolean("saved")){
+                if (resp.has("saved")) {
+                    if (resp.optBoolean("saved")) {
                         resetJournal("{}");
                     }
                 }
             } catch (IOException e) {
-                Snackbar.make(findViewById(R.id.content_lista),e.getLocalizedMessage(),Snackbar.LENGTH_LONG).show();
+                Snackbar.make(findViewById(R.id.content_lista), e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
                 return false;
             } catch (JSONException e) {
                 e.printStackTrace();
-                Snackbar.make(findViewById(R.id.content_lista),String.format("Problema de Comunicação. Mensagem do servidor: %s",j),Snackbar.LENGTH_LONG).show();
+                Snackbar.make(findViewById(R.id.content_lista), String.format("Problema de Comunicação. Mensagem do servidor: %s", j), Snackbar.LENGTH_LONG).show();
                 return false;
             }
             return true;
         }
+
         @Override
         protected void onPostExecute(final Boolean success) {
             reloading=false;
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
-            show();
+            if(todo!=null){
+                switch(todo){
+                    case EXIT:
+                        ((IChing)getApplicationContext()).setCookieJar(null);
+                        requestLogin();
+                        break;
+                }
+
+            }else {
+                show();
+            }
+        }
+
+        public void execute(Void aVoid, int exit) {
         }
     }
 
@@ -214,18 +259,35 @@ public class Lista extends AppCompatActivity {
     }
 
     private void show() {
+        if(stuff==null)return;;
         List<String> names=new ArrayList<>();
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_selectable_list_item,
-                android.R.id.text1, names));
+        media=new ArrayList<>();
         cleanUp();
+
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
             if(it.has("midia")){
-                new MediaLoader(it.optString("midia")).execute();
+                media.add(it.optString("midia"));
             }
         }
+        //for(int i=media.size()-1;i>=0;i--)
+        //    new MediaLoader(media.get(i)).execute();
+        if(prog!=null){
+            prog.dismiss();
+            if(media.size()>0) {
+                prog = new ProgressDialog(this);
+                prog.setCancelable(false);
+                prog.setMessage(getString(R.string.carregando));
+                prog.setTitle(getString(R.string.aguarde));
+                prog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                prog.setMax(media.size());
+                prog.setMessage(getString(R.string.loading_files));
+                prog.show();
+                new MediaLoader(media.get(0)).execute();
+            }
+        }
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names));
     }
 
     private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
@@ -243,7 +305,7 @@ public class Lista extends AppCompatActivity {
             }
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
             if(!destination.exists()) {
-                String url =String.format("http://%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
+                String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
                 CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
                 RequestBody formBody = new MultipartBody.Builder()
@@ -272,9 +334,18 @@ public class Lista extends AppCompatActivity {
         }
         @Override
         protected void onPostExecute(final Boolean success) {
+            media.remove(media.indexOf(filename));
+            if(prog!=null)
+                if(media.size()==0) {
+                    prog.dismiss();
+                }else{
+                    prog.setProgress(prog.getProgress()+1);
+                    new MediaLoader(media.get(0)).execute();
+                }
         }
     }
     private void cleanUp(){
+        if(stuff==null)return;
         JSONObject filenames = new JSONObject();
         try {
             for(int i=0;i<stuff.length();i++) {
@@ -309,6 +380,29 @@ public class Lista extends AppCompatActivity {
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    private class StuffAdapter<String> extends ArrayAdapter {
+        private final List<String> names;
+        private final int resourceId;
+
+
+        public StuffAdapter(Context context, int resource, List<String> n){
+            super(context, resource, n);
+            resourceId=resource;
+            names=n;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
+            if (v == null) {
+                LayoutInflater vi;
+                vi = LayoutInflater.from(context);
+                v = vi.inflate(resourceId, null);
+            }
+            ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
+            return v;
         }
     }
 }

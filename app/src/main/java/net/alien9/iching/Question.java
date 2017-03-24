@@ -3,57 +3,56 @@ package net.alien9.iching;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.LocationManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.widget.Adapter;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -69,7 +68,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
-public class Question extends AppCompatActivity {
+import static net.alien9.iching.R.id.perg_id;
+
+public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
@@ -80,6 +81,7 @@ public class Question extends AppCompatActivity {
     private static final int TYPE_NUMBER = 9;
     private static final int TYPE_YESORNO = 10;
     private static final int TYPE_MIDIA = 11;
+    private static final int TYPE_TABLE = 12;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
@@ -91,6 +93,7 @@ public class Question extends AppCompatActivity {
         put("numerica", TYPE_NUMBER);
         put("simnao", TYPE_YESORNO);
         put("midia", TYPE_MIDIA);
+        put("tabela", TYPE_TABLE);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int FIELD_INDEX = 99;
@@ -101,6 +104,11 @@ public class Question extends AppCompatActivity {
     private String cookies;
     private boolean jadeu;
     private boolean encerrabody=false;
+    private String prox="";
+    private int previous_index=-1;
+    private MediaPlayer mp;
+    private SurfaceHolder sh;
+    private String comment="";
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -171,29 +179,30 @@ public class Question extends AppCompatActivity {
                 }
             }
         });
+
+
+
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!validate())
-                    return;
-                ((IChing)getApplication()).resetUndo();
-                int cu = pu.getCurrentItem();
-                if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
-                    pu.setCurrentItem(cu + 1, true);
-                }else{
-                    termina();
-                }
+                pageup();
             }
         });
         ((FloatingActionButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 validate();
+                NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+                sv.scrollTo(0, 0);
                 if(!((IChing)getApplication()).hasUndo()){
                     int cu = pu.getCurrentItem();
-                    if (cu > 0)
-                        pu.setCurrentItem(cu - 1, true);
-
+                    if(previous_index>=0){
+                        pu.setCurrentItem(previous_index);
+                        previous_index=-1;
+                    }else {
+                        if (cu > 0)
+                            pu.setCurrentItem(cu - 1, true);
+                    }
                 }
                 ((IChing)getApplication()).setUndo();
             }
@@ -240,6 +249,7 @@ public class Question extends AppCompatActivity {
                     e.putString("gps", g.toString());
                     e.commit();
                 }
+
                 if(g!=null) {
                     if (g.has("latitude")) {
                         respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
@@ -250,7 +260,49 @@ public class Question extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        mp=new MediaPlayer();
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                findViewById(R.id.surface_view).setVisibility(View.GONE);
+                findViewById(R.id.main_view).setVisibility(View.VISIBLE);
+            }
+        });
+        sh=((SurfaceView)findViewById(R.id.surface_view)).getHolder();
+        sh.addCallback(Question.this);
+    }
+    private void pageup(String c){
+        comment=c;
+        pageup();
+    }
+    private void pageup() {
+        if(!validate())
+            return;
+        IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+        sv.scrollTo(0, 0);
+        ((IChing)getApplication()).resetUndo();
+        int cu = pu.getCurrentItem();
+        previous_index=cu;
+        if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
+            if(!prox.equals("")){
+                int i=0;
+                JSONObject pergs = polly.optJSONObject("pergs");
+                Iterator<?> keys = pergs.keys();
+                int n=0;
+                while( keys.hasNext() ) {
+                    String k=pergs.optJSONObject((String)keys.next()).optString("ord");
+                    if(k.equals(prox)){
+                        pu.setCurrentItem(n);
+                    }
+                    n++;
+                }
+            }else {
+                pu.setCurrentItem(cu + 1, true);
+            }
+        }else{
+            termina();
+        }
     }
 
     private void termina() {
@@ -331,6 +383,27 @@ public class Question extends AppCompatActivity {
         alertDialog.show();
     }
 
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        mp.start();
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        mp.setDisplay(sh);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        mp.stop();
+        mp.reset();
+    }
+
     private class BunchViewAdapter extends PagerAdapter {
         private final Context context;
         private ArrayList<String> keynames;
@@ -364,6 +437,9 @@ public class Question extends AppCompatActivity {
             try {
                 String perg_id=keynames.get(position);
                 JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
+                if(item.has("pergs")){ // tipo multiplas pergs
+                    item.put("tipo","tabela");
+                }
                 String tip=item.optString("tipo","text");
                 int t = 0;
                 try {
@@ -387,19 +463,20 @@ public class Question extends AppCompatActivity {
                     case TYPE_UNICA:
                     case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
-                        final JSONObject finalResps = resps;
+                        /*final JSONObject finalResps = resps;
+                        final View vuc = v.findViewById(R.id.comments_request);
                         CompoundButton.OnCheckedChangeListener l=new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                                 String quem= (String) compoundButton.getTag();
-                                View vu = findViewById(R.id.comments_request);
                                 if(compoundButton.isChecked()){
+                                    TextView fu = (TextView) findViewById(R.id.ask_for_comment);
                                     if(finalResps.optJSONObject(quem).has("expl")){
-                                        vu.setVisibility(View.VISIBLE);
-                                        ((TextView)findViewById(R.id.ask_for_comment)).setText(finalResps.optJSONObject(quem).optString("ins"));
+                                        vuc.setVisibility(View.VISIBLE);
+                                        if(fu!=null) fu.setText(finalResps.optJSONObject(quem).optString("ins"));
                                     }else{
-                                        ((TextView)findViewById(R.id.ask_for_comment)).setText("");
-                                        vu.setVisibility(View.GONE);
+                                        if(fu!=null) fu.setText("");
+                                        vuc.setVisibility(View.GONE);
                                     }
                                     if(finalResps.optJSONObject(quem).optString("fim","0").equals("1")){
                                         encerrabody=true;
@@ -408,19 +485,83 @@ public class Question extends AppCompatActivity {
                                     }
                                 }
                             }
-                        };
+                        };*/
                         for(int i=0;i<respskeys.size();i++){
-                            RadioButton bu = new RadioButton(context);
+                            LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                            RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
+                            //RadioButton bu = new RadioButton(context);//,null,R.style.checkstyle);
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
-                            bu.setOnCheckedChangeListener(l);
+                            //bu.setOnCheckedChangeListener(l);
                             if(respuestas.has(perg_id)) {
                                 if (respuestas.optJSONObject(perg_id).optString("v").equals(tag)) {
                                     bu.setChecked(true);
                                 }
                             }
                             ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
+                        }
+                        break;
+                    case TYPE_TABLE:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_table_question, collection, false);
+                        LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                        JSONObject subpergs = item.optJSONObject("pergs");
+                        Iterator<?> keys = subpergs.keys();
+                        while (keys.hasNext()) {
+                            String subitem_key = keys.next().toString();
+                            JSONObject subitem = subpergs.optJSONObject(subitem_key);
+                            int tipy;
+                            try {
+                                tipy = FIELD_TYPES.get(subitem.optString("tipo"));
+                            }catch(NullPointerException xixi){
+                                tipy=TYPE_TEXT;
+                            }
+                            LinearLayout lu;
+                            switch(tipy){
+                                case TYPE_RADIO:
+                                case TYPE_UNICA:
+                                case TYPE_YESORNO:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_radio_mini, null);
+                                    RadioGroup gu = (RadioGroup) lu.findViewById(R.id.radio_mini_group);
+                                    ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
+                                    JSONObject subresps = subitem.optJSONObject("resps");
+                                    Iterator<?> subkeys = subresps.keys();
+                                    while (subkeys.hasNext()) {
+                                        String k = (String) subkeys.next();
+                                        JSONObject resp = subresps.optJSONObject(k);
+                                        RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
+                                        bu.setText(resp.optString("txt"));
+                                        bu.setTag(k);
+                                        gu.addView(bu);
+                                    }
+                                    break;
+                                case TYPE_NUMBER:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_number_question, null);
+                                    break;
+                                case TYPE_TEXT:
+                                default:
+                                    lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
+
+                            }
+                            ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
+                            TextView tit = (TextView) lu.findViewById(R.id.title_text);
+                            if(tit!=null) tit.setText(subitem.optString("txt"));
+                            // isto com certeza está ruim - não mostramos os campos
+                            lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
+                            //lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                            /*
+                            if(subitem.has("resps")){
+                                if(subitem.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
+                                    lu.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
+                                }else{
+                                    lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                                }
+                            }
+                            */
+                            ((ViewGroup)v.findViewById(R.id.suport_table_layout)).addView(lu);
+                            ((TextView)v.findViewById(R.id.perg_id)).setText(perg_id);
+
+
                         }
                         break;
                     case TYPE_CHECKBOX:
@@ -448,28 +589,37 @@ public class Question extends AppCompatActivity {
                         break;
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
-
                         String du;
+                        Calendar c = Calendar.getInstance();
                         if(respuestas.has(perg_id))
                             du=respuestas.optJSONObject(perg_id).optString("v");
                         else{
-                            Calendar c = Calendar.getInstance();
                             du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                         }
                         List<String> dias=new ArrayList<String>();
                         for(int i=1;i<32;i++){
                             dias.add(""+i);
                         }
-                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, dias);
+                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,R.layout.spinner_item, dias);
                         Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
                         dup.setAdapter(ass);
+
+
+                        String[] months = getResources().getStringArray(R.array.meses);
+                        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, months);
+                        Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+                        mup.setAdapter(mss);
+
+
                         List<String> anos=new ArrayList<String>();
-                        for(int i=1800;i<2200;i++){
+                        int am = item.optInt("anomax", c.get(Calendar.YEAR));
+                        for(int i=1800;i<=am;i++){
                             anos.add(""+i);
                         }
-                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, anos);
+                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
                         Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
                         yup.setAdapter(ssa);
+
                         yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -481,6 +631,7 @@ public class Question extends AppCompatActivity {
 
                             }
                         });
+
                         ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
                             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
@@ -495,38 +646,42 @@ public class Question extends AppCompatActivity {
                             String[] dat=du.split("\\/");
                             if(dat.length==3){
                                 dup.setSelection(ass.getPosition(dat[0]));
-                                Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+                                mup = (Spinner) v.findViewById(R.id.spinner_month);
                                 mup.setSelection(Integer.parseInt(dat[1])-1);
                                 yup.setSelection(ssa.getPosition(dat[2]));
                             }
                         }
-                        if(item.has("resps")){
-                            if(item.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
-                                v.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
-                            }else{
-                                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
-                            }
-                        }
                         break;
                     case TYPE_NUMBER:
-                        //"resps":{"1":{"txt":"","menorval":"0","maiorval":"240"}}}
                         int n=0;
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
+                            ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         }else {
-                            v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
                             JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
-                            ((SeekBar)v.findViewById(R.id.seek)).setMax(jake.optInt("maiorval"));
                             final int minimum = jake.optInt("menorval",0);
-                            int maximum= jake.optInt("maiorval",10)-minimum;
+                            final int maximum= jake.optInt("maiorval",10);
+                            v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
+                            ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
+                            Bitmap bm = Bitmap.createBitmap(1168, 172, Bitmap.Config.ARGB_8888);
+                            Paint paint = new Paint();
+                            paint.setStyle(Paint.Style.FILL);
+                            paint.setColor(Color.BLACK);
+                            paint.setTextSize(62);
+                            Canvas canvas = new Canvas(bm);
+                            canvas.drawText("" + minimum, 5, 160, paint);
+                            paint.setTextAlign(Paint.Align.RIGHT);
+                            canvas.drawText("" + maximum, 1163, 160, paint);
+                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(), bm));
                             SeekBar s = (SeekBar) v.findViewById(R.id.seek);
                             final View v2=v;
-                            final TextView tv = (TextView) v2.findViewById(R.id.number_edittext);
+                            EditText seeker = (EditText) v.findViewById(R.id.value_edittext);
                             if(s!=null){
+                                s.setMax(maximum-minimum);
                                 s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                                     @Override
                                     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                                        tv.setText(""+(minimum+i));
+                                        ((EditText) v2.findViewById(R.id.value_edittext)).setText(""+(minimum+i));
                                     }
 
                                     @Override
@@ -539,47 +694,90 @@ public class Question extends AppCompatActivity {
 
                                     }
                                 });
-                                n = minimum + maximum / 2;
+                                n = (maximum-minimum) / 2;
                                 s.setProgress(n);
-                                tv.setText(""+n);
                             }
-                            ((EditText)v.findViewById(R.id.number_edittext)).setText(respuestas.optString(perg_id,""+n));
-                            Bitmap bm = Bitmap.createBitmap(1168,172,Bitmap.Config.ARGB_8888);
-                            Paint paint = new Paint();
-                            paint.setStyle(Paint.Style.FILL);
-                            paint.setColor(Color.BLACK);
-                            paint.setTextSize(82);
-                            Canvas canvas = new Canvas(bm);
-                            canvas.drawText(""+minimum, 5, 160, paint);
-                            paint.setTextAlign(Paint.Align.RIGHT);
-                            canvas.drawText(""+maximum, 1163, 160, paint);
-                            v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(),bm));
-                        }
 
+                            seeker.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+                                @Override
+                                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                                    if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                                            actionId == EditorInfo.IME_ACTION_DONE ||
+                                            event.getAction() == KeyEvent.ACTION_DOWN &&
+                                                    event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                                        int where;
+                                        try {
+                                            where = Integer.parseInt(v.getText().toString());
+                                        } catch (NumberFormatException ex) {
+                                            return true;
+                                        }
+                                        if (where > maximum)
+                                            where = maximum;
+                                        if (where < minimum)
+                                            where = minimum;
+                                        ((SeekBar) v2.findViewById(R.id.seek)).setProgress(where - minimum);
+                                        return false;
+                                    }
+
+                                    return false;
+                                }
+                            });
+                        }
                         break;
                     case TYPE_TEXT:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
-                        ((EditText)v.findViewById(R.id.textao_editText)).setText(respuestas.optString(perg_id));
+                        ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
-                        Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+item.optJSONObject("resps").optJSONObject("1").optString("midia"));
-                        if(b==null){
-
+                        findViewById(R.id.surface_view).setVisibility(View.GONE);
+                        final String filename = item.optJSONObject("resps").optJSONObject("1").optString("midia");
+                        if(filename.matches(".*\\.mp4")){
+                            v.findViewById(R.id.play).setVisibility(View.VISIBLE);
+                            v.findViewById(R.id.imageView).setVisibility(View.GONE);
+                            final ViewGroup finalV1 = v;
+                            ((ImageButton)v.findViewById(R.id.play)).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    View sv = findViewById(R.id.surface_view);
+                                    sv.setVisibility(View.VISIBLE);
+                                    findViewById(R.id.main_view).setVisibility(View.GONE);
+                                    try {
+                                        mp.setDataSource(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                                        mp.prepare();
+                                        mp.setOnPreparedListener(Question.this);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                        }else{
+                            v.findViewById(R.id.play).setVisibility(View.GONE);
+                            v.findViewById(R.id.imageView).setVisibility(View.VISIBLE);
+                            Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                            if(b==null){
+                                Snackbar.make(findViewById(R.id.main_view),"Arquivo não encontrado",Snackbar.LENGTH_LONG).show();
+                            }
+                            ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         }
-                        ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
                         break;
                     default:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
+
+                v.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
+                }else{
+                    v.findViewById(R.id.naosei).setVisibility(View.GONE);
                 }
                 if(item.optBoolean("naoresp",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
+                }else{
+                    v.findViewById(R.id.naoresp).setVisibility(View.GONE);
                 }
                 if(v.findViewById(R.id.decline_layout)!=null) {
                     if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
@@ -587,15 +785,25 @@ public class Question extends AppCompatActivity {
                         ((CheckBox) v.findViewById(R.id.naosei)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                                if (b)
+                                if (b) {
                                     ((CheckBox) finalV.findViewById(R.id.naoresp)).setChecked(false);
+                                    FormControl.freeze(finalV);
+                                    FormControl.thaw(finalV.findViewById(R.id.decline_layout));
+                                }else if(!((CheckBox)finalV.findViewById(R.id.naoresp)).isChecked()){
+                                    FormControl.thaw(finalV);
+                                }
                             }
                         });
                         ((CheckBox) v.findViewById(R.id.naoresp)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                             @Override
                             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                                if (b)
+                                if (b) {
                                     ((CheckBox) finalV.findViewById(R.id.naosei)).setChecked(false);
+                                    FormControl.freeze(finalV);
+                                    FormControl.thaw(finalV.findViewById(R.id.decline_layout));
+                                }else if(!((CheckBox)finalV.findViewById(R.id.naosei)).isChecked()){
+                                    FormControl.thaw(finalV);
+                                }
                             }
                         });
                     }
@@ -655,7 +863,7 @@ public class Question extends AppCompatActivity {
         for(int i=1;i<daisy+1;i++){
             ds.add(""+i);
         }
-        ArrayAdapter<String> ass = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, ds);
+        ArrayAdapter<String> ass = new ArrayAdapter<String>(this,R.layout.spinner_item, ds);
         dup.setAdapter(ass);
         if(dup.getCount()>pit)
             dup.setSelection(pit);
@@ -691,14 +899,19 @@ public class Question extends AppCompatActivity {
                 iw.setImageBitmap(imageBitmap);
         }
     }
+    protected boolean validate(String comentario){
+        comment=comentario;
+        return validate();
+    }
     protected boolean validate(){
         IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
         View v = vu.getChildAt(vi);
         if(v==null)return false;
-        TextView pergfield = (TextView) v.findViewById(R.id.perg_id);
+        TextView pergfield = (TextView) v.findViewById(perg_id);
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
+            JSONObject item=polly.optJSONObject("pergs").optJSONObject(perg_id);
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
@@ -714,49 +927,131 @@ public class Question extends AppCompatActivity {
                         return true;
                     }
                 }
-                if (v.findViewById(R.id.textao_editText) != null) {
-                    respuestas.put(perg_id, ((TextView) v.findViewById(R.id.textao_editText)).getText());
-                }
-                if (v.findViewById(R.id.number_edittext) != null) {
-                    CharSequence t = ((TextView) v.findViewById(R.id.number_edittext)).getText();
-                    if(t.length()==0)
+                JSONObject respostinha = new JSONObject();
+                if (v.findViewById(R.id.value_edittext) != null) {
+                    CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
+                    if(t.length()==0) {
+                        v.findViewById(R.id.value_edittext).requestFocus();
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+
                         return false;
-                    respuestas.put(perg_id, t);
-                }
-//                if (v.findViewById(R.id.datepicker_text) != null) {
-                if (v.findViewById(R.id.spinner_month) != null) {
-                    //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
-                    JSONObject e = new JSONObject();
-                    e.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
-                    View vc = v.findViewById(R.id.comments_request);
-                    if(vc.getVisibility()==View.VISIBLE){
-                        e.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                     }
-                    respuestas.put(perg_id, e);
-                }
-                if (v.findViewById(R.id.multipla_radio) != null) {
-                    int selectedId = ((RadioGroup)v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId();
-                    RadioButton u = (RadioButton) v.findViewById(selectedId);
-                    if(u!=null) {
-                        JSONObject j = new JSONObject();
-                        j.put("v",u.getTag());
-                        View vc = v.findViewById(R.id.comments_request);
-                        if(vc.getVisibility()==View.VISIBLE){
-                            j.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
-                        }
-                        respuestas.put(perg_id, j);
-                    }
-                }
-                if(v.findViewById(R.id.checkbox_container)!=null){
-                    respuestas.put(perg_id,new JSONObject());
-                    ViewGroup g = (ViewGroup) v.findViewById(R.id.checkbox_container);
-                    for (int i = 0; i < g.getChildCount(); i++) {
-                        CheckBox c= (CheckBox) g.getChildAt(i);
-                        String resp_id = (String) c.getTag();
-                        respuestas.optJSONObject(perg_id).put(resp_id,c.isChecked());
-                    }
+                    respostinha.put("v",t);
+                    //respuestas.put(perg_id, t);
                 }
 
+                /*
+                View vcl = v.findViewById(R.id.comments_request);
+                if(vcl.getVisibility()==View.VISIBLE){
+                    EditText vc=(EditText)vcl.findViewById(R.id.comments);
+                    String c = ((EditText) vc).getText().toString();
+                    if(c.length()<3){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.minimo_tamanho_de_texto),Snackbar.LENGTH_LONG).show();
+                        return false;
+                    }else{
+                        respostinha.put("c",c);
+                    }
+                }*/
+                // descubra se a pergunta requer comments
+                JSONObject resposta=new JSONObject();
+                boolean fim=false;
+                boolean require_comments=false;
+                if(item.has("resps")){
+                    require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
+                    resposta = item.optJSONObject("resps").optJSONObject("1");
+                }
+
+
+
+                if (v.findViewById(R.id.spinner_month) != null) {
+                    respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                }
+                if (v.findViewById(R.id.multipla_radio) != null) {
+                    respostinha=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
+                    if(respostinha==null){
+                        Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
+                        return false;
+                    }
+                    resposta = item.optJSONObject("resps").optJSONObject(respostinha.optString("v"));
+                    prox=resposta.optString("prox");
+                    fim = resposta.optInt("fim", 0) == 1;
+                    require_comments=resposta.optInt("expl",0)==1;
+                }
+                if(v.findViewById(R.id.checkbox_container)!=null){
+                    JSONObject what = new JSONObject();
+                    ViewGroup g = (ViewGroup) v.findViewById(R.id.checkbox_container);
+                    JSONObject ju=new JSONObject();
+                    for (int i = 0; i < g.getChildCount(); i++) {
+                        CheckBox c= (CheckBox) g.getChildAt(i);
+                        what.put((String) c.getTag(),c.isChecked());
+                    }
+                    respostinha.put("v",what);
+                    //respuestas.put(perg_id,what);
+                }
+                if(v.findViewById(R.id.suport_table_layout)!=null){ // tipo table
+                    // detectar o subtipo
+                    LinearLayout tabela= (LinearLayout) v.findViewById(R.id.suport_table_layout);
+                    JSONObject resposta_multi = new JSONObject();
+                    for(int o=0;o<tabela.getChildCount();o++){
+                        int subtipo;
+                        View g = tabela.getChildAt(o);
+                        try{
+                            subtipo=FIELD_TYPES.get(item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo"));
+                        }catch(NullPointerException xixi){
+                            subtipo=TYPE_TEXT;
+                        }
+                        JSONObject juk = null;
+                        switch(subtipo){
+                            case TYPE_RADIO:
+                            case TYPE_UNICA:
+                            case TYPE_YESORNO:
+                                juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
+                                if(juk==null){
+                                    g.findViewById(R.id.radio_mini_group).requestFocus();
+                                    return false;
+                                }
+                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                break;
+                            case TYPE_TEXT:
+                            default:
+                                juk=new JSONObject();
+                                juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
+                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                break;
+
+                        }
+                    }
+                    respostinha=resposta_multi;
+                }
+                if(require_comments && !respostinha.optBoolean("c")){
+                    if(comment.length()>0){
+                        respostinha.put("c",comment);
+                        comment="";
+                    }else {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle(resposta.optString("ins"));
+                        final EditText input = new EditText(this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        builder.setView(input);
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                pageup(input.getText().toString());
+                            }
+                        });
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+
+                        builder.show();
+                        return false;
+                    }
+                }
+                respuestas.put(perg_id,respostinha);
+                if(fim) termina();
             } catch (JSONException e) {
             }
             ching.setRespostas(respuestas);
@@ -764,6 +1059,24 @@ public class Question extends AppCompatActivity {
         }
         return false;
     }
+
+    private void comment(String s) {
+
+    }
+
+    private JSONObject getRadioValue(ViewGroup g) {
+        int selectedId = ((RadioGroup)g).getCheckedRadioButtonId();
+        RadioButton u = (RadioButton) g.findViewById(selectedId);
+        if(u!=null) {
+            JSONObject j = new JSONObject();
+            try {
+                j.put("v",u.getTag());
+                return j;
+            } catch (JSONException e) {}
+        }
+        return null;
+    }
+
     protected boolean verify(){
         return true;
     }
@@ -781,9 +1094,6 @@ public class Question extends AppCompatActivity {
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        //mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
 
@@ -792,5 +1102,8 @@ public class Question extends AppCompatActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         validate();
         super.onConfigurationChanged(newConfig);
+    }
+    @Override
+    public void onBackPressed() {
     }
 }

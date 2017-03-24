@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Debug;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -112,7 +113,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 return false;
             }
         });
-        mPasswordView.setText(password);
+        if(Debug.isDebuggerConnected())mPasswordView.setText(password);
         mEmailView.setText(username);
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -197,7 +198,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         ((IChing)getApplicationContext()).setDomain(cidades.optString(cidade));
         SharedPreferences.Editor e = sharedpreferences.edit();
         e.putString("username", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?email:"");
-        e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:""); // Isto aqui é temporário
+        if(Debug.isDebuggerConnected()) e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:"");
         e.putString("cidade", cidade);
         e.commit();
         boolean cancel = false;
@@ -345,7 +346,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         @Override
         protected Boolean doInBackground(Void... params) {
             IChing c = (IChing) getApplicationContext();
-            String url =String.format("http://%s%s",c.getDomain(),getString(R.string.login_url));
+            String url =String.format("%s%s",c.getDomain(),getString(R.string.login_url));
             cookieJar=c.getCookieJar();
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
 
@@ -374,19 +375,19 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     //Snackbar.make(findViewById(R.id.email_login_form),t,Snackbar.LENGTH_LONG).setAction("NOP",null).show();
                     return false;
                 }
-                // TODO: verificar se o login é válido
+                ((IChing)getApplicationContext()).setCookieJar(cookieJar);
+                return true;
+                /*
                 formBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
                         .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
                         .addFormDataPart("m","load")
                         .build();
                 request = new Request.Builder()
-                        .url(String.format("http://%s%s",c.getDomain(),getString(R.string.login_url)))
+                        .url(String.format("%s%s",c.getDomain(),getString(R.string.login_url)))
                         .method("POST", RequestBody.create(null, new byte[0]))
                         .post(formBody)
                         .build();
-                response = null;
-
                 Response response_l = client.newCall(request).execute();
                 String j=response_l.body().string();
                 Pattern p = Pattern.compile("\\[\\{.*");
@@ -396,13 +397,11 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     stuff = new JSONArray(s);
                     ((IChing)getApplicationContext()).setCookieJar(cookieJar);
                     return true;
-                }
+
+                }*/
             } catch (IOException e) {
                 mess=e.getLocalizedMessage();
-            } catch (JSONException e) {
-                mess=e.getLocalizedMessage();
             }
-
             return false;
         }
 
@@ -461,7 +460,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
 
         }
 
-
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
@@ -470,8 +468,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 findViewById(R.id.login_form).setVisibility(View.VISIBLE);
                 List<String> lic= new ArrayList<>();
                 Iterator<String> ky = cidades.keys();
-                while (ky.hasNext())
-                {
+                while (ky.hasNext()){
                     lic.add((String)ky.next());
                 }
                 ArrayAdapter<String> ass = new ArrayAdapter<String>(context,android.R.layout.simple_spinner_item, lic);
@@ -486,7 +483,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         }
-
     }
 }
 

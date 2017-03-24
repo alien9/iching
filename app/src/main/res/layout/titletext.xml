@@ -5,4 +5,5 @@
     android:textAppearance="?android:attr/textAppearanceLarge"
     android:text="Large Text"
     android:id="@+id/title_text"
+    android:padding="10dp"
     android:layout_marginBottom="22dp" />

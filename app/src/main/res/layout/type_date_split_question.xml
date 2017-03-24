@@ -11,10 +11,12 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="horizontal">
         <Spinner
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:prompt="@string/day"
             android:id="@+id/spinner_day" />
         <Spinner
             android:layout_width="wrap_content"
@@ -25,6 +27,7 @@
         <Spinner
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:prompt="@string/year"
             android:id="@+id/spinner_year" />
     </LinearLayout>
     <TextView
@@ -34,6 +37,5 @@
         android:id="@+id/perg_id"
         android:visibility="gone"
         />
-    <include layout="@layout/comments_request"/>
     <include layout="@layout/decline"/>
 </LinearLayout>

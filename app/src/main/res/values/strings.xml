@@ -37,6 +37,15 @@
         <item>Novembro</item>
     </string-array>
     <string name="month">Mês</string>
+    <string name="year">Ano</string>
+    <string name="day">Dia</string>
     <string name="cidades_url">http://home.newt.com.br/?m=getcidades</string>
-    <string name="escolha_cidade">Cidade</string>
+    <string name="escolha_cidade">cidade</string>
+    <string name="logout">Encerrar</string>
+    <string name="carregando">Carregando...</string>
+    <string name="aguarde">Aguarde</string>
+    <string name="minimo_tamanho_de_texto">Texto deve ser informado</string>
+    <string name="valor_requerido">Questão Obrigatória</string>
+    <string name="value_required">Valor Obrigatório</string>
+    <string name="loading_files">Carregando arquivos adicionais...</string>
 </resources>

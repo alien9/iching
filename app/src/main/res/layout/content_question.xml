@@ -14,10 +14,14 @@
     tools:context="net.alien9.iching.Question"
     android:animateLayoutChanges="true"
     >
-    <android.support.v4.view.ViewPager
+    <net.alien9.iching.IChingViewPager
         android:id="@+id/main_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     <RelativeLayout
         android:orientation="vertical"
         android:id="@+id/messenger_layout"
@@ -39,6 +43,6 @@
             android:gravity="bottom"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="78dp" />
+            android:layout_marginBottom="78dp" />e
     </RelativeLayout>
 </RelativeLayout>

@@ -5,18 +5,16 @@
     android:layout_height="wrap_content"
     style="@style/AppTheme.NoActionBar"
     >
-    <include layout="@layout/titletext"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="id da pergunta"
         android:id="@+id/perg_id"
-        android:visibility="gone"
+        android:visibility="visible"
         />
-    <RadioGroup android:layout_height="wrap_content"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:paddingLeft="28dp"
-        android:id="@+id/multipla_radio"
-        />
-    <include layout="@layout/decline"/>
+        android:layout_height="wrap_content"
+        android:id="@+id/suport_table_layout"
+        android:orientation="vertical" />
 </LinearLayout>
