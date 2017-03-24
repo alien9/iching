@@ -21,5 +21,5 @@
         android:id="@+id/subperg_id"
         android:visibility="visible"
         />
-    <include layout="@layout/comments_request"/>
+    <include layout="@layout/decline"/>
 </LinearLayout>

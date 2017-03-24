@@ -375,6 +375,9 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     //Snackbar.make(findViewById(R.id.email_login_form),t,Snackbar.LENGTH_LONG).setAction("NOP",null).show();
                     return false;
                 }
+                ((IChing)getApplicationContext()).setCookieJar(cookieJar);
+                return true;
+                /*
                 formBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
                         .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
@@ -394,13 +397,11 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     stuff = new JSONArray(s);
                     ((IChing)getApplicationContext()).setCookieJar(cookieJar);
                     return true;
-                }
+
+                }*/
             } catch (IOException e) {
                 mess=e.getLocalizedMessage();
-            } catch (JSONException e) {
-                mess=e.getLocalizedMessage();
             }
-
             return false;
         }
 

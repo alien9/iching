@@ -28,6 +28,7 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -107,6 +108,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
     private int previous_index=-1;
     private MediaPlayer mp;
     private SurfaceHolder sh;
+    private String comment="";
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -177,35 +179,13 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 }
             }
         });
+
+
+
         ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!validate())
-                    return;
-                NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
-                sv.scrollTo(0, 0);
-                ((IChing)getApplication()).resetUndo();
-                int cu = pu.getCurrentItem();
-                previous_index=cu;
-                if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
-                    if(!prox.equals("")){
-                        int i=0;
-                        JSONObject pergs = polly.optJSONObject("pergs");
-                        Iterator<?> keys = pergs.keys();
-                        int n=0;
-                        while( keys.hasNext() ) {
-                            String k=pergs.optJSONObject((String)keys.next()).optString("ord");
-                            if(k.equals(prox)){
-                                pu.setCurrentItem(n);
-                            }
-                            n++;
-                        }
-                    }else {
-                        pu.setCurrentItem(cu + 1, true);
-                    }
-                }else{
-                    termina();
-                }
+                pageup();
             }
         });
         ((FloatingActionButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
@@ -290,6 +270,39 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         });
         sh=((SurfaceView)findViewById(R.id.surface_view)).getHolder();
         sh.addCallback(Question.this);
+    }
+    private void pageup(String c){
+        comment=c;
+        pageup();
+    }
+    private void pageup() {
+        if(!validate())
+            return;
+        IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+        sv.scrollTo(0, 0);
+        ((IChing)getApplication()).resetUndo();
+        int cu = pu.getCurrentItem();
+        previous_index=cu;
+        if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
+            if(!prox.equals("")){
+                int i=0;
+                JSONObject pergs = polly.optJSONObject("pergs");
+                Iterator<?> keys = pergs.keys();
+                int n=0;
+                while( keys.hasNext() ) {
+                    String k=pergs.optJSONObject((String)keys.next()).optString("ord");
+                    if(k.equals(prox)){
+                        pu.setCurrentItem(n);
+                    }
+                    n++;
+                }
+            }else {
+                pu.setCurrentItem(cu + 1, true);
+            }
+        }else{
+            termina();
+        }
     }
 
     private void termina() {
@@ -450,7 +463,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                     case TYPE_UNICA:
                     case TYPE_YESORNO:
                         v = (ViewGroup) inflater.inflate(R.layout.type_radio_question, collection, false);
-                        final JSONObject finalResps = resps;
+                        /*final JSONObject finalResps = resps;
                         final View vuc = v.findViewById(R.id.comments_request);
                         CompoundButton.OnCheckedChangeListener l=new CompoundButton.OnCheckedChangeListener() {
                             @Override
@@ -472,7 +485,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                     }
                                 }
                             }
-                        };
+                        };*/
                         for(int i=0;i<respskeys.size();i++){
                             LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                             RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
@@ -480,7 +493,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                             bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
                             String tag=respskeys.get(i);
                             bu.setTag(tag);
-                            bu.setOnCheckedChangeListener(l);
+                            //bu.setOnCheckedChangeListener(l);
                             if(respuestas.has(perg_id)) {
                                 if (respuestas.optJSONObject(perg_id).optString("v").equals(tag)) {
                                     bu.setChecked(true);
@@ -535,7 +548,8 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                             if(tit!=null) tit.setText(subitem.optString("txt"));
                             // isto com certeza está ruim - não mostramos os campos
                             lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
-                            lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                            //lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
+                            /*
                             if(subitem.has("resps")){
                                 if(subitem.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
                                     lu.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
@@ -543,6 +557,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                     lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
                                 }
                             }
+                            */
                             ((ViewGroup)v.findViewById(R.id.suport_table_layout)).addView(lu);
                             ((TextView)v.findViewById(R.id.perg_id)).setText(perg_id);
 
@@ -636,14 +651,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                 yup.setSelection(ssa.getPosition(dat[2]));
                             }
                         }
-
-                        if(item.has("resps")){
-                            if(item.optJSONObject("resps").optJSONObject("1").optString("expl","0").equals("1")){
-                                v.findViewById(R.id.comments_request).setVisibility(View.VISIBLE);
-                            }else{
-                                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
-                            }
-                        }
                         break;
                     case TYPE_NUMBER:
                         int n=0;
@@ -723,6 +730,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         break;
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
+                        findViewById(R.id.surface_view).setVisibility(View.GONE);
                         final String filename = item.optJSONObject("resps").optJSONObject("1").optString("midia");
                         if(filename.matches(".*\\.mp4")){
                             v.findViewById(R.id.play).setVisibility(View.VISIBLE);
@@ -731,7 +739,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                             ((ImageButton)v.findViewById(R.id.play)).setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-
                                     View sv = findViewById(R.id.surface_view);
                                     sv.setVisibility(View.VISIBLE);
                                     findViewById(R.id.main_view).setVisibility(View.GONE);
@@ -758,7 +765,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
-                v.findViewById(R.id.comments_request).setVisibility(View.GONE);
+
                 v.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
@@ -892,6 +899,10 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 iw.setImageBitmap(imageBitmap);
         }
     }
+    protected boolean validate(String comentario){
+        comment=comentario;
+        return validate();
+    }
     protected boolean validate(){
         IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
         int vi = vu.getCurrentItem();
@@ -900,6 +911,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         TextView pergfield = (TextView) v.findViewById(perg_id);
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
+            JSONObject item=polly.optJSONObject("pergs").optJSONObject(perg_id);
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
@@ -915,28 +927,55 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         return true;
                     }
                 }
+                JSONObject respostinha = new JSONObject();
                 if (v.findViewById(R.id.value_edittext) != null) {
                     CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
-                    if(t.length()==0)
+                    if(t.length()==0) {
+                        v.findViewById(R.id.value_edittext).requestFocus();
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+
                         return false;
-                    respuestas.put(perg_id, t);
-                }
-                View vc = v.findViewById(R.id.comments_request);
-//                if (v.findViewById(R.id.datepicker_text) != null) {
-                if (v.findViewById(R.id.spinner_month) != null) {
-                    //respuestas.put(perg_id, ((TextView) v.findViewById(R.id.datepicker_text)).getText());
-                    JSONObject e = new JSONObject();
-                    e.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
-                    if(vc.getVisibility()==View.VISIBLE){
-                        e.put("c",((EditText)vc.findViewById(R.id.comments)).getText());
                     }
-                    respuestas.put(perg_id, e);
+                    respostinha.put("v",t);
+                    //respuestas.put(perg_id, t);
+                }
+
+                /*
+                View vcl = v.findViewById(R.id.comments_request);
+                if(vcl.getVisibility()==View.VISIBLE){
+                    EditText vc=(EditText)vcl.findViewById(R.id.comments);
+                    String c = ((EditText) vc).getText().toString();
+                    if(c.length()<3){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.minimo_tamanho_de_texto),Snackbar.LENGTH_LONG).show();
+                        return false;
+                    }else{
+                        respostinha.put("c",c);
+                    }
+                }*/
+                // descubra se a pergunta requer comments
+                JSONObject resposta=new JSONObject();
+                boolean fim=false;
+                boolean require_comments=false;
+                if(item.has("resps")){
+                    require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
+                    resposta = item.optJSONObject("resps").optJSONObject("1");
+                }
+
+
+
+                if (v.findViewById(R.id.spinner_month) != null) {
+                    respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                 }
                 if (v.findViewById(R.id.multipla_radio) != null) {
-                    JSONObject jradio=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
-                    JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
-                    prox=item.optJSONObject("resps").optJSONObject(jradio.optString("v")).optString("prox");
-                    respuestas.put(perg_id, jradio);
+                    respostinha=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
+                    if(respostinha==null){
+                        Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
+                        return false;
+                    }
+                    resposta = item.optJSONObject("resps").optJSONObject(respostinha.optString("v"));
+                    prox=resposta.optString("prox");
+                    fim = resposta.optInt("fim", 0) == 1;
+                    require_comments=resposta.optInt("expl",0)==1;
                 }
                 if(v.findViewById(R.id.checkbox_container)!=null){
                     JSONObject what = new JSONObject();
@@ -946,10 +985,10 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         CheckBox c= (CheckBox) g.getChildAt(i);
                         what.put((String) c.getTag(),c.isChecked());
                     }
-                    respuestas.put(perg_id,what);
+                    respostinha.put("v",what);
+                    //respuestas.put(perg_id,what);
                 }
                 if(v.findViewById(R.id.suport_table_layout)!=null){ // tipo table
-                    JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
                     // detectar o subtipo
                     LinearLayout tabela= (LinearLayout) v.findViewById(R.id.suport_table_layout);
                     JSONObject resposta_multi = new JSONObject();
@@ -982,11 +1021,37 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
 
                         }
                     }
-                    respuestas.put(perg_id,resposta_multi);
-                    return true;
+                    respostinha=resposta_multi;
                 }
+                if(require_comments && !respostinha.optBoolean("c")){
+                    if(comment.length()>0){
+                        respostinha.put("c",comment);
+                        comment="";
+                    }else {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle(resposta.optString("ins"));
+                        final EditText input = new EditText(this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        builder.setView(input);
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                pageup(input.getText().toString());
+                            }
+                        });
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
 
-
+                        builder.show();
+                        return false;
+                    }
+                }
+                respuestas.put(perg_id,respostinha);
+                if(fim) termina();
             } catch (JSONException e) {
             }
             ching.setRespostas(respuestas);
@@ -995,22 +1060,19 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         return false;
     }
 
+    private void comment(String s) {
+
+    }
+
     private JSONObject getRadioValue(ViewGroup g) {
         int selectedId = ((RadioGroup)g).getCheckedRadioButtonId();
         RadioButton u = (RadioButton) g.findViewById(selectedId);
-        View vc = ((ViewGroup)g.getParent()).findViewById(R.id.comments_request);
         if(u!=null) {
             JSONObject j = new JSONObject();
             try {
                 j.put("v",u.getTag());
-                if(vc!=null) {
-                    if (vc.getVisibility() == View.VISIBLE) {
-                        j.put("c", ((EditText) vc.findViewById(R.id.comments)).getText());
-                    }
-                }
                 return j;
             } catch (JSONException e) {}
-
         }
         return null;
     }

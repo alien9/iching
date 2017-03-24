@@ -14,12 +14,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/play"
         android:src="@drawable/play"/>
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
-        android:ems="10"
-        android:id="@+id/value_edittext" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,11 +27,5 @@
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
         android:id="@+id/imageView" />
-    <include layout="@layout/comments_request"/>
-
-    <VideoView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/videoView" />
-
+    <include layout="@layout/decline"/>
 </LinearLayout>

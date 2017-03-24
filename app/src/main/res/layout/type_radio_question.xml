@@ -18,5 +18,5 @@
         android:paddingLeft="28dp"
         android:id="@+id/multipla_radio"
         />
-    <include layout="@layout/comments_request"/>
+    <include layout="@layout/decline"/>
 </LinearLayout>

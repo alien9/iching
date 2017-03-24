@@ -33,6 +33,7 @@
         </provider>
         <activity
             android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
             android:name=".Login"
             android:label="@string/title_activity_login">
         </activity>

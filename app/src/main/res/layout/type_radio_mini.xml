@@ -23,5 +23,5 @@
         android:id="@+id/radio_mini_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-    </RadioGroup><include layout="@layout/comments_request"/>
+    </RadioGroup><include layout="@layout/decline"/>
 </LinearLayout>
