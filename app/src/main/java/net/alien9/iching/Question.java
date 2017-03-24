@@ -290,13 +290,16 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 JSONObject pergs = polly.optJSONObject("pergs");
                 Iterator<?> keys = pergs.keys();
                 int n=0;
+                boolean exist=false;
                 while( keys.hasNext() ) {
                     String k=pergs.optJSONObject((String)keys.next()).optString("ord");
                     if(k.equals(prox)){
                         pu.setCurrentItem(n);
+                        exist=true;
                     }
                     n++;
                 }
+                if(!exist) pu.setCurrentItem(cu + 1, true);
             }else {
                 pu.setCurrentItem(cu + 1, true);
             }

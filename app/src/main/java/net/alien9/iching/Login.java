@@ -82,7 +82,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
     private UserLoginTask mAuthTask = null;
 
     // UI references.
-    private AutoCompleteTextView mEmailView;
+    private EditText mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
@@ -96,7 +96,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mEmailView = (EditText) findViewById(R.id.email);
         //populateAutoComplete();
         final SharedPreferences sharedpreferences=getSharedPreferences("login",MODE_PRIVATE);
         String username = sharedpreferences.getString("username", "");
@@ -313,7 +313,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 new ArrayAdapter<>(Login.this,
                         android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
 
-        mEmailView.setAdapter(adapter);
+        //mEmailView.setAdapter(adapter);
     }
 
 
