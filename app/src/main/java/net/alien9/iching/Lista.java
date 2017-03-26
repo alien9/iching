@@ -193,7 +193,7 @@ public class Lista extends AppCompatActivity {
             RequestBody bode = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("c", ((IChing) getApplicationContext()).getPesqId())
-                    .addFormDataPart("d", "{}") //                    .addFormDataPart("d",getJournal().toString())
+                    .addFormDataPart("d",getJournal().toString())
                     .addFormDataPart("m", "save")
                     .build();
             Request request = new Request.Builder()
@@ -234,6 +234,7 @@ public class Lista extends AppCompatActivity {
             reloading=false;
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
+            prog.dismiss();
             if(todo!=null){
                 switch(todo){
                     case EXIT:
