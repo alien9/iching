@@ -149,6 +149,13 @@ public class Lista extends AppCompatActivity {
                 }
                 logout();
                 break;
+            case R.id.send_data:
+                if(!isNetworkAvailable()){
+                    Snackbar.make(findViewById(R.id.content_lista),R.string.no_network_available, Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
+                logout();
+                break;
         }
         return true;
 

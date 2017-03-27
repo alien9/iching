@@ -1032,7 +1032,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                 juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
                                 resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                 break;
-
                         }
                     }
                     respostinha=resposta_multi;
