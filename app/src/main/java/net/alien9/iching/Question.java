@@ -556,7 +556,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                     lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
 
                             }
-                            lu.setBackgroundColor((n%2==0)?Color.parseColor("#0000ff00"):Color.parseColor("#ffeeeeee"));
+                            lu.setBackgroundColor((n%2==0)?Color.parseColor("#0000ff00"):Color.parseColor("#ffdddddd"));
                             ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
                             TextView tit = (TextView) lu.findViewById(R.id.title_text);
                             if(tit!=null) tit.setText(subitem.optString("txt"));
