@@ -48,4 +48,5 @@
     <string name="valor_requerido">Questão Obrigatória</string>
     <string name="value_required">Valor Obrigatório</string>
     <string name="loading_files">Carregando arquivos adicionais...</string>
+    <string name="no_network_available">Não há conexão. Tente novamente quando estiver conectado.</string>
 </resources>

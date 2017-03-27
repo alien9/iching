@@ -1,14 +1,17 @@
 package net.alien9.iching;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
@@ -46,6 +49,7 @@ public class IChing extends Application {
     private JSONObject last_known_position;
     private LocationManager locationManager;
     private String domain;
+    private boolean isReloading=false;
 
     public static IChing getInstance() {
         return singleton;
@@ -59,6 +63,7 @@ public class IChing extends Application {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         singleton = this;
     }
+
     public void startGPS(Activity a){
         Log.d("ICHING SERVICE","should start");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -117,9 +122,23 @@ public class IChing extends Application {
 
     public void setStuff(JSONArray s) {
         stuff = s;
+        if(stuff!=null) {
+            SharedPreferences sharedpreferences = getSharedPreferences(String.format("stuff_%s", getPesqId()), Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedpreferences.edit();
+            editor.putString("stuff", stuff.toString());
+            editor.commit();
+        }
     }
 
     public JSONArray getStuff() {
+        if(stuff==null){
+            SharedPreferences sharedpreferences = getSharedPreferences(String.format("stuff_%s",getPesqId()), Context.MODE_PRIVATE);
+            try {
+                stuff= new JSONArray(sharedpreferences.getString("stuff","{}"));
+            } catch (JSONException e) {
+                return null;
+            }
+        }
         return stuff;
     }
 
@@ -166,6 +185,14 @@ public class IChing extends Application {
             }
         }catch(SecurityException sx){} catch (JSONException ignore) {}
         return last_known_position;
+    }
+
+    public boolean getIsReloading() {
+        return isReloading;
+    }
+
+    public void setReloading(boolean reloading) {
+        isReloading = reloading;
     }
 
     private static class CookiePot implements CookieJar {

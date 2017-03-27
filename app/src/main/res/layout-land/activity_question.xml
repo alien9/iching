@@ -22,19 +22,25 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.design.widget.FloatingActionButton
+    <ImageButton
         android:id="@+id/next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center_vertical|end"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_media_next" />
-    <android.support.design.widget.FloatingActionButton
+        android:layout_margin="0dp"
+        android:background="@color/transparent"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/but_forward" />
+
+    <ImageButton
         android:id="@+id/previous"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center_vertical|start"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_media_previous" />
+        android:layout_margin="0dp"
+        android:background="@color/transparent"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/but_backward" />
         <include layout="@layout/content_question"/>
 </android.support.design.widget.CoordinatorLayout>
