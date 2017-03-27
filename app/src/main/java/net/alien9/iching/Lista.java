@@ -125,7 +125,13 @@ public class Lista extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
-
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem item = menu.findItem(R.id.send_data);
+        JSONObject j = getJournal();
+        item.setEnabled((j.length()>0)?true:false);
+        return super.onPrepareOptionsMenu(menu);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -154,7 +160,7 @@ public class Lista extends AppCompatActivity {
                     Snackbar.make(findViewById(R.id.content_lista),R.string.no_network_available, Snackbar.LENGTH_LONG).show();
                     return true;
                 }
-                logout();
+                reload();
                 break;
         }
         return true;
