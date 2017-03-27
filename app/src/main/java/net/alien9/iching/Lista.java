@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -67,6 +68,8 @@ public class Lista extends AppCompatActivity {
     private boolean exiting=false;
     private ProgressDialog prog;
     private List<String> media;
+    private int totalsize;
+    private int currentsize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -264,12 +267,25 @@ public class Lista extends AppCompatActivity {
         List<String> names=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
+        totalsize = 0;
+        currentsize=0;
 
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
             if(it.has("midia")){
-                media.add(it.optString("midia"));
+                String filename=it.optString("midia");
+                SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
+                JSONObject saved_files;
+                try {
+                    saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
+                } catch (JSONException e) {
+                    saved_files=new JSONObject();
+                }
+                if(!saved_files.has(filename)){
+                    media.add(filename);
+                    totalsize+=it.optInt("msize");
+                }
             }
         }
         //for(int i=media.size()-1;i>=0;i--)
@@ -282,7 +298,7 @@ public class Lista extends AppCompatActivity {
                 prog.setMessage(getString(R.string.carregando));
                 prog.setTitle(getString(R.string.aguarde));
                 prog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                prog.setMax(media.size());
+                prog.setMax(totalsize);
                 prog.setMessage(getString(R.string.loading_files));
                 prog.show();
                 new MediaLoader(media.get(0)).execute();
@@ -305,7 +321,7 @@ public class Lista extends AppCompatActivity {
                 directory.mkdirs();
             }
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
-            if(!destination.exists()) {
+            //if(!destination.exists()) {
                 String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
                 CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
                 OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
@@ -321,16 +337,45 @@ public class Lista extends AppCompatActivity {
                         .post(formBody)
                         .build();
                 Response response = null;
+                InputStream input=null;
                 try {
                     response = client.newCall(request).execute();
+                    input = response.body().byteStream();
+                    byte[] buff = new byte[1024 * 4];
+
+
                     FileOutputStream fos = new FileOutputStream(getExternalCacheDir() + File.separator + "midia" + File.separator + filename);
-                    fos.write(response.body().bytes());
+                    byte[] data = new byte[1024];
+
+                    long total = 0;
+
+                    int count;
+                    while ((count = input.read(data)) != -1) {
+                        currentsize+=1024;
+                        prog.setProgress(currentsize);
+                        fos.write(data, 0, count);
+                    }
+                    fos.flush();
                     fos.close();
+                    input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Util.unzip(getExternalCacheDir()+File.separator+"midia",filename);
-            }
+                if(Util.unzip(getExternalCacheDir()+File.separator+"midia",filename)){
+                    SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
+                    JSONObject saved_files;
+                    try {
+                        saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
+                        saved_files.put(filename,true);
+                    } catch (JSONException e) {
+                        saved_files=new JSONObject();
+                    }
+                    SharedPreferences.Editor e = sharedpreferences.edit();
+                    e.putString("saved", saved_files.toString());
+                    e.commit();
+
+                };
+            //}
             return true;
         }
         @Override
@@ -340,7 +385,7 @@ public class Lista extends AppCompatActivity {
                 if(media.size()==0) {
                     prog.dismiss();
                 }else{
-                    prog.setProgress(prog.getProgress()+1);
+                    //prog.setProgress(prog.getProgress()+1);
                     new MediaLoader(media.get(0)).execute();
                 }
         }

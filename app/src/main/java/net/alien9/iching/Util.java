@@ -122,9 +122,15 @@ public class Util {
                     Util._dirChecker(ze.getName(),path);
                 } else {
                     FileOutputStream fout = new FileOutputStream(path+File.separator + ze.getName());
-                    for (int c = zin.read(); c != -1; c = zin.read()) {
-                        fout.write(c);
+                    byte b[] = new byte[1024];
+                    int n;
+                    while ((n = zin.read(b,0,1024)) >= 0) {
+                        fout.write(b,0,n);
                     }
+
+                    //for (int c = zin.read(); c != -1; c = zin.read()) {
+                    //    fout.write(c);
+                    //}
 
                     zin.closeEntry();
                     fout.close();
