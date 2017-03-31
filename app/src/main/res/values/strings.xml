@@ -50,4 +50,7 @@
     <string name="loading_files">Carregando arquivos adicionais...</string>
     <string name="no_network_available">Não há conexão. Tente novamente quando estiver conectado.</string>
     <string name="action_send">Enviar Dados</string>
+    <string name="server_not_available">O servidor não responde</string>
+    <string name="try_again">Tentar novamente?</string>
+    <string name="problems_downloading">Alguns arquivos não puderam ser baixados.</string>
 </resources>

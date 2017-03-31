@@ -6,12 +6,14 @@ import android.annotation.TargetApi;
 import android.app.Application;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Debug;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 
@@ -313,7 +315,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 new ArrayAdapter<>(Login.this,
                         android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
 
-        //mEmailView.setAdapter(adapter);
     }
 
 
@@ -377,28 +378,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                 }
                 ((IChing)getApplicationContext()).setCookieJar(cookieJar);
                 return true;
-                /*
-                formBody = new MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
-                        .addFormDataPart("m","load")
-                        .build();
-                request = new Request.Builder()
-                        .url(String.format("%s%s",c.getDomain(),getString(R.string.login_url)))
-                        .method("POST", RequestBody.create(null, new byte[0]))
-                        .post(formBody)
-                        .build();
-                Response response_l = client.newCall(request).execute();
-                String j=response_l.body().string();
-                Pattern p = Pattern.compile("\\[\\{.*");
-                m = p.matcher(j);
-                if(m.find()) {
-                    String s = m.group();
-                    stuff = new JSONArray(s);
-                    ((IChing)getApplicationContext()).setCookieJar(cookieJar);
-                    return true;
-
-                }*/
             } catch (IOException e) {
                 mess=e.getLocalizedMessage();
             }
@@ -409,7 +388,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
-
             if (success) {
                 Intent intent=new Intent(context,Lista.class);
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
@@ -422,6 +400,7 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     mPasswordView.setError(mess);
                     mPasswordView.requestFocus();
                 }else {
+                    serverNotAvailable();
                     Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
                 }
             }
@@ -479,9 +458,31 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     ((Spinner)findViewById(R.id.city_spinner)).setSelection(spinnerPosition);
                 }
             } else {
+                serverNotAvailable();
                 Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         }
+    }
+
+    private void serverNotAvailable() {
+        new AlertDialog.Builder(context)
+                .setCancelable(false)
+                .setTitle(getString(R.string.server_not_available))
+                .setMessage(getString(R.string.try_again))
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent=new Intent(context,Login.class);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                        System.exit(0);
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }
 

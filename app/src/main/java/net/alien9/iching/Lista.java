@@ -1,21 +1,16 @@
 package net.alien9.iching;
 
-import android.app.Activity;
-import android.app.Application;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.database.DataSetObserver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -24,12 +19,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -42,16 +33,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import okhttp3.CookieJar;
-import okhttp3.FormBody;
-import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -61,7 +46,6 @@ import okhttp3.Response;
 public class Lista extends AppCompatActivity {
 
     private static final int EXIT = 0;
-    private JSONObject groselha;
     private String cookies;
     private OkHttpClient client;
     private JSONArray stuff;
@@ -349,6 +333,7 @@ public class Lista extends AppCompatActivity {
 
     private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
         private final String filename;
+        private String mess;
 
         public MediaLoader(String f) {
             filename=f;
@@ -399,7 +384,8 @@ public class Lista extends AppCompatActivity {
                 fos.close();
                 input.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                mess=e.getMessage();
+                return false;
             }
             if(Util.unzip(getExternalCacheDir()+File.separator+"midia",filename)){
                 SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
@@ -420,6 +406,27 @@ public class Lista extends AppCompatActivity {
         }
         @Override
         protected void onPostExecute(final Boolean success) {
+            if(!success){
+                Snackbar.make(findViewById(R.id.content_lista),mess,Snackbar.LENGTH_LONG).show();
+                new AlertDialog.Builder(context)
+                        .setCancelable(false)
+                        .setTitle(getString(R.string.problems_downloading))
+                        .setMessage(getString(R.string.try_again))
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                show();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                prog.dismiss();
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+
+                return;
+            }
             media.remove(media.indexOf(filename));
             if(media.size()==0) {
                 setReloading(false);
@@ -523,5 +530,9 @@ public class Lista extends AppCompatActivity {
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+    @Override
+    public void onResume() {
+        super.onResume();  // Always call the superclass method first
     }
 }

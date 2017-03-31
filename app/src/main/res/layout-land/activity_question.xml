@@ -42,5 +42,10 @@
         android:background="@color/transparent"
         android:scaleType="fitCenter"
         app:srcCompat="@drawable/but_backward" />
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
         <include layout="@layout/content_question"/>
 </android.support.design.widget.CoordinatorLayout>

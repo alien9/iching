@@ -17,6 +17,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -25,6 +26,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -49,6 +51,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
@@ -71,7 +74,7 @@ import java.util.List;
 import static net.alien9.iching.R.id.perg_id;
 import static net.alien9.iching.R.id.shortcut;
 
-public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
+public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback, android.widget.MediaController.MediaPlayerControl {
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
@@ -110,6 +113,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
     private MediaPlayer mp;
     private SurfaceHolder sh;
     private String comment="";
+    private MediaController mc;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -269,8 +273,10 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
             public void onCompletion(MediaPlayer mediaPlayer) {
                 findViewById(R.id.surface_view).setVisibility(View.GONE);
                 findViewById(R.id.main_view).setVisibility(View.VISIBLE);
+                getSupportActionBar().show();
             }
         });
+        mc = new MediaController(context);
         sh=((SurfaceView)findViewById(R.id.surface_view)).getHolder();
         sh.addCallback(Question.this);
     }
@@ -398,6 +404,14 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         mp.start();
+        mc.setMediaPlayer(this);
+        mc.setAnchorView(findViewById(R.id.surface_view));
+        mc.post(new Runnable() {
+            public void run() {
+                mc.setEnabled(true);
+                mc.show();
+            }
+        });
     }
 
     @Override
@@ -414,6 +428,61 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         mp.stop();
         mp.reset();
+    }
+
+    @Override
+    public void start() {
+mp.start();
+    }
+
+    @Override
+    public void pause() {
+mp.pause();
+    }
+
+    @Override
+    public int getDuration() {
+        return 0;
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return 0;
+    }
+
+    @Override
+    public void seekTo(int i) {
+
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return false;
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return false;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return false;
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return false;
+    }
+
+    @Override
+    public int getAudioSessionId() {
+        return 0;
     }
 
     private class BunchViewAdapter extends PagerAdapter {
@@ -753,6 +822,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                 @Override
                                 public void onClick(View view) {
                                     View sv = findViewById(R.id.surface_view);
+                                    getSupportActionBar().hide();
                                     sv.setVisibility(View.VISIBLE);
                                     findViewById(R.id.main_view).setVisibility(View.GONE);
                                     try {
