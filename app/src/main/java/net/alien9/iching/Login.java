@@ -413,7 +413,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
             if (success) {
                 Intent intent=new Intent(context,Lista.class);
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
-                ((IChing)getApplicationContext()).setStuff(stuff);
                 startActivity(intent);
                 finish();
             } else {

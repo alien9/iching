@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.DataSetObserver;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -67,6 +70,8 @@ public class Lista extends AppCompatActivity {
     private boolean exiting=false;
     private ProgressDialog prog;
     private List<String> media;
+    private int totalsize;
+    private int currentsize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,8 +107,6 @@ public class Lista extends AppCompatActivity {
             editor.putString("journal", journal.toString());
             editor.commit();
         }
-
-        show();
         ((IChing)getApplicationContext()).startGPS(this);
         client = IChing.getInstance().getClient();
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -114,8 +117,6 @@ public class Lista extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        //if(intent.hasExtra("result"))
         reload();
     }
 
@@ -124,7 +125,13 @@ public class Lista extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
-
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem item = menu.findItem(R.id.send_data);
+        JSONObject j = getJournal();
+        item.setEnabled((j.length()>0)?true:false);
+        return super.onPrepareOptionsMenu(menu);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -135,10 +142,25 @@ public class Lista extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.reload_groselha:
+                if(!isNetworkAvailable()){
+                    Snackbar.make(findViewById(R.id.content_lista),R.string.no_network_available, Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
                 reload();
                 break;
             case R.id.logout:
+                if(!isNetworkAvailable()){
+                    Snackbar.make(findViewById(R.id.content_lista),R.string.no_network_available, Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
                 logout();
+                break;
+            case R.id.send_data:
+                if(!isNetworkAvailable()){
+                    Snackbar.make(findViewById(R.id.content_lista),R.string.no_network_available, Snackbar.LENGTH_LONG).show();
+                    return true;
+                }
+                reload();
                 break;
         }
         return true;
@@ -156,8 +178,12 @@ public class Lista extends AppCompatActivity {
     }
 
     private void reload() {
-        if(!reloading) {
-            reloading=true;
+        if(!isNetworkAvailable()) {
+            show();
+            return;
+        }
+        if(!isReloading()) {
+            setReloading(true);
             prog = new ProgressDialog(this);
             prog.setCancelable(false);
             prog.setMessage(getString(R.string.carregando));
@@ -168,6 +194,13 @@ public class Lista extends AppCompatActivity {
             ReloadTask reloader = new ReloadTask();
             reloader.execute();
         }
+    }
+
+    private boolean isReloading() {
+        return ((IChing)getApplicationContext()).getIsReloading();
+    }
+    private void setReloading(boolean r){
+        ((IChing)getApplicationContext()).setReloading(r);
     }
 
     private JSONObject getJournal() {
@@ -218,6 +251,7 @@ public class Lista extends AppCompatActivity {
                         resetJournal("{}");
                     }
                 }
+                ((IChing)getApplicationContext()).setStuff(stuff);
             } catch (IOException e) {
                 Snackbar.make(findViewById(R.id.content_lista), e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
                 return false;
@@ -231,10 +265,12 @@ public class Lista extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            reloading=false;
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
-            prog.dismiss();
+
+            if (prog != null && prog.isShowing()) {
+                prog.dismiss();
+            }
             if(todo!=null){
                 switch(todo){
                     case EXIT:
@@ -260,35 +296,55 @@ public class Lista extends AppCompatActivity {
     }
 
     private void show() {
-        if(stuff==null)return;;
+        if(stuff==null)return;
         List<String> names=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
+        totalsize = 0;
+        currentsize=0;
 
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
             if(it.has("midia")){
-                media.add(it.optString("midia"));
+                String filename=it.optString("midia");
+                SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
+                JSONObject saved_files;
+                try {
+                    saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
+                } catch (JSONException e) {
+                    saved_files=new JSONObject();
+                }
+                if(!saved_files.has(filename)){
+                    media.add(filename);
+                    totalsize+=it.optInt("msize");
+                }
             }
         }
         //for(int i=media.size()-1;i>=0;i--)
         //    new MediaLoader(media.get(i)).execute();
+        setReloading(false);
         if(prog!=null){
             prog.dismiss();
             if(media.size()>0) {
-                prog = new ProgressDialog(this);
-                prog.setCancelable(false);
-                prog.setMessage(getString(R.string.carregando));
-                prog.setTitle(getString(R.string.aguarde));
-                prog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                prog.setMax(media.size());
-                prog.setMessage(getString(R.string.loading_files));
-                prog.show();
+                showProgressDialog();
                 new MediaLoader(media.get(0)).execute();
             }
         }
         ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names));
+    }
+
+    private void showProgressDialog() {
+        prog = new ProgressDialog(this);
+        findViewById(R.id.content_lista).setKeepScreenOn(true);
+        prog.setCancelable(false);
+        prog.setProgressNumberFormat("%1d/%2d kB");
+        prog.setMessage(getString(R.string.carregando));
+        prog.setTitle(getString(R.string.aguarde));
+        prog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        prog.setMax(totalsize/1024);
+        prog.setMessage(getString(R.string.loading_files));
+        prog.show();
     }
 
     private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
@@ -305,44 +361,73 @@ public class Lista extends AppCompatActivity {
                 directory.mkdirs();
             }
             File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
-            if(!destination.exists()) {
-                String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
-                CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
-                OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
-                RequestBody formBody = new MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
-                        .addFormDataPart("midia",filename)
-                        .addFormDataPart("m","midia")
-                        .build();
-                Request request = new Request.Builder()
-                        .url(url)
-                        .method("POST", RequestBody.create(null, new byte[0]))
-                        .post(formBody)
-                        .build();
-                Response response = null;
-                try {
-                    response = client.newCall(request).execute();
-                    FileOutputStream fos = new FileOutputStream(getExternalCacheDir() + File.separator + "midia" + File.separator + filename);
-                    fos.write(response.body().bytes());
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            //if(!destination.exists()) {
+            String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
+            CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
+            OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+            RequestBody formBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("c",((IChing) getApplicationContext()).getPesqId())
+                    .addFormDataPart("midia",filename)
+                    .addFormDataPart("m","midia")
+                    .build();
+            Request request = new Request.Builder()
+                    .url(url)
+                    .method("POST", RequestBody.create(null, new byte[0]))
+                    .post(formBody)
+                    .build();
+            Response response = null;
+            InputStream input=null;
+            try {
+                response = client.newCall(request).execute();
+                input = response.body().byteStream();
+                byte[] buff = new byte[1024 * 4];
+
+
+                FileOutputStream fos = new FileOutputStream(getExternalCacheDir() + File.separator + "midia" + File.separator + filename);
+                byte[] data = new byte[1024];
+
+                long total = 0;
+
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    currentsize+=1024;
+                    prog.setProgress(currentsize/1024);
+                    fos.write(data, 0, count);
                 }
-                Util.unzip(getExternalCacheDir()+File.separator+"midia",filename);
+                fos.flush();
+                fos.close();
+                input.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            if(Util.unzip(getExternalCacheDir()+File.separator+"midia",filename)){
+                SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
+                JSONObject saved_files;
+                try {
+                    saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
+                    saved_files.put(filename,true);
+                } catch (JSONException e) {
+                    saved_files=new JSONObject();
+                }
+                SharedPreferences.Editor e = sharedpreferences.edit();
+                e.putString("saved", saved_files.toString());
+                e.commit();
+
+            };
+            //}
             return true;
         }
         @Override
         protected void onPostExecute(final Boolean success) {
             media.remove(media.indexOf(filename));
-            if(prog!=null)
-                if(media.size()==0) {
+            if(media.size()==0) {
+                setReloading(false);
+                if(prog!=null && prog.isShowing())
                     prog.dismiss();
-                }else{
-                    prog.setProgress(prog.getProgress()+1);
-                    new MediaLoader(media.get(0)).execute();
-                }
+            }else{
+                new MediaLoader(media.get(0)).execute();
+            }
         }
     }
     private void cleanUp(){
@@ -370,15 +455,29 @@ public class Lista extends AppCompatActivity {
                     }
                 }
             }
+
+            SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
+            JSONObject saved_files;
+            try {
+                saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
+            } catch (JSONException e) {
+                saved_files=new JSONObject();
+            }
             File directory = new File(getExternalCacheDir()+File.separator+"midia");
             File[] files = directory.listFiles();
             if(files!=null) {
                 for (int i = 0; i < files.length; i++) {
                     if (!filenames.has(files[i].getName())) {
+                        if(saved_files.has(files[i].getName()))
+                            saved_files.remove(files[i].getName());
                         files[i].delete();
                     }
                 }
             }
+            SharedPreferences.Editor e = sharedpreferences.edit();
+            e.putString("saved", saved_files.toString());
+            e.commit();
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -405,5 +504,24 @@ public class Lista extends AppCompatActivity {
             ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
             return v;
         }
+    }
+    private void dismissProgressDialog() {
+        if (prog != null && prog.isShowing()) {
+            prog.dismiss();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        dismissProgressDialog();
+        setReloading(false);
+        super.onDestroy();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

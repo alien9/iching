@@ -69,6 +69,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static net.alien9.iching.R.id.perg_id;
+import static net.alien9.iching.R.id.shortcut;
 
 public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
     private static final int TYPE_TEXT = 2;
@@ -175,23 +176,24 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 else {
                     pu.setVisibility(View.VISIBLE);
                     findViewById(R.id.next).setVisibility(View.VISIBLE);
-                    findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                    if(pu.getCurrentItem()>0)findViewById(R.id.previous).setVisibility(View.VISIBLE);
                 }
             }
         });
 
 
 
-        ((FloatingActionButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
+        ((ImageButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 pageup();
+                if(pu.getCurrentItem()>0)findViewById(R.id.previous).setVisibility(View.VISIBLE);
             }
         });
-        ((FloatingActionButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
+        ((ImageButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                validate();
+                //validate();
                 NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
                 sv.scrollTo(0, 0);
                 if(!((IChing)getApplication()).hasUndo()){
@@ -203,6 +205,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         if (cu > 0)
                             pu.setCurrentItem(cu - 1, true);
                     }
+                    findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)?View.GONE:View.VISIBLE);
                 }
                 ((IChing)getApplication()).setUndo();
             }
@@ -292,10 +295,16 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 int n=0;
                 boolean exist=false;
                 while( keys.hasNext() ) {
-                    String k=pergs.optJSONObject((String)keys.next()).optString("ord");
-                    if(k.equals(prox)){
+                    //String k=pergs.optJSONObject((String)keys.next()).optString("ord");
+                    String key= (String) keys.next();
+                    if(key.equals(prox)){
                         pu.setCurrentItem(n);
                         exist=true;
+                    }else if(key.contains("tela")){ // tem sub questoes
+                        if(pergs.optJSONObject(key).optJSONObject("pergs").has(prox)){
+                            pu.setCurrentItem(n);
+                            exist=true;
+                        }
                     }
                     n++;
                 }
@@ -510,6 +519,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                         JSONObject subpergs = item.optJSONObject("pergs");
                         Iterator<?> keys = subpergs.keys();
+                        int n=0;
                         while (keys.hasNext()) {
                             String subitem_key = keys.next().toString();
                             JSONObject subitem = subpergs.optJSONObject(subitem_key);
@@ -546,6 +556,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                     lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
 
                             }
+                            lu.setBackgroundColor((n%2==0)?Color.parseColor("#0000ff00"):Color.parseColor("#ffdddddd"));
                             ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
                             TextView tit = (TextView) lu.findViewById(R.id.title_text);
                             if(tit!=null) tit.setText(subitem.optString("txt"));
@@ -563,8 +574,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                             */
                             ((ViewGroup)v.findViewById(R.id.suport_table_layout)).addView(lu);
                             ((TextView)v.findViewById(R.id.perg_id)).setText(perg_id);
-
-
+                            n++;
                         }
                         break;
                     case TYPE_CHECKBOX:
@@ -656,7 +666,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         }
                         break;
                     case TYPE_NUMBER:
-                        int n=0;
+                        n=0;
                         if(!item.has("resps")){
                             v = (ViewGroup) inflater.inflate(R.layout.type_number_question, collection, false);
                             ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
@@ -912,6 +922,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         View v = vu.getChildAt(vi);
         if(v==null)return false;
         TextView pergfield = (TextView) v.findViewById(perg_id);
+        prox="";
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
             JSONObject item=polly.optJSONObject("pergs").optJSONObject(perg_id);
@@ -936,7 +947,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                     if(t.length()==0) {
                         v.findViewById(R.id.value_edittext).requestFocus();
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
-
                         return false;
                     }
                     respostinha.put("v",t);
@@ -1010,6 +1020,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                             case TYPE_YESORNO:
                                 juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
                                 if(juk==null){
+                                    Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
                                     g.findViewById(R.id.radio_mini_group).requestFocus();
                                     return false;
                                 }
@@ -1021,7 +1032,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                                 juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
                                 resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                 break;
-
                         }
                     }
                     respostinha=resposta_multi;
@@ -1033,6 +1043,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                     }else {
                         AlertDialog.Builder builder = new AlertDialog.Builder(this);
                         builder.setTitle(resposta.optString("ins"));
+                        builder.setCancelable(false);
                         final EditText input = new EditText(this);
                         input.setInputType(InputType.TYPE_CLASS_TEXT);
                         builder.setView(input);
