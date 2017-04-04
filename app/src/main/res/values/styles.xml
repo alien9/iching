@@ -18,6 +18,13 @@
         <item name="android:checkboxStyle">@style/checkstyle</item>
         <item name="android:radioButtonStyle">@style/checkstyle</item>
     </style>
+    <style name="AppTheme.NoActionBar.FullScreen">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:checkboxStyle">@style/checkstyle</item>
+        <item name="android:radioButtonStyle">@style/checkstyle</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
     <style name="Theme.AppCompat.Light.NoActionBar.FullScreen" parent="@style/Theme.AppCompat.Light">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>

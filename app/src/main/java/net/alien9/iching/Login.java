@@ -458,7 +458,6 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
                     ((Spinner)findViewById(R.id.city_spinner)).setSelection(spinnerPosition);
                 }
             } else {
-                serverNotAvailable();
                 Snackbar.make(findViewById(R.id.email_login_form), mess, Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         }

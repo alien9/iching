@@ -3,6 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
+    android:background="@drawable/blue_bg"
+    android:scaleType="fitXY"
     android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
@@ -18,38 +20,41 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="80dp"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_gravity="center_vertical|center_horizontal" />
 
     <ScrollView
         android:id="@+id/login_form"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent">
-
         <LinearLayout
+            android:layout_gravity="center_vertical"
+            android:background="@color/white"
             android:id="@+id/email_login_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:weightSum="7"
             android:orientation="horizontal">
-
             <LinearLayout
-                android:layout_weight="1"
+                android:layout_weight="2"
                 android:orientation="vertical"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:padding="20dp">
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:src="@mipmap/launcher"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_weight="1"
-                android:orientation="vertical"
+                android:layout_gravity="center_vertical"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:padding="20dp">
+                <ImageView
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="200dp"
+                    android:src="@drawable/logo_newt_saude"
+                    android:layout_height="200dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_weight="5"
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:padding="25dp">
                 <android.support.design.widget.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">

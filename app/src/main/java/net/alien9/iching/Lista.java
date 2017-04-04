@@ -9,10 +9,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -33,6 +38,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -56,13 +62,18 @@ public class Lista extends AppCompatActivity {
     private List<String> media;
     private int totalsize;
     private int currentsize;
+    private boolean cancel_download;
+    private TextView progress_text;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista);
+        cancel_download=false;
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.tolbar_icon);
         context=this;
         Intent intent=getIntent();
         if(intent.hasExtra("CNETSERVERLOGACAO")){
@@ -168,11 +179,18 @@ public class Lista extends AppCompatActivity {
         }
         if(!isReloading()) {
             setReloading(true);
-            prog = new ProgressDialog(this);
-            prog.setCancelable(false);
-            prog.setMessage(getString(R.string.carregando));
-            prog.setTitle(getString(R.string.aguarde));
+            prog = new NewtProgressDialog(this,R.layout.preloader_dialog);
             prog.show();
+            prog.setTitle(getString(R.string.app_name));
+            prog.setIcon(ContextCompat.getDrawable(context, R.drawable.tolbar_icon));
+            ((Button)prog.findViewById(R.id.cancel_butt)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    cancelDownload();
+                    finish();
+                    requestLogin();
+                }
+            });
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.VISIBLE);
             ReloadTask reloader = new ReloadTask();
@@ -305,8 +323,6 @@ public class Lista extends AppCompatActivity {
                 }
             }
         }
-        //for(int i=media.size()-1;i>=0;i--)
-        //    new MediaLoader(media.get(i)).execute();
         setReloading(false);
         if(prog!=null){
             prog.dismiss();
@@ -319,24 +335,34 @@ public class Lista extends AppCompatActivity {
     }
 
     private void showProgressDialog() {
-        prog = new ProgressDialog(this);
+        prog = new NewtProgressDialog(this,R.layout.medialoader_dialog);
         findViewById(R.id.content_lista).setKeepScreenOn(true);
-        prog.setCancelable(false);
-        prog.setProgressNumberFormat("%1d/%2d kB");
-        prog.setMessage(getString(R.string.carregando));
-        prog.setTitle(getString(R.string.aguarde));
-        prog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        prog.setMax(totalsize/1024);
-        prog.setMessage(getString(R.string.loading_files));
         prog.show();
+        ((Button)prog.findViewById(R.id.cancel_butt)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cancelDownload();
+                finish();
+                requestLogin();
+            }
+        });
+        prog.setMax(totalsize);
+        prog.setTitle(getString(R.string.app_name));
+        prog.setIcon(ContextCompat.getDrawable(context, R.drawable.tolbar_icon));
+    }
+
+    private void cancelDownload() {
+        cancel_download=true;
     }
 
     private class MediaLoader extends AsyncTask<Void, Void, Boolean> {
         private final String filename;
+        private final Handler handler;
         private String mess;
 
         public MediaLoader(String f) {
             filename=f;
+            handler=new MediaLoaderHandler();
         }
 
         @Override
@@ -345,8 +371,6 @@ public class Lista extends AppCompatActivity {
             if(!directory.exists()) {
                 directory.mkdirs();
             }
-            File destination= new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
-            //if(!destination.exists()) {
             String url =String.format("%s%s",((IChing) getApplicationContext()).getDomain(),getString(R.string.login_url));
             CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
             OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
@@ -366,19 +390,16 @@ public class Lista extends AppCompatActivity {
             try {
                 response = client.newCall(request).execute();
                 input = response.body().byteStream();
-                byte[] buff = new byte[1024 * 4];
-
-
                 FileOutputStream fos = new FileOutputStream(getExternalCacheDir() + File.separator + "midia" + File.separator + filename);
                 byte[] data = new byte[1024];
-
-                long total = 0;
-
                 int count;
                 while ((count = input.read(data)) != -1) {
                     currentsize+=1024;
-                    prog.setProgress(currentsize/1024);
+                    prog.setProgress(currentsize);
                     fos.write(data, 0, count);
+                    Message msg = new Message();
+                    msg.what=currentsize;
+                    handler.sendMessage(msg);
                 }
                 fos.flush();
                 fos.close();
@@ -401,7 +422,6 @@ public class Lista extends AppCompatActivity {
                 e.commit();
 
             };
-            //}
             return true;
         }
         @Override
@@ -433,7 +453,8 @@ public class Lista extends AppCompatActivity {
                 if(prog!=null && prog.isShowing())
                     prog.dismiss();
             }else{
-                new MediaLoader(media.get(0)).execute();
+                if(!cancel_download)
+                    new MediaLoader(media.get(0)).execute();
             }
         }
     }
@@ -534,5 +555,30 @@ public class Lista extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
+    }
+
+    private class MediaLoaderHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            int completed= (int) Math.round(100.0*msg.what/prog.getMax());
+            if(completed>100)completed=100;
+            ((TextView)prog.findViewById(R.id.completed_text)).setText(String.format("%s%%",completed));
+        }
+    }
+    @Override
+    protected boolean onPrepareOptionsPanel(View view, Menu menu) {
+        if (menu != null) {
+            if (menu.getClass().getSimpleName().equals("MenuBuilder")) {
+                try {
+                    Method m = menu.getClass().getDeclaredMethod(
+                            "setOptionalIconsVisible", Boolean.TYPE);
+                    m.setAccessible(true);
+                    m.invoke(menu, true);
+                } catch (Exception e) {
+                    Log.e(getClass().getSimpleName(), "onMenuOpened...unable to set icons for overflow menu", e);
+                }
+            }
+        }
+        return super.onPrepareOptionsPanel(view, menu);
     }
 }
