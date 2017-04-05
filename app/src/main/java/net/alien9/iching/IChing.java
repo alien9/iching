@@ -22,6 +22,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -266,7 +267,8 @@ public class IChing extends Application {
         Bitmap bi= Bitmap.createBitmap(bm.getWidth(),bm.getHeight(),Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bi);
         Paint paint = new Paint();
-        paint.setColor(Color.GREEN);
+        int color = ContextCompat.getColor(this, R.color.darkGreen);
+        paint.setColor(color);
         canvas.drawBitmap(bi, new Matrix(), null);
         canvas.drawCircle(bi.getWidth()/2,bi.getHeight()/2, bi.getHeight()/2, paint);
         canvas.drawBitmap(bm,0,0,null);

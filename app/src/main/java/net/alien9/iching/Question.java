@@ -142,8 +142,7 @@ public class Question extends AppCompatActivity{
         getSupportActionBar().setIcon(R.drawable.tolbar_icon);
         Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"));
 
-        Bitmap bi = Bitmap.createScaledBitmap(bu.getWidth(),bu.getHeight(),false);
-        getSupportActionBar().setIcon();
+        //Bitmap bi = Bitmap.createScaledBitmap(bu,bu.getWidth(),bu.getHeight(),false);
 
         getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
