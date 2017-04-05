@@ -5,6 +5,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -26,6 +32,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -40,8 +47,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.zip.ZipFile;
+
 import okhttp3.CookieJar;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -53,22 +63,19 @@ public class Lista extends AppCompatActivity {
 
     private static final int EXIT = 0;
     private String cookies;
-    private OkHttpClient client;
     private JSONArray stuff;
     private Context context;
-    private boolean reloading=false;
     private boolean exiting=false;
     private ProgressDialog prog;
     private List<String> media;
     private int totalsize;
     private int currentsize;
     private boolean cancel_download;
-    private TextView progress_text;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista);
+        IChing iching=(IChing)getApplicationContext();
         cancel_download=false;
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -76,13 +83,17 @@ public class Lista extends AppCompatActivity {
         getSupportActionBar().setIcon(R.drawable.tolbar_icon);
         context=this;
         Intent intent=getIntent();
-        if(intent.hasExtra("CNETSERVERLOGACAO")){
+        cookies=null;
+        if(intent.hasExtra("CNETSERVERLOGACAO")) {
             cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
         }else{
+            cookies=iching.getCookieJarCookies();
+        }
+        if((cookies==null)||(iching.getPesqId()==null)||(iching.getDomain()==null)){
             requestLogin();
             return;
         }
-        stuff=((IChing)getApplicationContext()).getStuff();
+        stuff=iching.getStuff();
         SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
         JSONObject journal;
         try {
@@ -90,6 +101,16 @@ public class Lista extends AppCompatActivity {
         } catch (JSONException e) {
             journal=new JSONObject();
         }
+        iching.startGPS(this);
+        ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(context, Question.class);
+                intent.putExtra("poll",stuff.optJSONObject(i).toString());
+                intent.putExtra("CNETSERVERLOGACAO",cookies);
+                startActivity(intent);
+            }
+        });
         if(intent.hasExtra("result")){ // está trazendo json pra gravar
             SharedPreferences.Editor editor = sharedpreferences.edit();
             try {
@@ -101,18 +122,29 @@ public class Lista extends AppCompatActivity {
             } catch (JSONException ignored) {}
             editor.putString("journal", journal.toString());
             editor.commit();
+            show();
+        }else {
+            reload();
         }
-        ((IChing)getApplicationContext()).startGPS(this);
-        client = IChing.getInstance().getClient();
-        ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(context, Question.class);
-                intent.putExtra("poll",stuff.optJSONObject(i).toString());
-                startActivity(intent);
-            }
-        });
-        reload();
+    }
+
+    private int contagem() {
+        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+        JSONObject journal;
+        try {
+            journal=new JSONObject(sharedpreferences.getString("journal","{}"));
+        } catch (JSONException e) {
+            journal=new JSONObject();
+        }
+        Iterator<String> iter = journal.keys();
+        int total=0;
+        while (iter.hasNext()) {
+            String key = iter.next();
+            try {
+                total+=journal.getJSONArray(key).length();
+            } catch (JSONException ignore) {}
+        }
+        return total;
     }
 
     private void requestLogin() {
@@ -125,6 +157,9 @@ public class Lista extends AppCompatActivity {
         MenuItem item = menu.findItem(R.id.send_data);
         JSONObject j = getJournal();
         item.setEnabled((j.length()>0)?true:false);
+        int n=contagem();
+        String itemzinho=(n==1)?"item":"itens";
+        menu.findItem(R.id.send_data).setTitle(String.format("Enviar: %s %s",""+contagem(),itemzinho));
         return super.onPrepareOptionsMenu(menu);
     }
     @Override
@@ -218,7 +253,6 @@ public class Lista extends AppCompatActivity {
 
     private class ReloadTask extends AsyncTask<Integer,Integer,Boolean>{
         private Integer todo;
-
         @Override
         protected Boolean doInBackground(Integer... integers) {
             if (integers.length > 0) {
@@ -269,7 +303,6 @@ public class Lista extends AppCompatActivity {
         protected void onPostExecute(final Boolean success) {
             ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_spinner);
             progressBar.setVisibility(View.GONE);
-
             if (prog != null && prog.isShowing()) {
                 prog.dismiss();
             }
@@ -280,13 +313,9 @@ public class Lista extends AppCompatActivity {
                         requestLogin();
                         break;
                 }
-
             }else {
                 show();
             }
-        }
-
-        public void execute(Void aVoid, int exit) {
         }
     }
 
@@ -300,6 +329,7 @@ public class Lista extends AppCompatActivity {
     private void show() {
         if(stuff==null)return;
         List<String> names=new ArrayList<>();
+        List<String> focos=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
@@ -308,16 +338,11 @@ public class Lista extends AppCompatActivity {
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
+            focos.add(it.optString("foco","geral"));
             if(it.has("midia")){
                 String filename=it.optString("midia");
-                SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
-                JSONObject saved_files;
-                try {
-                    saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
-                } catch (JSONException e) {
-                    saved_files=new JSONObject();
-                }
-                if(!saved_files.has(filename)){
+                File file = new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
+                if(!Util.isValid(file)){
                     media.add(filename);
                     totalsize+=it.optInt("msize");
                 }
@@ -331,7 +356,7 @@ public class Lista extends AppCompatActivity {
                 new MediaLoader(media.get(0)).execute();
             }
         }
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names));
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos));
     }
 
     private void showProgressDialog() {
@@ -408,20 +433,7 @@ public class Lista extends AppCompatActivity {
                 mess=e.getMessage();
                 return false;
             }
-            if(Util.unzip(getExternalCacheDir()+File.separator+"midia",filename)){
-                SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
-                JSONObject saved_files;
-                try {
-                    saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
-                    saved_files.put(filename,true);
-                } catch (JSONException e) {
-                    saved_files=new JSONObject();
-                }
-                SharedPreferences.Editor e = sharedpreferences.edit();
-                e.putString("saved", saved_files.toString());
-                e.commit();
-
-            };
+            Util.unzip(getExternalCacheDir()+File.separator+"midia",filename);
             return true;
         }
         @Override
@@ -484,28 +496,15 @@ public class Lista extends AppCompatActivity {
                 }
             }
 
-            SharedPreferences sharedpreferences = getSharedPreferences("files", Context.MODE_PRIVATE);
-            JSONObject saved_files;
-            try {
-                saved_files=new JSONObject(sharedpreferences.getString("saved","{}"));
-            } catch (JSONException e) {
-                saved_files=new JSONObject();
-            }
             File directory = new File(getExternalCacheDir()+File.separator+"midia");
             File[] files = directory.listFiles();
             if(files!=null) {
                 for (int i = 0; i < files.length; i++) {
                     if (!filenames.has(files[i].getName())) {
-                        if(saved_files.has(files[i].getName()))
-                            saved_files.remove(files[i].getName());
                         files[i].delete();
                     }
                 }
             }
-            SharedPreferences.Editor e = sharedpreferences.edit();
-            e.putString("saved", saved_files.toString());
-            e.commit();
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -514,12 +513,14 @@ public class Lista extends AppCompatActivity {
     private class StuffAdapter<String> extends ArrayAdapter {
         private final List<String> names;
         private final int resourceId;
+        private final List<String> focos;
 
 
-        public StuffAdapter(Context context, int resource, List<String> n){
+        public StuffAdapter(Context context, int resource, List<String> n, List<String> f){
             super(context, resource, n);
             resourceId=resource;
             names=n;
+            focos=f;
         }
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -530,6 +531,8 @@ public class Lista extends AppCompatActivity {
                 v = vi.inflate(resourceId, null);
             }
             ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
+            Bitmap bi=((IChing)getApplicationContext()).getItemBitmap((java.lang.String) focos.get(position));
+            ((ImageView)v.findViewById(R.id.bullet)).setImageBitmap(bi);
             return v;
         }
     }
@@ -580,5 +583,8 @@ public class Lista extends AppCompatActivity {
             }
         }
         return super.onPrepareOptionsPanel(view, menu);
+    }
+    @Override
+    public void onBackPressed() {
     }
 }

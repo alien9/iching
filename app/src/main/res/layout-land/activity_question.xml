@@ -6,22 +6,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:id="@+id/question_layout"
     tools:context="net.alien9.iching.Question">
-
     <android.support.design.widget.AppBarLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:theme="@style/AppTheme.AppBarOverlay">
-
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
+            app:contentInsetLeft="10dp"
+            app:contentInsetStart="10dp"
+            app:titleMarginStart="16dp"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
-
     </android.support.design.widget.AppBarLayout>
-
     <ImageButton
         android:id="@+id/next"
         android:layout_width="80dp"
@@ -42,10 +42,49 @@
         android:background="@color/transparent"
         android:scaleType="fitCenter"
         app:srcCompat="@drawable/but_backward" />
-    <SurfaceView
-        android:id="@+id/surface_view"
+    <RelativeLayout
+        android:gravity="center_horizontal|center_vertical"
+        android:id="@+id/video_container"
+        android:background="#000"
         android:visibility="gone"
+        android:animateLayoutChanges="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-        <include layout="@layout/content_question"/>
+        android:layout_height="match_parent">
+        <VideoView
+            android:layout_centerInParent="true"
+            android:clickable="true"
+            android:id="@+id/video_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <LinearLayout
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:gravity="center_horizontal"
+            android:padding="5dp"
+            android:id="@+id/video_controller"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            >
+            <ImageButton
+                android:id="@+id/rew"
+                android:layout_margin="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_media_rew"/>
+            <ImageButton
+                android:id="@+id/pause"
+                android:layout_margin="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_media_pause"/>
+            <ImageButton
+                android:id="@+id/ff"
+                android:layout_margin="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_media_ff"/>
+        </LinearLayout>
+    </RelativeLayout>
+    <include layout="@layout/content_question"/>
 </android.support.design.widget.CoordinatorLayout>

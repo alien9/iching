@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import okhttp3.Cookie;
@@ -149,6 +150,23 @@ public class Util {
         File f = new File(location+File.separator + dir);
         if(!f.isDirectory()) {
             f.mkdirs();
+        }
+    }
+    static boolean isValid(final File file) {
+        ZipFile zipfile = null;
+        try {
+            zipfile = new ZipFile(file);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            try {
+                if (zipfile != null) {
+                    zipfile.close();
+                    zipfile = null;
+                }
+            } catch (IOException e) {
+            }
         }
     }
 }

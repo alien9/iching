@@ -57,6 +57,7 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,10 +72,11 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
+import static android.view.View.GONE;
 import static net.alien9.iching.R.id.perg_id;
 import static net.alien9.iching.R.id.shortcut;
 
-public class Question extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback, android.widget.MediaController.MediaPlayerControl {
+public class Question extends AppCompatActivity{
     private static final int TYPE_TEXT = 2;
     private static final int TYPE_RADIO = 3;
     private static final int TYPE_CHECKBOX = 4;
@@ -113,7 +115,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
     private MediaPlayer mp;
     private SurfaceHolder sh;
     private String comment="";
-    private MediaController mc;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -126,29 +127,36 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
             } catch (JSONException ignore) {
                 Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                return;
             }
         }
         if(intent.hasExtra("CNETSERVERLOGACAO")){
             cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
         }
-
         setContentView(R.layout.activity_question);
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        toolbar.setTitle(polly.optString("nom"));
-        final Context context = this;
-        setTitle(polly.optString("nom"));
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.tolbar_icon);
+        Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"));
+
+        Bitmap bi = Bitmap.createScaledBitmap(bu.getWidth(),bu.getHeight(),false);
+        getSupportActionBar().setIcon();
+
+        getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
-            findViewById(R.id.next).setVisibility(View.GONE);
-            findViewById(R.id.previous).setVisibility(View.GONE);
-            pu.setVisibility(View.GONE);
+            findViewById(R.id.next).setVisibility(GONE);
+            findViewById(R.id.previous).setVisibility(GONE);
+            pu.setVisibility(GONE);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgini"));
             te.setVisibility(View.VISIBLE);
         }else{
             findViewById(R.id.next).setVisibility(View.VISIBLE);
-            te.setVisibility(View.GONE);
+            te.setVisibility(GONE);
             pu.setVisibility(View.VISIBLE);
         }
         PagerAdapter pa = new BunchViewAdapter(this);
@@ -161,6 +169,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 return true;
             }
         });
+
         pu.setAdapter(pa);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Activity budega = (Activity) this;
@@ -173,8 +182,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         ((Button)findViewById(R.id.continue_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                te.setVisibility(View.GONE);
-
+                te.setVisibility(GONE);
                 if(jadeu)
                     encerra();
                 else {
@@ -184,8 +192,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 }
             }
         });
-
-
 
         ((ImageButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -197,7 +203,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         ((ImageButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //validate();
                 NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
                 sv.scrollTo(0, 0);
                 if(!((IChing)getApplication()).hasUndo()){
@@ -209,7 +214,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                         if (cu > 0)
                             pu.setCurrentItem(cu - 1, true);
                     }
-                    findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)?View.GONE:View.VISIBLE);
+                    findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)? GONE:View.VISIBLE);
                 }
                 ((IChing)getApplication()).setUndo();
             }
@@ -225,7 +230,7 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 findViewById(R.id.previous).setVisibility(View.VISIBLE);
                 findViewById(R.id.next).setVisibility(View.VISIBLE);
                 if(position==0) {
-                    findViewById(R.id.previous).setVisibility(View.GONE);
+                    findViewById(R.id.previous).setVisibility(GONE);
                 }
                 //ViewGroup.LayoutParams params = pu.getLayoutParams();
                 //params.height = 1000;
@@ -267,18 +272,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        mp=new MediaPlayer();
-        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                findViewById(R.id.surface_view).setVisibility(View.GONE);
-                findViewById(R.id.main_view).setVisibility(View.VISIBLE);
-                getSupportActionBar().show();
-            }
-        });
-        mc = new MediaController(context);
-        sh=((SurfaceView)findViewById(R.id.surface_view)).getHolder();
-        sh.addCallback(Question.this);
     }
     private void pageup(String c){
         comment=c;
@@ -301,7 +294,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
                 int n=0;
                 boolean exist=false;
                 while( keys.hasNext() ) {
-                    //String k=pergs.optJSONObject((String)keys.next()).optString("ord");
                     String key= (String) keys.next();
                     if(key.equals(prox)){
                         pu.setCurrentItem(n);
@@ -327,13 +319,13 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         jadeu=true;
         if(polly.has("msgfim")){
             IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
-            findViewById(R.id.next).setVisibility(View.GONE);
-            findViewById(R.id.previous).setVisibility(View.GONE);
-            pu.setVisibility(View.GONE);
+            findViewById(R.id.next).setVisibility(GONE);
+            findViewById(R.id.previous).setVisibility(GONE);
+            pu.setVisibility(GONE);
             View te=findViewById(R.id.messenger_layout);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
             te.setVisibility(View.VISIBLE);
-            findViewById(R.id.main_view).setVisibility(View.GONE);
+            findViewById(R.id.main_view).setVisibility(GONE);
             return;
         }
         encerra();
@@ -401,90 +393,6 @@ public class Question extends AppCompatActivity implements MediaPlayer.OnPrepare
         alertDialog.show();
     }
 
-    @Override
-    public void onPrepared(MediaPlayer mediaPlayer) {
-        mp.start();
-        mc.setMediaPlayer(this);
-        mc.setAnchorView(findViewById(R.id.surface_view));
-        mc.post(new Runnable() {
-            public void run() {
-                mc.setEnabled(true);
-                mc.show();
-            }
-        });
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        mp.setDisplay(sh);
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        mp.stop();
-        mp.reset();
-    }
-
-    @Override
-    public void start() {
-mp.start();
-    }
-
-    @Override
-    public void pause() {
-mp.pause();
-    }
-
-    @Override
-    public int getDuration() {
-        return 0;
-    }
-
-    @Override
-    public int getCurrentPosition() {
-        return 0;
-    }
-
-    @Override
-    public void seekTo(int i) {
-
-    }
-
-    @Override
-    public boolean isPlaying() {
-        return false;
-    }
-
-    @Override
-    public int getBufferPercentage() {
-        return 0;
-    }
-
-    @Override
-    public boolean canPause() {
-        return false;
-    }
-
-    @Override
-    public boolean canSeekBackward() {
-        return false;
-    }
-
-    @Override
-    public boolean canSeekForward() {
-        return false;
-    }
-
-    @Override
-    public int getAudioSessionId() {
-        return 0;
-    }
-
     private class BunchViewAdapter extends PagerAdapter {
         private final Context context;
         private ArrayList<String> keynames;
@@ -511,7 +419,7 @@ mp.pause();
             return n;
         }
         @Override
-        public Object instantiateItem(ViewGroup collection, int position) {
+        public Object instantiateItem(ViewGroup collection, final int position) {
             LayoutInflater inflater = LayoutInflater.from(context);
             ViewGroup v = null;
             JSONObject respuestas = ((IChing) getApplication()).getRespostas();
@@ -630,7 +538,7 @@ mp.pause();
                             TextView tit = (TextView) lu.findViewById(R.id.title_text);
                             if(tit!=null) tit.setText(subitem.optString("txt"));
                             // isto com certeza está ruim - não mostramos os campos
-                            lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
+                            lu.findViewById(R.id.decline_layout).setVisibility(GONE);
                             //lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
                             /*
                             if(subitem.has("resps")){
@@ -812,30 +720,75 @@ mp.pause();
                         break;
                     case TYPE_MIDIA:
                         v = (ViewGroup) inflater.inflate(R.layout.type_image_question, collection, false);
-                        findViewById(R.id.surface_view).setVisibility(View.GONE);
                         final String filename = item.optJSONObject("resps").optJSONObject("1").optString("midia");
                         if(filename.matches(".*\\.mp4")){
                             v.findViewById(R.id.play).setVisibility(View.VISIBLE);
-                            v.findViewById(R.id.imageView).setVisibility(View.GONE);
-                            final ViewGroup finalV1 = v;
+                            v.findViewById(R.id.imageView).setVisibility(GONE);
                             ((ImageButton)v.findViewById(R.id.play)).setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    View sv = findViewById(R.id.surface_view);
+                                    findViewById(R.id.content_scroller).setVisibility(GONE);
+                                    findViewById(R.id.next).setVisibility(GONE);
+                                    findViewById(R.id.previous).setVisibility(GONE);
+                                    findViewById(R.id.video_container).setVisibility(View.VISIBLE);
                                     getSupportActionBar().hide();
-                                    sv.setVisibility(View.VISIBLE);
-                                    findViewById(R.id.main_view).setVisibility(View.GONE);
-                                    try {
-                                        mp.setDataSource(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
-                                        mp.prepare();
-                                        mp.setOnPreparedListener(Question.this);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                    final VideoView vw = (android.widget.VideoView) findViewById(R.id.video_view);
+                                    vw.setVideoPath(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                                    vw.setOnTouchListener(new View.OnTouchListener() {
+                                        @Override
+                                        public boolean onTouch(View view, MotionEvent motionEvent) {
+                                            if(motionEvent.getAction()==MotionEvent.ACTION_DOWN) {
+                                                if((findViewById(R.id.video_controller).isShown())){
+                                                    findViewById(R.id.video_controller).setVisibility(GONE);
+                                                }else
+                                                    findViewById(R.id.video_controller).setVisibility(View.VISIBLE);
+                                            }
+                                            return true;
+                                        }
+                                    });
+                                    vw.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                        public void onPrepared(MediaPlayer mediaPlayer) {
+                                            vw.seekTo(0);
+                                            vw.start();
+                                        }
+                                    });
+                                    vw.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                        @Override
+                                        public void onCompletion(MediaPlayer mediaPlayer) {
+                                            finishVideo();
+                                        }
+                                    });
+                                    ((ImageButton)findViewById(R.id.rew)).setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            vw.seekTo(0);
+                                        }
+                                    });
+                                    ((ImageButton)findViewById(R.id.ff)).setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            vw.pause();
+                                            finishVideo();
+                                        }
+                                    });
+                                    ((ImageButton)findViewById(R.id.pause)).setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            if(vw.isPlaying()) {
+                                                vw.pause();
+                                                ((ImageButton)findViewById(R.id.pause)).setImageResource(android.R.drawable.ic_media_play);
+                                            }else{
+                                                vw.start();
+                                                ((ImageButton)findViewById(R.id.pause)).setImageResource(android.R.drawable.ic_media_pause);
+                                            }
+                                        }
+                                    });
+
+
                                 }
                             });
                         }else{
-                            v.findViewById(R.id.play).setVisibility(View.GONE);
+                            v.findViewById(R.id.play).setVisibility(GONE);
                             v.findViewById(R.id.imageView).setVisibility(View.VISIBLE);
                             Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
                             if(b==null){
@@ -849,18 +802,18 @@ mp.pause();
                         break;
                 }
 
-                v.findViewById(R.id.decline_layout).setVisibility(View.GONE);
+                v.findViewById(R.id.decline_layout).setVisibility(GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
                 }else{
-                    v.findViewById(R.id.naosei).setVisibility(View.GONE);
+                    v.findViewById(R.id.naosei).setVisibility(GONE);
                 }
                 if(item.optBoolean("naoresp",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
                 }else{
-                    v.findViewById(R.id.naoresp).setVisibility(View.GONE);
+                    v.findViewById(R.id.naoresp).setVisibility(GONE);
                 }
                 if(v.findViewById(R.id.decline_layout)!=null) {
                     if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
@@ -912,6 +865,14 @@ mp.pause();
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
         }
+    }
+
+    private void finishVideo() {
+        findViewById(R.id.content_scroller).setVisibility(View.VISIBLE);
+        findViewById(R.id.next).setVisibility(View.VISIBLE);
+        if(((IChingViewPager) findViewById(R.id.main_view)).getCurrentItem()>0) findViewById(R.id.previous).setVisibility(View.VISIBLE);
+        findViewById(R.id.video_container).setVisibility(View.GONE);
+        getSupportActionBar().show();
     }
 
     private void fixDays() {
@@ -1161,13 +1122,6 @@ mp.pause();
         return null;
     }
 
-    protected boolean verify(){
-        return true;
-    }
-
-    private void iterate(View v, String ix) {
-
-    }
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());

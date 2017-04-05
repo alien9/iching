@@ -9,11 +9,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -22,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import okhttp3.Cookie;
@@ -44,13 +52,15 @@ public class IChing extends Application {
     private int undid;
     private JSONArray stuff;
     private String cod;
-    private String pesqId;
     public static final int POSITION_UPDATE = 0;
     private JSONObject last_known_position;
-    private LocationManager locationManager;
-    private String domain;
     private boolean isReloading=false;
-
+    Hashtable<String,Integer> BULLETS=new Hashtable<String,Integer>() {{
+        put((String) "habi", R.drawable.bullet_pessoa);
+        put((String) "fami", R.drawable.bullet_familia);
+        put((String) "ende", R.drawable.bullet_casa);
+        put((String) "geral", R.drawable.bullet_doc);
+    }};
     public static IChing getInstance() {
         return singleton;
     }
@@ -60,7 +70,6 @@ public class IChing extends Application {
         super.onCreate();
         respostas = new JSONObject();
         undid = 0;
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         singleton = this;
     }
 
@@ -69,9 +78,11 @@ public class IChing extends Application {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d("ICHING SERVICE","permission nort granted");
             ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            List<ActivityManager.AppTask> tasks = activityManager.getAppTasks();
-            tasks.get(0);
-
+            List<ActivityManager.AppTask> tasks = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                tasks = activityManager.getAppTasks();
+                tasks.get(0);
+            }
             ActivityCompat.requestPermissions(a,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     ICHING_REQUEST_GPS_PERMISSION);
@@ -81,23 +92,42 @@ public class IChing extends Application {
         Intent intent = new Intent();
         intent.setClass(getApplicationContext(), LocationService.class);
         startService(intent);
-        //final Handler locator = new Chandler();
-        //LocationListenerDourado l = new LocationListenerDourado(locator);
-        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, l);
     }
 
+    public CookieJar getCookieJar() {
+        if(cookieJar==null) {
+            cookieJar = new CookiePot();
+            SharedPreferences sharedpreferences = getSharedPreferences("COOKIES", Context.MODE_PRIVATE);
+            if(sharedpreferences.contains("CNETSERVERLOGACAO")){
+                try {
+                    JSONObject cu=new JSONObject(sharedpreferences.getString("CNETSERVERLOGACAO","{}"));
+                    Cookie ebom=new Cookie.Builder()
+                            .domain(cu.optString("domain"))
+                            .path(cu.optString("path"))
+                            .name(cu.optString("name"))
+                            .value(cu.optString("value"))
+                            .expiresAt(cu.optLong("expiresAt"))
+                            .httpOnly()
+                            .secure()
+                            .build();
+                    List<Cookie> lc=new ArrayList<>();
+                    lc.add(ebom);
+                    cookieJar.saveFromResponse(HttpUrl.parse(getString(R.string.load_url)),lc);
+                    return cookieJar;
+                } catch (JSONException|IllegalArgumentException estercado) {
+                    return cookieJar;
+                }
 
-    public static void setClient(OkHttpClient c){
-        getInstance().client=c;
-    }
-
-    public static OkHttpClient getClient(){
-        return getInstance().client;
-    }
-    public static CookieJar getCookieJar() {
-        if(cookieJar==null)
-            cookieJar=new CookiePot();
+            }
+        }
         return cookieJar;
+    }
+    public String getCookieJarCookies(){
+        CookieJar c= getCookieJar();
+        if(((CookiePot)c).cookies==null) return null;
+        if(((CookiePot)c).cookies.size()>0)
+            return cookieJar.cookies.get(0).toString();
+        return null;
     }
 
     public void setRespostas(JSONObject resps) {
@@ -151,24 +181,56 @@ public class IChing extends Application {
     }
 
     public void setPesqId(String p) {
-        pesqId = p;
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("id", p);
+        editor.commit();
     }
 
     public String getPesqId() {
-        return pesqId;
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        return sharedpreferences.getString("id",null);
     }
 
     public void setCookieJar(CookieJar c) {
         cookieJar = (CookiePot) c;
+        SharedPreferences sharedpreferences = getSharedPreferences("COOKIES", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        if(c!=null){
+            if(((CookiePot) c).cookies!=null){
+                if(((CookiePot) c).cookies.size()>0){
+                    JSONObject cu=new JSONObject();
+                    Cookie cookie = ((CookiePot) c).cookies.get(0);
+                    try {
+                        cu.put("name",cookie.value());
+                        cu.put("domain",cookie.domain());
+                        cu.put("value",cookie.value());
+                        cu.put("expiresAt",cookie.expiresAt());
+                        cu.put("path",cookie.path());
+                    } catch (JSONException ignore) {
+
+                    }
+                    editor.putString("CNETSERVERLOGACAO",cu.toString());
+                    editor.commit();
+                    return;
+                }
+            }
+        }
+        editor.remove("CNETSERVERLOGACAO");
+        editor.commit();
     }
 
 
 
     public void setDomain(String d) {
-        domain = d;
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("domain", d);
+        editor.commit();
     }
     public String getDomain(){
-        return domain;
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        return sharedpreferences.getString("domain",null);
     }
 
     public void setLastKnownPosition(JSONObject lastKnownPosition) {
@@ -195,14 +257,28 @@ public class IChing extends Application {
         isReloading = reloading;
     }
 
+    public Bitmap getItemBitmap(String string) {
+        Integer bitmap_res = BULLETS.get(string);
+        if(bitmap_res==null){
+            bitmap_res=R.drawable.bullet_doc;
+        }
+        Bitmap bm = BitmapFactory.decodeResource(getResources(), bitmap_res);
+        Bitmap bi= Bitmap.createBitmap(bm.getWidth(),bm.getHeight(),Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bi);
+        Paint paint = new Paint();
+        paint.setColor(Color.GREEN);
+        canvas.drawBitmap(bi, new Matrix(), null);
+        canvas.drawCircle(bi.getWidth()/2,bi.getHeight()/2, bi.getHeight()/2, paint);
+        canvas.drawBitmap(bm,0,0,null);
+        return bi;
+    }
+
     private static class CookiePot implements CookieJar {
         private List<Cookie> cookies;
-
         @Override
         public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
             this.cookies =  cookies;
         }
-
         @Override
         public List<Cookie> loadForRequest(HttpUrl url) {
             if (cookies != null)
