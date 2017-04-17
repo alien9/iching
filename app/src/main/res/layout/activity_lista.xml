@@ -13,8 +13,8 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             app:contentInsetLeft="10dp"
-            app:contentInsetStart="10dp"
-            app:titleMarginStart="16dp"
+            app:contentInsetStart="20dp"
+            app:titleMarginStart="26dp"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
@@ -27,9 +27,6 @@
                 android:indeterminate="true"
                 android:visibility="gone" />
         </android.support.v7.widget.Toolbar>
-
     </android.support.design.widget.AppBarLayout>
-
     <include layout="@layout/content_lista" />
-
 </android.support.design.widget.CoordinatorLayout>

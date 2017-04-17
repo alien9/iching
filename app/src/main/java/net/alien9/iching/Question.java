@@ -41,6 +41,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -59,6 +60,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -66,7 +68,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -88,6 +93,8 @@ public class Question extends AppCompatActivity{
     private static final int TYPE_YESORNO = 10;
     private static final int TYPE_MIDIA = 11;
     private static final int TYPE_TABLE = 12;
+    private static final int TYPE_HABI = 13;
+    private static final int TYPE_ENDE = 14;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
@@ -100,11 +107,15 @@ public class Question extends AppCompatActivity{
         put("simnao", TYPE_YESORNO);
         put("midia", TYPE_MIDIA);
         put("tabela", TYPE_TABLE);
+        put("habitante", TYPE_HABI);
+        put("endereco", TYPE_ENDE);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private static final int FIELD_INDEX = 99;
     public static final int POSITION_UPDATE = 0;
     private static final int ICHING_REQUEST_GPS_PERMISSION = 0;
+    private static final int PAGE_UP = 1;
+    private static final int PAGE_DOWN = -1;
+    private static final int NOTHING = 0;
     private File imageFile;
     private JSONObject polly;
     private String cookies;
@@ -115,16 +126,22 @@ public class Question extends AppCompatActivity{
     private MediaPlayer mp;
     private SurfaceHolder sh;
     private String comment="";
+    private boolean isPagingUp;
+    private int toDo;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
+        isPagingUp=false;
         if(intent.hasExtra("poll")){
             String h = intent.getExtras().getString("poll");
             try {
                 polly=new JSONObject(h);
                 ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
+                if(polly.has("preset")){
+                    ((IChing)getApplicationContext()).setRespostas(polly.optJSONObject("preset"));
+                }
             } catch (JSONException ignore) {
                 Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
                 return;
@@ -141,9 +158,6 @@ public class Question extends AppCompatActivity{
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.drawable.tolbar_icon);
         Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"));
-
-        //Bitmap bi = Bitmap.createScaledBitmap(bu,bu.getWidth(),bu.getHeight(),false);
-
         getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
@@ -195,27 +209,31 @@ public class Question extends AppCompatActivity{
         ((ImageButton)findViewById(R.id.next)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pageup();
-                if(pu.getCurrentItem()>0)findViewById(R.id.previous).setVisibility(View.VISIBLE);
+                if(isPagingUp) return;
+                isPagingUp=true;
+                NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+                if(sv.getScrollY()>0) {
+                    setToDo(Question.PAGE_UP);
+                    sv.scrollTo(0, 0);
+                }else{
+                    pageup();
+                }
             }
         });
         ((ImageButton)findViewById(R.id.previous)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(isPagingUp) return;
+                isPagingUp=true;
                 NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
-                sv.scrollTo(0, 0);
-                if(!((IChing)getApplication()).hasUndo()){
-                    int cu = pu.getCurrentItem();
-                    if(previous_index>=0){
-                        pu.setCurrentItem(previous_index);
-                        previous_index=-1;
-                    }else {
-                        if (cu > 0)
-                            pu.setCurrentItem(cu - 1, true);
-                    }
-                    findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)? GONE:View.VISIBLE);
+                setToDo(Question.PAGE_DOWN);
+                if(sv.getScrollY()>0) {
+                    setToDo(Question.PAGE_UP);
+                    sv.scrollTo(0, 0);
+                }else{
+                    pagedown();
                 }
-                ((IChing)getApplication()).setUndo();
+
             }
         });
         pu.addOnPageChangeListener(new IChingViewPager.OnPageChangeListener() {
@@ -241,6 +259,8 @@ public class Question extends AppCompatActivity{
             @Override
             public void onPageScrollStateChanged(int state) {
                 Log.d("iching page scroll",""+state);
+                if(state==ViewPager.SCROLL_STATE_IDLE)
+                    isPagingUp=false;
             }
         });
 
@@ -271,17 +291,52 @@ public class Question extends AppCompatActivity{
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
+        sv.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                switch (getToDo()){
+                    case PAGE_DOWN:
+                        pagedown();
+                        break;
+                    case PAGE_UP:
+                        pageup();
+                        break;
+
+                }
+                setToDo(Question.NOTHING);
+            }
+        });
     }
+
+    private void pagedown() {
+        final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        if(!((IChing)getApplication()).hasUndo()){
+            int cu = pu.getCurrentItem();
+            if(previous_index>=0){
+                pu.setCurrentItem(previous_index);
+                previous_index=-1;
+            }else {
+                if (cu > 0)
+                    pu.setCurrentItem(cu - 1, true);
+            }
+            findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)? GONE:View.VISIBLE);
+        }else{
+            isPagingUp=false;
+        }
+        ((IChing)getApplication()).setUndo();
+    }
+
     private void pageup(String c){
         comment=c;
         pageup();
     }
     private void pageup() {
-        if(!validate())
+        if(!validate()) {
+            isPagingUp=false;
             return;
+        }
         IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
-        NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
-        sv.scrollTo(0, 0);
         ((IChing)getApplication()).resetUndo();
         int cu = pu.getCurrentItem();
         previous_index=cu;
@@ -392,30 +447,64 @@ public class Question extends AppCompatActivity{
         alertDialog.show();
     }
 
+    public void setToDo(int t) {
+        toDo = t;
+    }
+
+    public int getToDo() {
+        return toDo;
+    }
+
     private class BunchViewAdapter extends PagerAdapter {
         private final Context context;
         private ArrayList<String> keynames;
+        private int counta;
 
         public BunchViewAdapter(Context c) {
             context = c;
+            counta=-1;
         }
         @Override
         public int getCount() {
             if(!polly.has("pergs")) return 0;
+            if(counta>=0)return counta;
             JSONObject pergs = null;
             try {
                 pergs = polly.getJSONObject("pergs");
             } catch (JSONException e) {
                 pergs=new JSONObject();
             }
-            Iterator<?> keys = pergs.keys();
+
             keynames=new ArrayList<String>();
-            int n=0;
-            while( keys.hasNext() ) {
-                keynames.add((String)keys.next());
-                n++;
+            List<JSONObject> things = new ArrayList<>();
+            counta=0;
+
+            if(polly.optBoolean("comhabi",true)){
+                keynames.add("habi");
+                counta++;
             }
-            return n;
+            if(polly.optBoolean("comende",true)){
+                keynames.add("ende");
+                counta++;
+            }
+
+            Iterator<?> keys = pergs.keys();
+            try {
+                while( keys.hasNext() ) {
+                    String k = (String) keys.next();
+                    JSONObject j = pergs.optJSONObject(k);
+                    j.put("cod",k);
+                    things.add(j);
+                    counta++;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Collections.sort(things,new ThingsSorter());
+            for(int i=0;i<things.size();i++){
+                keynames.add(things.get(i).optString("cod"));
+            }
+            return counta;
         }
         @Override
         public Object instantiateItem(ViewGroup collection, final int position) {
@@ -424,7 +513,17 @@ public class Question extends AppCompatActivity{
             JSONObject respuestas = ((IChing) getApplication()).getRespostas();
             try {
                 String perg_id=keynames.get(position);
-                JSONObject item=polly.getJSONObject("pergs").getJSONObject(perg_id);
+                JSONObject item=new JSONObject();
+                if(polly.getJSONObject("pergs").has(perg_id)){
+                    item = polly.getJSONObject("pergs").getJSONObject(perg_id);
+                }else{
+                    if(perg_id.equals("habi")){
+                        item.put("tipo","habitante");
+                    }
+                    if(perg_id.equals("ende")){
+                        item.put("tipo","endereco");
+                    }
+                }
                 if(item.has("pergs")){ // tipo multiplas pergs
                     item.put("tipo","tabela");
                 }
@@ -447,6 +546,47 @@ public class Question extends AppCompatActivity{
                     }
                 }
                 switch(t){
+                    case TYPE_HABI:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_habitante, collection, false);
+                        String data_atual;
+                        Calendar c = Calendar.getInstance();
+                        if(respuestas.has("hab1_dat_nasc"))
+                            data_atual=respuestas.optString("hab1_dat_nasc");
+                        else{
+                            data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
+                        }
+                        setupDateField(context,v,data_atual,c.get(Calendar.YEAR));
+                        ((EditText)v.findViewById(R.id.editText_habi1_nom)).setText(respuestas.optString("habi1_nom",""));
+                        break;
+                    case TYPE_ENDE:
+                        /*
+ende1_cod
+ende1_logr
+ende1_num
+ende1_bai
+ende1_compl
+ende1_lat
+ende1_lng
+                        *
+                        * */
+
+                        v = (ViewGroup) inflater.inflate(R.layout.type_endereco, collection, false);
+                        ((EditText)v.findViewById(R.id.editText_nomedarua)).setText(respuestas.optString("ende1_logr"));
+                        ((EditText)v.findViewById(R.id.editText_numero)).setText(respuestas.optString("ende1_num"));
+                        ((EditText)v.findViewById(R.id.editText_complemento)).setText(respuestas.optString("ende1_compl"));
+                        ((EditText)v.findViewById(R.id.editText_telefone)).setText(respuestas.optString("ende1_tele"));
+                        ((EditText)v.findViewById(R.id.editText_bairro)).setText(respuestas.optString("ende1_bai"));
+                        ((EditText)v.findViewById(R.id.editText_cidade)).setText(respuestas.optString("ende1_cida"));
+                        ((TextView)v.findViewById(R.id.ende1_lat)).setText(respuestas.optString("ende1_lat"));
+                        ((TextView)v.findViewById(R.id.ende1_lng)).setText(respuestas.optString("ende1_lng"));
+                        ((TextView)v.findViewById(R.id.ende1_cod)).setText(respuestas.optString("ende1_cod"));
+                        String[] estados=getResources().getStringArray(R.array.estados);
+                        int uf=Arrays.asList(estados).indexOf(respuestas.optString("ende1_uf"));
+                        if(uf>=0) {
+                            ((Spinner) v.findViewById(R.id.estado_spinner)).setSelection(uf);
+                        }
+
+                        break;
                     case TYPE_RADIO:
                     case TYPE_UNICA:
                     case TYPE_YESORNO:
@@ -578,68 +718,13 @@ public class Question extends AppCompatActivity{
                         break;
                     case TYPE_DATE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_date_split_question, collection, false);
-                        String du;
-                        Calendar c = Calendar.getInstance();
+                        c = Calendar.getInstance();
                         if(respuestas.has(perg_id))
-                            du=respuestas.optJSONObject(perg_id).optString("v");
+                            data_atual=respuestas.optJSONObject(perg_id).optString("v");
                         else{
-                            du=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
+                            data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                         }
-                        List<String> dias=new ArrayList<String>();
-                        for(int i=1;i<32;i++){
-                            dias.add(""+i);
-                        }
-                        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,R.layout.spinner_item, dias);
-                        Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
-                        dup.setAdapter(ass);
-
-
-                        String[] months = getResources().getStringArray(R.array.meses);
-                        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, months);
-                        Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
-                        mup.setAdapter(mss);
-
-
-                        List<String> anos=new ArrayList<String>();
-                        int am = item.optInt("anomax", c.get(Calendar.YEAR));
-                        for(int i=1800;i<=am;i++){
-                            anos.add(""+i);
-                        }
-                        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
-                        Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
-                        yup.setAdapter(ssa);
-
-                        yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                            @Override
-                            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                                fixDays();
-                            }
-
-                            @Override
-                            public void onNothingSelected(AdapterView<?> adapterView) {
-
-                            }
-                        });
-
-                        ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                            @Override
-                            public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
-                                fixDays();
-                            }
-                            @Override
-                            public void onNothingSelected(AdapterView<?> adapterView) {
-
-                            }
-                        });
-                        if(!du.equals(null)){
-                            String[] dat=du.split("\\/");
-                            if(dat.length==3){
-                                dup.setSelection(ass.getPosition(dat[0]));
-                                mup = (Spinner) v.findViewById(R.id.spinner_month);
-                                mup.setSelection(Integer.parseInt(dat[1])-1);
-                                yup.setSelection(ssa.getPosition(dat[2]));
-                            }
-                        }
+                        setupDateField(context,v,data_atual,item.optInt("anomax", c.get(Calendar.YEAR)));
                         break;
                     case TYPE_NUMBER:
                         n=0;
@@ -800,7 +885,6 @@ public class Question extends AppCompatActivity{
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
-
                 v.findViewById(R.id.decline_layout).setVisibility(GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
@@ -863,6 +947,63 @@ public class Question extends AppCompatActivity{
         @Override
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
+        }
+    }
+
+    private void setupDateField(Context context, ViewGroup v, String data_atual,int am) {
+        Calendar c = Calendar.getInstance();
+        List<String> dias=new ArrayList<String>();
+        for(int i=1;i<32;i++){
+            dias.add(""+i);
+        }
+        ArrayAdapter<String> ass = new ArrayAdapter<String>(context,R.layout.spinner_item, dias);
+        Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
+        dup.setAdapter(ass);
+
+        String[] months = getResources().getStringArray(R.array.meses);
+        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, months);
+        Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
+        mup.setAdapter(mss);
+
+
+        List<String> anos=new ArrayList<String>();
+        for(int i=1800;i<=am;i++){
+            anos.add(""+i);
+        }
+        ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
+        Spinner yup = (Spinner) v.findViewById(R.id.spinner_year);
+        yup.setAdapter(ssa);
+
+        yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                fixDays();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
+                fixDays();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        if(!data_atual.equals(null)){
+            String[] dat=data_atual.split("\\/");
+            if(dat.length==3){
+                dup.setSelection(ass.getPosition(dat[0]));
+                mup = (Spinner) v.findViewById(R.id.spinner_month);
+                mup.setSelection(Integer.parseInt(dat[1])-1);
+                yup.setSelection(ssa.getPosition(dat[2]));
+            }
         }
     }
 
@@ -955,7 +1096,10 @@ public class Question extends AppCompatActivity{
         prox="";
         if(pergfield!=null) {
             String perg_id = (String) pergfield.getText();
-            JSONObject item=polly.optJSONObject("pergs").optJSONObject(perg_id);
+            JSONObject item=new JSONObject();
+            if(polly.optJSONObject("pergs").has(perg_id)){
+                item=polly.optJSONObject("pergs").optJSONObject(perg_id);
+            };
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
@@ -980,10 +1124,60 @@ public class Question extends AppCompatActivity{
                         return false;
                     }
                     respostinha.put("v",t);
-                    //respuestas.put(perg_id, t);
                 }
+                if(v.findViewById(R.id.habitante_layout)!=null){
+                    respuestas.put("habi1_nom",((EditText)findViewById(R.id.editText_habi1_nom)).getText());
+                    if(respuestas.optString("habi1_nom").length()<2){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        findViewById(R.id.editText_habi1_nom).requestFocus();
+                        return false;
+                    }
+                    respuestas.put("habi1_cod",((TextView)findViewById(R.id.habi1_cod)).getText());
+                    respuestas.put("habi1_nom_mae",((EditText)findViewById(R.id.editText_habi1_nom_mae)).getText());
+                    respuestas.put("habi1_nom_pai",((EditText)findViewById(R.id.editText_habi1_nom_pai)).getText());
+                    respuestas.put("habi1_cns",((EditText)findViewById(R.id.editText_habi1_cns)).getText());
+                    respuestas.put("habi1_cpf",((EditText)findViewById(R.id.editText_habi1_cpf)).getText());
+                    respuestas.put("habi1_rg",((EditText)findViewById(R.id.editText_habi1_rg)).getText());
+                    respuestas.put("habi1_dat_nasc",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    /*
 
+habi1_cod
+habi1_nom
+habi1_nom_mae
+habi1_nom_pai;
+habi1_cns
+habi1_rg=$habi
+habi1_cpf
+habi1_sex
+habi1_dat_nasc
+*/
+                }
+                if(v.findViewById(R.id.endereco_layout)!=null) {
+                    respuestas.put("ende1_logr", ((EditText) findViewById(R.id.editText_nomedarua)).getText());
+                    if (respuestas.optString("ende1_logr").length() < 1) {
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        findViewById(R.id.editText_nomedarua).requestFocus();
+                        return false;
+                    }
+                    respuestas.put("ende1_num", ((EditText) findViewById(R.id.editText_numero)).getText());
+                    respuestas.put("ende1_tele", ((EditText) findViewById(R.id.editText_telefone)).getText());
+                    respuestas.put("ende1_compl", ((EditText) findViewById(R.id.editText_complemento)).getText());
+                }
                 /*
+((EditText)v.findViewById(R.id.editText_nomedarua)).setText(respuestas.optString("ende1_logr"));
+                        ((EditText)v.findViewById(R.id.editText_numero)).setText(respuestas.optString("ende1_num"));
+                        ((EditText)v.findViewById(R.id.editText_complemento)).setText(respuestas.optString("ende1_compl"));
+                        ((EditText)v.findViewById(R.id.editText_telefone)).setText(respuestas.optString("ende1_tele"));
+                        ((EditText)v.findViewById(R.id.editText_bairro)).setText(respuestas.optString("ende1_bai"));
+                        ((EditText)v.findViewById(R.id.editText_cidade)).setText(respuestas.optString("ende1_cida"));
+                        ((TextView)v.findViewById(R.id.ende1_lat)).setText(respuestas.optString("ende1_lat"));
+                        ((TextView)v.findViewById(R.id.ende1_lng)).setText(respuestas.optString("ende1_lng"));
+                        ((TextView)v.findViewById(R.id.ende1_cod)).setText(respuestas.optString("ende1_cod"));
+                        String[] estados=getResources().getStringArray(R.array.estados);
+                        int uf=Arrays.asList(estados).indexOf(respuestas.optString("ende1_uf"));
+                        if(uf>=0) {
+                            ((Spinner) v.findViewById(R.id.estado_spinner)).setSelection(uf);
+                        }
                 View vcl = v.findViewById(R.id.comments_request);
                 if(vcl.getVisibility()==View.VISIBLE){
                     EditText vc=(EditText)vcl.findViewById(R.id.comments);
@@ -1003,8 +1197,6 @@ public class Question extends AppCompatActivity{
                     require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
                     resposta = item.optJSONObject("resps").optJSONObject("1");
                 }
-
-
 
                 if (v.findViewById(R.id.spinner_month) != null) {
                     respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
@@ -1066,6 +1258,13 @@ public class Question extends AppCompatActivity{
                     }
                     respostinha=resposta_multi;
                 }
+                if(v.findViewById(R.id.habitante_layout)!=null){
+
+                }
+                if(v.findViewById(R.id.endereco_layout)!=null){
+
+                }
+
                 if(require_comments && !respostinha.optBoolean("c")){
                     if(comment.length()>0){
                         respostinha.put("c",comment);
@@ -1142,5 +1341,24 @@ public class Question extends AppCompatActivity{
     }
     @Override
     public void onBackPressed() {
+    }
+
+    private class ThingsSorter implements java.util.Comparator<JSONObject> {
+        @Override
+        public int compare(JSONObject jsonObject, JSONObject t1) {
+
+            return getOrd(jsonObject)-getOrd(t1);
+        }
+
+        private int getOrd(JSONObject t) {
+            if(t.has("ord")) return t.optInt("ord");
+            if(t.has("pergs")){
+                JSONObject pergs = t.optJSONObject("pergs");
+                if(pergs.keys().hasNext()){
+                    return pergs.optJSONObject(pergs.keys().next()).optInt("ord");
+                }
+            }
+            return 0;
+        }
     }
 }

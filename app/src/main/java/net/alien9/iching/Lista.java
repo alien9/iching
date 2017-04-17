@@ -6,11 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -47,10 +42,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.zip.ZipFile;
 
 import okhttp3.CookieJar;
 import okhttp3.MultipartBody;
@@ -71,6 +64,8 @@ public class Lista extends AppCompatActivity {
     private int totalsize;
     private int currentsize;
     private boolean cancel_download;
+    private JSONObject current_pesquisa;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,8 +100,39 @@ public class Lista extends AppCompatActivity {
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if(current_pesquisa==null){ // CLICKOU NUMA PESQUISA
+                    current_pesquisa = stuff.optJSONObject(i);
+                    if(current_pesquisa.optString("foco").equals("ende")){
+                        if(current_pesquisa.optJSONArray("ende").length()>0){
+                            showEnderecos(current_pesquisa);
+                            return;
+                        }
+                    }
+                    if(current_pesquisa.optString("foco").equals("habi")){
+                        if(current_pesquisa.optJSONArray("habi").length()>0){
+                            showEnderecos(current_pesquisa);
+                            return;
+                        }
+                    }
+                }else{
+                    //selecionando extras da pesquisa
+                    if(current_pesquisa.optString("foco").equals("habi")){
+                        try {
+                            current_pesquisa.put("preset",current_pesquisa.optJSONArray("habi").optJSONObject(i));
+                        } catch (JSONException ignore) {
+                            Log.d("ICHING","habitante mal informado!");
+                        }
+                    }
+                    if(current_pesquisa.optString("foco").equals("ende")){
+                        try {
+                            current_pesquisa.put("preset",current_pesquisa.optJSONArray("ende").optJSONObject(i));
+                        } catch (JSONException ignore) {
+                            Log.d("ICHING","endereço mal informado!");
+                        }
+                    }
+                }
                 Intent intent = new Intent(context, Question.class);
-                intent.putExtra("poll",stuff.optJSONObject(i).toString());
+                intent.putExtra("poll",current_pesquisa.toString());
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
                 startActivity(intent);
             }
@@ -122,7 +148,7 @@ public class Lista extends AppCompatActivity {
             } catch (JSONException ignored) {}
             editor.putString("journal", journal.toString());
             editor.commit();
-            show();
+            showPesquisas();
         }else {
             reload();
         }
@@ -209,7 +235,7 @@ public class Lista extends AppCompatActivity {
 
     private void reload() {
         if(!isNetworkAvailable()) {
-            show();
+            showPesquisas();
             return;
         }
         if(!isReloading()) {
@@ -314,7 +340,7 @@ public class Lista extends AppCompatActivity {
                         break;
                 }
             }else {
-                show();
+                showPesquisas();
             }
         }
     }
@@ -326,7 +352,34 @@ public class Lista extends AppCompatActivity {
         editor.commit();
     }
 
-    private void show() {
+    private void showEnderecos(JSONObject pesquisa){
+        setTitle(pesquisa.optString("nom"));
+        List<String> names=new ArrayList<>();
+        List<String> focos=new ArrayList<>();
+        media=new ArrayList<>();
+        cleanUp();
+        totalsize = 0;
+        currentsize=0;
+        if(pesquisa.has("habi")) {
+            JSONArray habi = pesquisa.optJSONArray("habi");
+            for (int i = 0; i < habi.length(); i++) {
+                JSONObject it = habi.optJSONObject(i);
+                names.add(it.optString("habi1_nom"));
+                focos.add("habi");
+            }
+        }else if(pesquisa.has("ende")){
+            JSONArray ende = pesquisa.optJSONArray("ende");
+            for (int i = 0; i < ende.length(); i++) {
+                JSONObject it = ende.optJSONObject(i);
+                names.add(it.optString("ende1_logr"));
+                focos.add("ende");
+            }
+        }
+        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos));
+    }
+
+    private void showPesquisas() {
+        setTitle(getString(R.string.app_name));
         if(stuff==null)return;
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
@@ -334,7 +387,6 @@ public class Lista extends AppCompatActivity {
         cleanUp();
         totalsize = 0;
         currentsize=0;
-
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
@@ -446,7 +498,7 @@ public class Lista extends AppCompatActivity {
                         .setMessage(getString(R.string.try_again))
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                show();
+                                showPesquisas();
                             }
                         })
                         .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -586,5 +638,9 @@ public class Lista extends AppCompatActivity {
     }
     @Override
     public void onBackPressed() {
+        if(current_pesquisa!=null){
+            current_pesquisa=null;
+            showPesquisas();
+        }
     }
 }
