@@ -18,48 +18,76 @@
             android:layout_weight="5"
             android:orientation="vertical"
             android:layout_height="match_parent">
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_do_habitante"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/nome_do_habitante"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_da_mae"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/nome_da_mae"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom_mae" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_do_pai"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/nome_do_pai"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom_pai" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cns"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:hint="@string/cns"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_cns" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/rg"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:hint="@string/rg"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_rg" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cpf"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:hint="@string/cpf"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_habi1_cpf" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/data_nasc"
+                />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

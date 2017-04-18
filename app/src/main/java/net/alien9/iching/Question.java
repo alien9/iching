@@ -259,8 +259,8 @@ public class Question extends AppCompatActivity{
             @Override
             public void onPageScrollStateChanged(int state) {
                 Log.d("iching page scroll",""+state);
-                if(state==ViewPager.SCROLL_STATE_IDLE)
-                    isPagingUp=false;
+                //if(state==ViewPager.SCROLL_STATE_IDLE)
+                    //isPagingUp=false;
             }
         });
 
@@ -367,6 +367,7 @@ public class Question extends AppCompatActivity{
         }else{
             termina();
         }
+        isPagingUp=false;
     }
 
     private void termina() {

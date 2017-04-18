@@ -10,7 +10,7 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:weightSum="10"
+        android:weightSum="5"
         android:id="@+id/endereco_layout"
         >
         <LinearLayout
@@ -18,67 +18,96 @@
             android:layout_weight="5"
             android:orientation="vertical"
             android:layout_height="match_parent">
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_da_rua"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/nome_da_rua"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_nomedarua" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/numero"
+                />
+
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:hint="@string/numero"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_numero" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/complemento"
+                />
+
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:hint="@string/complemento"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_complemento" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/telefone"
+                />
+
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:hint="@string/telefone"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_telefone" />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/bairro"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:hint="@string/bairro"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_bairro" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="5"
-            android:orientation="vertical"
-            android:layout_height="match_parent">
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cidade"
+                />
+
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/cidade"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_cidade" />
-
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/estado"
+                />
             <Spinner
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/estado_spinner"
                 android:entries="@array/estados"
                 />
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_do_contato"
+                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:hint="@string/nome_do_contato"
                 android:ems="10"
+                style="@style/EditGrande"
                 android:id="@+id/editText_nomedocontato" />
             <CheckBox
                 android:layout_width="match_parent"
@@ -86,11 +115,6 @@
                 android:id="@+id/presente_checkbox"
                 android:text="@string/presente"
                 />
-            <Button
-                android:text="Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/button" />
         </LinearLayout>
     </LinearLayout>
     <TextView

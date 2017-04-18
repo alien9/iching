@@ -98,4 +98,6 @@
     <string name="nome_do_pai">Nome do pai</string>
     <string name="cpf">CPF</string>
     <string name="rg">RG</string>
+    <string name="data_nasc">Data de nascimento</string>
+    <string name="estado">Estado</string>
 </resources>

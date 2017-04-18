@@ -24,7 +24,7 @@
         <item name="windowNoTitle">true</item>
         <item name="android:checkboxStyle">@style/checkstyle</item>
         <item name="android:radioButtonStyle">@style/radiostyle</item>
-        <item name="android:editTextStyle">@style/text_style</item>
+        <item name="android:editTextStyle">@style/EditGrande</item>
         <item name="android:windowFullscreen">true</item>
     </style>
     <style name="Theme.AppCompat.Light.NoActionBar.FullScreen" parent="@style/Theme.AppCompat.Light">
@@ -67,5 +67,9 @@
     <style name="text_style" parent="@android:style/Widget.DeviceDefault.EditText">
         <item name="android:textColor">#ffffff00</item>
         <item name="android:textSize">40dp</item>
+    </style>
+
+    <style name="EditGrande">
+        <item name="android:textSize">30dp</item>
     </style>
 </resources>
