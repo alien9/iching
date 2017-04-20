@@ -349,10 +349,10 @@ public class Question extends AppCompatActivity{
                 boolean exist=false;
                 while( keys.hasNext() ) {
                     String key= (String) keys.next();
-                    if(pergs.optString("ord").equals(prox)){
+                    if(pergs.optJSONObject(key).equals(prox)){
                         pu.setCurrentItem(n);
                         exist=true;
-                    }else if(key.contains("tela")){ // tem sub questoes
+                    }else if(pergs.optJSONObject(key).has("pergs")){ // tem sub questoes
                         if(pergs.optJSONObject(key).optJSONObject("pergs").has(prox)){
                             pu.setCurrentItem(n);
                             exist=true;
@@ -666,7 +666,7 @@ ende1_lng
                                     }
                                     break;
                                 case TYPE_NUMBER:
-                                    lu = (LinearLayout) vi.inflate(R.layout.type_number_question, null);
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_number_mini, null);
                                     break;
                                 case TYPE_TEXT:
                                 default:
@@ -675,7 +675,7 @@ ende1_lng
                             }
                             lu.setBackgroundColor((n%2==0)?Color.parseColor("#0000ff00"):Color.parseColor("#ffdddddd"));
                             ((TextView)lu.findViewById(R.id.subperg_id)).setText(subitem_key);
-                            TextView tit = (TextView) lu.findViewById(R.id.title_text);
+                            TextView tit = (TextView) lu.findViewById(R.id.subtitle_text);
                             if(tit!=null) tit.setText(subitem.optString("txt"));
                             // isto com certeza está ruim - não mostramos os campos
                             lu.findViewById(R.id.decline_layout).setVisibility(GONE);
@@ -929,6 +929,7 @@ ende1_lng
                     }
                 }
                 String title=item.optString("txt",null);
+                if(title==null) title=item.optString("tit");
                 if(title!=null){
                     TextView tw = (TextView) v.findViewById(R.id.title_text);
                     if(tw!=null)
