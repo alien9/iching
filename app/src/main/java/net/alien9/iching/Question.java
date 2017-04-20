@@ -349,7 +349,7 @@ public class Question extends AppCompatActivity{
                 boolean exist=false;
                 while( keys.hasNext() ) {
                     String key= (String) keys.next();
-                    if(key.equals(prox)){
+                    if(pergs.optString("ord").equals(prox)){
                         pu.setCurrentItem(n);
                         exist=true;
                     }else if(key.contains("tela")){ // tem sub questoes
