@@ -340,27 +340,27 @@ public class Question extends AppCompatActivity{
         ((IChing)getApplication()).resetUndo();
         int cu = pu.getCurrentItem();
         previous_index=cu;
+        ArrayList keynames = ((BunchViewAdapter)pu.getAdapter()).keynames;
         if((cu<pu.getAdapter().getCount()-1)&&!encerrabody) {
             if(!prox.equals("")){
-                int i=0;
-                JSONObject pergs = polly.optJSONObject("pergs");
-                Iterator<?> keys = pergs.keys();
-                int n=0;
                 boolean exist=false;
-                while( keys.hasNext() ) {
-                    String key= (String) keys.next();
-                    if(pergs.optJSONObject(key).equals(prox)){
-                        pu.setCurrentItem(n);
+                JSONObject pergs = polly.optJSONObject("pergs");
+                for(int i=0;i<keynames.size();i++){
+                    String key= (String) keynames.get(i);
+                    if(key.equals(prox)){
+                        pu.setCurrentItem(i);
                         exist=true;
-                    }else if(pergs.optJSONObject(key).has("pergs")){ // tem sub questoes
-                        if(pergs.optJSONObject(key).optJSONObject("pergs").has(prox)){
-                            pu.setCurrentItem(n);
-                            exist=true;
+                        break;
+                    }else if(pergs.has(key)){ // é uma pergunta convencional
+                        if(pergs.optJSONObject(key).has("pergs")) { // tem sub questoes
+                            if (pergs.optJSONObject(key).optJSONObject("pergs").has(prox)) {
+                                pu.setCurrentItem(i);
+                                exist = true;
+                            }
                         }
                     }
-                    n++;
                 }
-                if(!exist) pu.setCurrentItem(cu + 1, true);
+                if(!exist) pu.setCurrentItem(cu + 1, true); // situação anormal, a pregunta indicada COMO PRÓXIMA NÃO EXISTE
             }else {
                 pu.setCurrentItem(cu + 1, true);
             }
@@ -371,6 +371,7 @@ public class Question extends AppCompatActivity{
     }
 
     private void termina() {
+        isPagingUp=false;
         jadeu=true;
         if(polly.has("msgfim")){
             IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
@@ -458,7 +459,7 @@ public class Question extends AppCompatActivity{
 
     private class BunchViewAdapter extends PagerAdapter {
         private final Context context;
-        private ArrayList<String> keynames;
+        public ArrayList<String> keynames;
         private int counta;
 
         public BunchViewAdapter(Context c) {
