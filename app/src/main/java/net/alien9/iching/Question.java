@@ -260,7 +260,7 @@ public class Question extends AppCompatActivity{
             public void onPageScrollStateChanged(int state) {
                 Log.d("iching page scroll",""+state);
                 //if(state==ViewPager.SCROLL_STATE_IDLE)
-                    //isPagingUp=false;
+                //isPagingUp=false;
             }
         });
 
@@ -669,6 +669,16 @@ ende1_lng
                                 case TYPE_NUMBER:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_number_mini, null);
                                     break;
+                                case TYPE_DATE:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_date_mini, null);
+                                    c = Calendar.getInstance();
+                                    if(respuestas.has(subitem_key)) {
+                                        data_atual = respuestas.optJSONObject(subitem_key).optString("v");
+                                    }else{
+                                        data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
+                                    }
+                                    setupDateField(context,lu,data_atual,item.optInt("anomax", c.get(Calendar.YEAR)));
+                                    break;
                                 case TYPE_TEXT:
                                 default:
                                     lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
@@ -887,6 +897,8 @@ ende1_lng
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         break;
                 }
+                if(v.findViewById(R.id.type_of_question)!=null)
+                    ((TextView)v.findViewById(R.id.type_of_question)).setText(""+t);
                 v.findViewById(R.id.decline_layout).setVisibility(GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
@@ -953,7 +965,7 @@ ende1_lng
         }
     }
 
-    private void setupDateField(Context context, ViewGroup v, String data_atual,int am) {
+    private void setupDateField(Context context, final ViewGroup v, String data_atual, int am) {
         Calendar c = Calendar.getInstance();
         List<String> dias=new ArrayList<String>();
         for(int i=1;i<32;i++){
@@ -980,7 +992,7 @@ ende1_lng
         yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                fixDays();
+                fixDays(v);
             }
 
             @Override
@@ -992,7 +1004,7 @@ ende1_lng
         ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
-                fixDays();
+                fixDays(v);
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -1018,11 +1030,11 @@ ende1_lng
         getSupportActionBar().show();
     }
 
-    private void fixDays() {
-        Spinner dup = (Spinner) findViewById(R.id.spinner_day);
+    private void fixDays(ViewGroup g) {
+        Spinner dup = (Spinner) g.findViewById(R.id.spinner_day);
         int pit=dup.getSelectedItemPosition();
         int daisy=31;
-        switch(((Spinner)findViewById(R.id.spinner_month)).getSelectedItemPosition()){
+        switch(((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition()){
             case 0://jan
             case 2://mar
             case 4://mai
@@ -1039,7 +1051,7 @@ ende1_lng
                 daisy=30;
                 break;
             case 1://fev
-                int year=Integer.parseInt(((Spinner) findViewById(R.id.spinner_year)).getSelectedItem().toString());
+                int year=Integer.parseInt(((Spinner) g.findViewById(R.id.spinner_year)).getSelectedItem().toString());
                 if((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0))
                     daisy=29;
                 else
@@ -1106,6 +1118,7 @@ ende1_lng
             IChing ching = ((IChing) getApplication());
             JSONObject respuestas = ching.getRespostas();
             try {
+                int tipo=Integer.parseInt((String) ((TextView)v.findViewById(R.id.type_of_question)).getText());
                 if(v.findViewById(R.id.decline_layout).getVisibility()==View.VISIBLE){
                     if((v.findViewById(R.id.naosei).getVisibility()==View.VISIBLE)&&(((CheckBox)v.findViewById(R.id.naosei)).isChecked())){
                         respuestas.put(perg_id,"ns");
@@ -1119,14 +1132,94 @@ ende1_lng
                     }
                 }
                 JSONObject respostinha = new JSONObject();
-                if (v.findViewById(R.id.value_edittext) != null) {
-                    CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
-                    if(t.length()==0) {
-                        v.findViewById(R.id.value_edittext).requestFocus();
-                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
-                        return false;
-                    }
-                    respostinha.put("v",t);
+                JSONObject resposta=new JSONObject();
+                boolean fim=false;
+                boolean require_comments=false;
+                if(item.has("resps")){
+                    require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
+                    resposta = item.optJSONObject("resps").optJSONObject("1");
+                }
+                switch(tipo){
+                    case TYPE_UNICA:
+                    case TYPE_RADIO:
+                    case TYPE_YESORNO:
+                        respostinha=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
+                        if(respostinha==null){
+                            Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                        resposta = item.optJSONObject("resps").optJSONObject(respostinha.optString("v"));
+                        prox=resposta.optString("prox");
+                        fim = resposta.optInt("fim", 0) == 1;
+                        require_comments=resposta.optInt("expl",0)==1;
+                        break;
+                    case TYPE_NUMBER:
+                    case TYPE_TEXT:
+                    case TYPE_CAMERA:
+                        CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
+                        if(t.length()==0) {
+                            v.findViewById(R.id.value_edittext).requestFocus();
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                        respostinha.put("v",t);
+                        break;
+                    case TYPE_DATE:
+                        respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                        break;
+                    case TYPE_CHECKBOX:
+                    case TYPE_MULTIPLA:
+                        JSONObject what = new JSONObject();
+                        ViewGroup gr = (ViewGroup) v.findViewById(R.id.checkbox_container);
+                        JSONObject ju=new JSONObject();
+                        for (int i = 0; i < gr.getChildCount(); i++) {
+                            CheckBox c= (CheckBox) gr.getChildAt(i);
+                            what.put((String) c.getTag(),c.isChecked());
+                        }
+                        respostinha.put("v",what);
+
+                        break;
+                    case TYPE_TABLE:
+                        // detectar o subtipo
+                        LinearLayout tabela= (LinearLayout) v.findViewById(R.id.suport_table_layout);
+                        JSONObject resposta_multi = new JSONObject();
+                        for(int o=0;o<tabela.getChildCount();o++){
+                            int subtipo;
+                            View g = tabela.getChildAt(o);
+                            try{
+                                subtipo=FIELD_TYPES.get(item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo"));
+                            }catch(NullPointerException xixi){
+                                subtipo=TYPE_TEXT;
+                            }
+                            JSONObject juk = null;
+                            switch(subtipo){
+                                case TYPE_RADIO:
+                                case TYPE_UNICA:
+                                case TYPE_YESORNO:
+                                    juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
+                                    if(juk==null){
+                                        Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
+                                        g.findViewById(R.id.radio_mini_group).requestFocus();
+                                        return false;
+                                    }
+                                    resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                    break;
+                                case TYPE_DATE:
+                                    String d=String.format("%02d/%02d/%04d",((Spinner)g.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)g.findViewById(R.id.spinner_year)).getSelectedItem().toString()));
+                                    juk=new JSONObject();
+                                    juk.put("v",d);
+                                    resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                    break;
+                                case TYPE_TEXT:
+                                default:
+                                    juk=new JSONObject();
+                                    juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
+                                    resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                    break;
+                            }
+                        }
+                        respostinha=resposta_multi;
+                        break;
                 }
                 if(v.findViewById(R.id.habitante_layout)!=null){
                     respuestas.put("habi1_nom",((EditText)findViewById(R.id.editText_habi1_nom)).getText());
@@ -1193,96 +1286,21 @@ habi1_dat_nasc
                     }
                 }*/
                 // descubra se a pergunta requer comments
-                JSONObject resposta=new JSONObject();
-                boolean fim=false;
-                boolean require_comments=false;
-                if(item.has("resps")){
-                    require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
-                    resposta = item.optJSONObject("resps").optJSONObject("1");
-                }
-
-                if (v.findViewById(R.id.spinner_month) != null) {
-                    respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
-                }
-                if (v.findViewById(R.id.multipla_radio) != null) {
-                    respostinha=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
-                    if(respostinha==null){
-                        Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
-                        return false;
-                    }
-                    resposta = item.optJSONObject("resps").optJSONObject(respostinha.optString("v"));
-                    prox=resposta.optString("prox");
-                    fim = resposta.optInt("fim", 0) == 1;
-                    require_comments=resposta.optInt("expl",0)==1;
-                }
-                if(v.findViewById(R.id.checkbox_container)!=null){
-                    JSONObject what = new JSONObject();
-                    ViewGroup g = (ViewGroup) v.findViewById(R.id.checkbox_container);
-                    JSONObject ju=new JSONObject();
-                    for (int i = 0; i < g.getChildCount(); i++) {
-                        CheckBox c= (CheckBox) g.getChildAt(i);
-                        what.put((String) c.getTag(),c.isChecked());
-                    }
-                    respostinha.put("v",what);
-                    //respuestas.put(perg_id,what);
-                }
-                if(v.findViewById(R.id.suport_table_layout)!=null){ // tipo table
-                    // detectar o subtipo
-                    LinearLayout tabela= (LinearLayout) v.findViewById(R.id.suport_table_layout);
-                    JSONObject resposta_multi = new JSONObject();
-                    for(int o=0;o<tabela.getChildCount();o++){
-                        int subtipo;
-                        View g = tabela.getChildAt(o);
-                        try{
-                            subtipo=FIELD_TYPES.get(item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo"));
-                        }catch(NullPointerException xixi){
-                            subtipo=TYPE_TEXT;
-                        }
-                        JSONObject juk = null;
-                        switch(subtipo){
-                            case TYPE_RADIO:
-                            case TYPE_UNICA:
-                            case TYPE_YESORNO:
-                                juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
-                                if(juk==null){
-                                    Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
-                                    g.findViewById(R.id.radio_mini_group).requestFocus();
-                                    return false;
-                                }
-                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
-                                break;
-                            case TYPE_TEXT:
-                            default:
-                                juk=new JSONObject();
-                                juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
-                                resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
-                                break;
-                        }
-                    }
-                    respostinha=resposta_multi;
-                }
-                if(v.findViewById(R.id.habitante_layout)!=null){
-
-                }
-                if(v.findViewById(R.id.endereco_layout)!=null){
-
-                }
-
                 if(require_comments && !respostinha.optBoolean("c")){
                     if(comment.length()>0){
                         respostinha.put("c",comment);
                         comment="";
                     }else {
                         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                        builder.setTitle(resposta.optString("ins"));
+                        builder.setTitle(resposta.optString("ins", getString(R.string.comment_this)));
                         builder.setCancelable(false);
-                        final EditText input = new EditText(this);
-                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        LayoutInflater li = LayoutInflater.from(this);
+                        final View input = li.inflate(R.layout.comment_dialog, null);
                         builder.setView(input);
                         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                pageup(input.getText().toString());
+                                pageup(((EditText)((ViewGroup)input).findViewById(R.id.comment_text)).getText().toString());
                             }
                         });
                         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1344,6 +1362,10 @@ habi1_dat_nasc
     }
     @Override
     public void onBackPressed() {
+        IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        if(pu.getCurrentItem()==0){
+            finish();
+        }
     }
 
     private class ThingsSorter implements java.util.Comparator<JSONObject> {

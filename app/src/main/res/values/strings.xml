@@ -100,4 +100,5 @@
     <string name="rg">RG</string>
     <string name="data_nasc">Data de nascimento</string>
     <string name="estado">Estado</string>
+    <string name="comment_this">Comentário:</string>
 </resources>
