@@ -559,6 +559,10 @@ public class Question extends AppCompatActivity{
                         }
                         setupDateField(context,v,data_atual,c.get(Calendar.YEAR));
                         ((EditText)v.findViewById(R.id.editText_habi1_nom)).setText(respuestas.optString("habi1_nom",""));
+                        if(respuestas.optString("habi1_sex","X").equals("M"))
+                            ((RadioButton)v.findViewById(R.id.masculino_radiobutton)).setChecked(true);
+                        if(respuestas.optString("habi1_sex","X").equals("F"))
+                            ((RadioButton)v.findViewById(R.id.feminino_radiobutton)).setChecked(true);
                         break;
                     case TYPE_ENDE:
                         /*
@@ -1222,18 +1226,24 @@ ende1_lng
                         break;
                 }
                 if(v.findViewById(R.id.habitante_layout)!=null){
-                    respuestas.put("habi1_nom",((EditText)findViewById(R.id.editText_habi1_nom)).getText());
+                    respuestas.put("habi1_nom",((EditText)v.findViewById(R.id.editText_habi1_nom)).getText());
                     if(respuestas.optString("habi1_nom").length()<2){
-                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
-                        findViewById(R.id.editText_habi1_nom).requestFocus();
+                        Snackbar.make(v.findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_habi1_nom).requestFocus();
                         return false;
                     }
-                    respuestas.put("habi1_cod",((TextView)findViewById(R.id.habi1_cod)).getText());
-                    respuestas.put("habi1_nom_mae",((EditText)findViewById(R.id.editText_habi1_nom_mae)).getText());
-                    respuestas.put("habi1_nom_pai",((EditText)findViewById(R.id.editText_habi1_nom_pai)).getText());
-                    respuestas.put("habi1_cns",((EditText)findViewById(R.id.editText_habi1_cns)).getText());
-                    respuestas.put("habi1_cpf",((EditText)findViewById(R.id.editText_habi1_cpf)).getText());
-                    respuestas.put("habi1_rg",((EditText)findViewById(R.id.editText_habi1_rg)).getText());
+                    if(((RadioButton)v.findViewById(R.id.masculino_radiobutton)).isChecked()){
+                        respuestas.put("habi1_sex","M");
+                    }
+                    if(((RadioButton)v.findViewById(R.id.feminino_radiobutton)).isChecked()){
+                        respuestas.put("habi1_sex","F");
+                    }
+                    respuestas.put("habi1_cod",((TextView)v.findViewById(R.id.habi1_cod)).getText());
+                    respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
+                    respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
+                    respuestas.put("habi1_cns",((EditText)v.findViewById(R.id.editText_habi1_cns)).getText());
+                    respuestas.put("habi1_cpf",((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText());
+                    respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
                     respuestas.put("habi1_dat_nasc",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                     /*
 
@@ -1249,15 +1259,15 @@ habi1_dat_nasc
 */
                 }
                 if(v.findViewById(R.id.endereco_layout)!=null) {
-                    respuestas.put("ende1_logr", ((EditText) findViewById(R.id.editText_nomedarua)).getText());
+                    respuestas.put("ende1_logr", ((EditText) v.findViewById(R.id.editText_nomedarua)).getText());
                     if (respuestas.optString("ende1_logr").length() < 1) {
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
                         findViewById(R.id.editText_nomedarua).requestFocus();
                         return false;
                     }
-                    respuestas.put("ende1_num", ((EditText) findViewById(R.id.editText_numero)).getText());
-                    respuestas.put("ende1_tele", ((EditText) findViewById(R.id.editText_telefone)).getText());
-                    respuestas.put("ende1_compl", ((EditText) findViewById(R.id.editText_complemento)).getText());
+                    respuestas.put("ende1_num", ((EditText) v.findViewById(R.id.editText_numero)).getText());
+                    respuestas.put("ende1_tele", ((EditText) v.findViewById(R.id.editText_telefone)).getText());
+                    respuestas.put("ende1_compl", ((EditText) v.findViewById(R.id.editText_complemento)).getText());
                 }
                 /*
 ((EditText)v.findViewById(R.id.editText_nomedarua)).setText(respuestas.optString("ende1_logr"));

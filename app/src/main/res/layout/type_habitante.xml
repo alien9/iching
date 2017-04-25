@@ -31,6 +31,25 @@
                 android:id="@+id/editText_habi1_nom" />
             <TextView android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/genero_do_habitante"
+                />
+            <RadioGroup
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="M"
+                    android:id="@+id/masculino_radiobutton"/>
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="F"
+                    android:id="@+id/feminino_radiobutton"/>
+            </RadioGroup>
+            <TextView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/nome_da_mae"
                 />
             <EditText
