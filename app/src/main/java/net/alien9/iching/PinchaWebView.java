@@ -10,7 +10,7 @@ import android.webkit.WebView;
  * Created by tiago on 01/05/17.
  */
 
-class PinchaWebView extends WebView {
+public class PinchaWebView extends WebView {
     public static final int SAIR = 0;
     private boolean lastZoomOutResult=false;
     private Handler zoomrespond;
