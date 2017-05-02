@@ -35,8 +35,10 @@
         <item>Setembro</item>
         <item>Outubro</item>
         <item>Novembro</item>
+        <item>Dezembro</item>
     </string-array>
     <string-array name="estados">
+        <item/>
         <item>Acre</item>
         <item>Alagoas</item>
         <item>Amapá</item>
@@ -65,10 +67,40 @@
         <item>Sergipe</item>
         <item>Tocantins</item>
     </string-array>
+    <string-array name="ufs">
+        <item/>
+        <item>AC</item>
+        <item>AL</item>
+        <item>AP</item>
+        <item>AM</item>
+        <item>BA</item>
+        <item>CE</item>
+        <item>DF</item>
+        <item>ES</item>
+        <item>GO</item>
+        <item>MA</item>
+        <item>MT</item>
+        <item>MS</item>
+        <item>MG</item>
+        <item>PA</item>
+        <item>PB</item>
+        <item>PR</item>
+        <item>PE</item>
+        <item>PI</item>
+        <item>RJ</item>
+        <item>RN</item>
+        <item>RS</item>
+        <item>RO</item>
+        <item>RR</item>
+        <item>SC</item>
+        <item>SP</item>
+        <item>SE</item>
+        <item>TO</item>
+    </string-array>
     <string name="month">Mês</string>
     <string name="year">Ano</string>
     <string name="day">Dia</string>
-    <string name="cidades_url">http://home.newt.com.br/?m=getcidades</string>
+    <string name="cidades_url">http://home.newt.com.br/?m=getcidades2</string>
     <string name="escolha_cidade">cidade</string>
     <string name="logout">Sair</string>
     <string name="carregando">Carregando...</string>
@@ -102,4 +134,6 @@
     <string name="estado">Estado</string>
     <string name="comment_this">Comentário:</string>
     <string name="genero_do_habitante">Gênero</string>
+    <string name="celular_do_habitante">Celular</string>
+    <string name="logradouro">Logradouro</string>
 </resources>

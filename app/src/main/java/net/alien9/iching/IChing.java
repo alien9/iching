@@ -222,6 +222,17 @@ public class IChing extends Application {
     }
 
 
+    public void setEstado(String estado) {
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("uf", estado);
+        editor.commit();
+    }
+    public String getEstado() {
+        SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
+        return sharedpreferences.getString("uf", null);
+    }
+
 
     public void setDomain(String d) {
         SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);

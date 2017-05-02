@@ -20,6 +20,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -43,6 +45,7 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -77,7 +80,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
-import static android.view.View.GONE;
 import static net.alien9.iching.R.id.perg_id;
 import static net.alien9.iching.R.id.shortcut;
 
@@ -151,8 +153,6 @@ public class Question extends AppCompatActivity{
             cookies = intent.getExtras().getString("CNETSERVERLOGACAO");
         }
         setContentView(R.layout.activity_question);
-
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -162,14 +162,14 @@ public class Question extends AppCompatActivity{
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
-            findViewById(R.id.next).setVisibility(GONE);
-            findViewById(R.id.previous).setVisibility(GONE);
-            pu.setVisibility(GONE);
+            findViewById(R.id.next).setVisibility(View.GONE);
+            findViewById(R.id.previous).setVisibility(View.GONE);
+            pu.setVisibility(View.GONE);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgini"));
             te.setVisibility(View.VISIBLE);
         }else{
             findViewById(R.id.next).setVisibility(View.VISIBLE);
-            te.setVisibility(GONE);
+            te.setVisibility(View.GONE);
             pu.setVisibility(View.VISIBLE);
         }
         PagerAdapter pa = new BunchViewAdapter(this);
@@ -195,7 +195,7 @@ public class Question extends AppCompatActivity{
         ((Button)findViewById(R.id.continue_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                te.setVisibility(GONE);
+                te.setVisibility(View.GONE);
                 if(jadeu)
                     encerra();
                 else {
@@ -211,6 +211,7 @@ public class Question extends AppCompatActivity{
             public void onClick(View view) {
                 if(isPagingUp) return;
                 isPagingUp=true;
+                finishVideo();
                 NestedScrollView sv = (NestedScrollView)findViewById(R.id.content_scroller);
                 if(sv.getScrollY()>0) {
                     setToDo(Question.PAGE_UP);
@@ -247,7 +248,7 @@ public class Question extends AppCompatActivity{
                 findViewById(R.id.previous).setVisibility(View.VISIBLE);
                 findViewById(R.id.next).setVisibility(View.VISIBLE);
                 if(position==0) {
-                    findViewById(R.id.previous).setVisibility(GONE);
+                    findViewById(R.id.previous).setVisibility(View.GONE);
                 }
                 //ViewGroup.LayoutParams params = pu.getLayoutParams();
                 //params.height = 1000;
@@ -320,7 +321,7 @@ public class Question extends AppCompatActivity{
                 if (cu > 0)
                     pu.setCurrentItem(cu - 1, true);
             }
-            findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)? GONE:View.VISIBLE);
+            findViewById(R.id.previous).setVisibility((pu.getCurrentItem()==0)? View.GONE:View.VISIBLE);
         }else{
             isPagingUp=false;
         }
@@ -375,13 +376,13 @@ public class Question extends AppCompatActivity{
         jadeu=true;
         if(polly.has("msgfim")){
             IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
-            findViewById(R.id.next).setVisibility(GONE);
-            findViewById(R.id.previous).setVisibility(GONE);
-            pu.setVisibility(GONE);
+            findViewById(R.id.next).setVisibility(View.GONE);
+            findViewById(R.id.previous).setVisibility(View.GONE);
+            pu.setVisibility(View.GONE);
             View te=findViewById(R.id.messenger_layout);
             ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
             te.setVisibility(View.VISIBLE);
-            findViewById(R.id.main_view).setVisibility(GONE);
+            findViewById(R.id.main_view).setVisibility(View.GONE);
             return;
         }
         encerra();
@@ -481,11 +482,11 @@ public class Question extends AppCompatActivity{
             List<JSONObject> things = new ArrayList<>();
             counta=0;
 
-            if(polly.optBoolean("comhabi",true)){
+            if(polly.optBoolean("comhabi",false)){
                 keynames.add("habi");
                 counta++;
             }
-            if(polly.optBoolean("comende",true)){
+            if(polly.optBoolean("comende",false)){
                 keynames.add("ende");
                 counta++;
             }
@@ -552,12 +553,12 @@ public class Question extends AppCompatActivity{
                         v = (ViewGroup) inflater.inflate(R.layout.type_habitante, collection, false);
                         String data_atual;
                         Calendar c = Calendar.getInstance();
-                        if(respuestas.has("hab1_dat_nasc"))
-                            data_atual=respuestas.optString("hab1_dat_nasc");
-                        else{
-                            data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
+                        if(respuestas.has("hab1_dat_nasc")) {
+                            data_atual = respuestas.optString("hab1_dat_nasc");
+                        }else{
+                            data_atual="";//String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                         }
-                        setupDateField(context,v,data_atual,c.get(Calendar.YEAR));
+                        setupDateField(context, v, data_atual, c.get(Calendar.YEAR));
                         ((EditText)v.findViewById(R.id.editText_habi1_nom)).setText(respuestas.optString("habi1_nom",""));
                         if(respuestas.optString("habi1_sex","X").equals("M"))
                             ((RadioButton)v.findViewById(R.id.masculino_radiobutton)).setChecked(true);
@@ -587,7 +588,12 @@ ende1_lng
                         ((TextView)v.findViewById(R.id.ende1_lng)).setText(respuestas.optString("ende1_lng"));
                         ((TextView)v.findViewById(R.id.ende1_cod)).setText(respuestas.optString("ende1_cod"));
                         String[] estados=getResources().getStringArray(R.array.estados);
-                        int uf=Arrays.asList(estados).indexOf(respuestas.optString("ende1_uf"));
+                        String estado = ((IChing) getApplicationContext()).getEstado();
+                        if(!respuestas.optString("ende1_uf","").equals("")) estado=respuestas.optString("ende1_uf");
+                        int uf=Arrays.asList(estados).indexOf(estado);
+                        if(uf<0){
+                            uf=Arrays.asList(getResources().getStringArray(R.array.ufs)).indexOf(estado);
+                        }
                         if(uf>=0) {
                             ((Spinner) v.findViewById(R.id.estado_spinner)).setSelection(uf);
                         }
@@ -693,7 +699,7 @@ ende1_lng
                             TextView tit = (TextView) lu.findViewById(R.id.subtitle_text);
                             if(tit!=null) tit.setText(subitem.optString("txt"));
                             // isto com certeza está ruim - não mostramos os campos
-                            lu.findViewById(R.id.decline_layout).setVisibility(GONE);
+                            lu.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                             //lu.findViewById(R.id.comments_request).setVisibility(View.GONE);
                             /*
                             if(subitem.has("resps")){
@@ -823,14 +829,16 @@ ende1_lng
                         final String filename = item.optJSONObject("resps").optJSONObject("1").optString("midia");
                         if(filename.matches(".*\\.mp4")){
                             v.findViewById(R.id.play).setVisibility(View.VISIBLE);
-                            v.findViewById(R.id.imageView).setVisibility(GONE);
+                            v.findViewById(R.id.imageButt).setVisibility(View.GONE);
                             ((ImageButton)v.findViewById(R.id.play)).setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    findViewById(R.id.content_scroller).setVisibility(GONE);
-                                    findViewById(R.id.next).setVisibility(GONE);
-                                    findViewById(R.id.previous).setVisibility(GONE);
+                                    findViewById(R.id.content_scroller).setVisibility(View.GONE);
+                                    findViewById(R.id.next).setVisibility(View.GONE);
+                                    findViewById(R.id.previous).setVisibility(View.GONE);
                                     findViewById(R.id.video_container).setVisibility(View.VISIBLE);
+                                    findViewById(R.id.pincha).setVisibility(View.GONE);
+                                    findViewById(R.id.video_view).setVisibility(View.VISIBLE);
                                     getSupportActionBar().hide();
                                     final VideoView vw = (android.widget.VideoView) findViewById(R.id.video_view);
                                     vw.setVideoPath(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
@@ -839,7 +847,7 @@ ende1_lng
                                         public boolean onTouch(View view, MotionEvent motionEvent) {
                                             if(motionEvent.getAction()==MotionEvent.ACTION_DOWN) {
                                                 if((findViewById(R.id.video_controller).isShown())){
-                                                    findViewById(R.id.video_controller).setVisibility(GONE);
+                                                    findViewById(R.id.video_controller).setVisibility(View.GONE);
                                                 }else
                                                     findViewById(R.id.video_controller).setVisibility(View.VISIBLE);
                                             }
@@ -888,13 +896,40 @@ ende1_lng
                                 }
                             });
                         }else{
-                            v.findViewById(R.id.play).setVisibility(GONE);
-                            v.findViewById(R.id.imageView).setVisibility(View.VISIBLE);
-                            Bitmap b = BitmapFactory.decodeFile(getExternalCacheDir() + File.separator + "midia" + File.separator+filename);
+                            v.findViewById(R.id.play).setVisibility(View.GONE);
+                            v.findViewById(R.id.imageButt).setVisibility(View.VISIBLE);
+                            final String file = getExternalCacheDir() + File.separator + "midia" + File.separator + filename;
+                            Bitmap b = BitmapFactory.decodeFile(file);
                             if(b==null){
                                 Snackbar.make(findViewById(R.id.main_view),"Arquivo não encontrado",Snackbar.LENGTH_LONG).show();
                             }
-                            ((ImageView)v.findViewById(R.id.imageView)).setImageBitmap(b);
+                            ((ImageButton)v.findViewById(R.id.imageButt)).setImageBitmap(b);
+                            ((ImageButton)v.findViewById(R.id.imageButt)).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    getSupportActionBar().hide();
+                                    findViewById(R.id.content_scroller).setVisibility(View.GONE);
+                                    findViewById(R.id.next).setVisibility(View.GONE);
+                                    findViewById(R.id.previous).setVisibility(View.GONE);
+                                    String data = "<body style=\"margin:0;padding:0;height:100%;text-align:center\"><img style=\"height:100%\" src=\""+file+"\"/></body>";
+                                    PinchaWebView w = (PinchaWebView) findViewById(R.id.pincha);
+                                    w.loadDataWithBaseURL("file:///android_asset/", data, "text/html", "utf-8", null);
+                                    w.getSettings().setBuiltInZoomControls(true);
+                                    w.setLongClickable(true);
+                                    w.setOnLongClickListener(new View.OnLongClickListener() {
+                                        @Override
+                                        public boolean onLongClick(View v) {
+                                            mostraNext();
+                                            return false;
+                                        }
+                                    });
+                                    ZoomDetectHandler zh=new ZoomDetectHandler();
+                                    w.setZoomDetector(zh);
+                                    findViewById(R.id.video_container).setVisibility(View.VISIBLE);
+                                    findViewById(R.id.pincha).setVisibility(View.VISIBLE);
+                                    findViewById(R.id.video_view).setVisibility(View.GONE);
+                                }
+                            });
                         }
                         break;
                     default:
@@ -903,18 +938,18 @@ ende1_lng
                 }
                 if(v.findViewById(R.id.type_of_question)!=null)
                     ((TextView)v.findViewById(R.id.type_of_question)).setText(""+t);
-                v.findViewById(R.id.decline_layout).setVisibility(GONE);
+                v.findViewById(R.id.decline_layout).setVisibility(View.GONE);
                 if(item.optBoolean("naosei",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naosei).setVisibility(View.VISIBLE);
                 }else{
-                    v.findViewById(R.id.naosei).setVisibility(GONE);
+                    v.findViewById(R.id.naosei).setVisibility(View.GONE);
                 }
                 if(item.optBoolean("naoresp",false)){
                     v.findViewById(R.id.decline_layout).setVisibility(View.VISIBLE);
                     v.findViewById(R.id.naoresp).setVisibility(View.VISIBLE);
                 }else{
-                    v.findViewById(R.id.naoresp).setVisibility(GONE);
+                    v.findViewById(R.id.naoresp).setVisibility(View.GONE);
                 }
                 if(v.findViewById(R.id.decline_layout)!=null) {
                     if (v.findViewById(R.id.decline_layout).getVisibility() == View.VISIBLE) {
@@ -972,6 +1007,14 @@ ende1_lng
     private void setupDateField(Context context, final ViewGroup v, String data_atual, int am) {
         Calendar c = Calendar.getInstance();
         List<String> dias=new ArrayList<String>();
+        List<String> anos=new ArrayList<String>();
+        List<String> meses=new ArrayList<>();
+        if(data_atual.equals("")){
+            dias.add("");
+            meses.add("");
+            anos.add("");
+        }
+        meses.addAll(Arrays.asList(getResources().getStringArray(R.array.meses)));
         for(int i=1;i<32;i++){
             dias.add(""+i);
         }
@@ -979,14 +1022,12 @@ ende1_lng
         Spinner dup = (Spinner) v.findViewById(R.id.spinner_day);
         dup.setAdapter(ass);
 
-        String[] months = getResources().getStringArray(R.array.meses);
-        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, months);
+        ArrayAdapter<String> mss = new ArrayAdapter<String>(context,R.layout.spinner_item, meses);
         Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
         mup.setAdapter(mss);
 
-
-        List<String> anos=new ArrayList<String>();
-        for(int i=1800;i<=am;i++){
+        int ano_inicial=am-150;
+        for(int i=ano_inicial;i<=am;i++){
             anos.add(""+i);
         }
         ArrayAdapter<String> ssa = new ArrayAdapter<String>(context,R.layout.spinner_item, anos);
@@ -1015,7 +1056,7 @@ ende1_lng
 
             }
         });
-        if(!data_atual.equals(null)){
+        if(data_atual!=""){
             String[] dat=data_atual.split("\\/");
             if(dat.length==3){
                 dup.setSelection(ass.getPosition(dat[0]));
@@ -1038,7 +1079,13 @@ ende1_lng
         Spinner dup = (Spinner) g.findViewById(R.id.spinner_day);
         int pit=dup.getSelectedItemPosition();
         int daisy=31;
-        switch(((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition()){
+        List<String> ds=new ArrayList<String>();
+        int mes_selecionado=((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition();
+        if(((Spinner) g.findViewById(R.id.spinner_month)).getAdapter().getCount()==13){
+            mes_selecionado--;
+            ds.add("");
+        }
+        switch(mes_selecionado){
             case 0://jan
             case 2://mar
             case 4://mai
@@ -1055,14 +1102,20 @@ ende1_lng
                 daisy=30;
                 break;
             case 1://fev
-                int year=Integer.parseInt(((Spinner) g.findViewById(R.id.spinner_year)).getSelectedItem().toString());
-                if((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0))
-                    daisy=29;
-                else
+                try {
+                    int year = Integer.parseInt(((Spinner) g.findViewById(R.id.spinner_year)).getSelectedItem().toString());
+                    if((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0))
+                        daisy=29;
+                    else
+                        daisy=28;
+                }catch(NumberFormatException exxx){
                     daisy=28;
+                }
                 break;
+            default:
+                return;
         }
-        List<String> ds=new ArrayList<String>();
+
         for(int i=1;i<daisy+1;i++){
             ds.add(""+i);
         }
@@ -1227,8 +1280,9 @@ ende1_lng
                 }
                 if(v.findViewById(R.id.habitante_layout)!=null){
                     respuestas.put("habi1_nom",((EditText)v.findViewById(R.id.editText_habi1_nom)).getText());
+                    respuestas.put("habi1_cel",((EditText)v.findViewById(R.id.editText_habi1_cel)).getText());
                     if(respuestas.optString("habi1_nom").length()<2){
-                        Snackbar.make(v.findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
                         v.findViewById(R.id.editText_habi1_nom).requestFocus();
                         return false;
                     }
@@ -1244,9 +1298,13 @@ ende1_lng
                     respuestas.put("habi1_cns",((EditText)v.findViewById(R.id.editText_habi1_cns)).getText());
                     respuestas.put("habi1_cpf",((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText());
                     respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
-                    respuestas.put("habi1_dat_nasc",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    try {
+                        respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition() + 1, ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition() + 1, Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                    }catch(NumberFormatException xxx){
+                        Log.d("ICHING", "Não é possível ler uma data válida. Sem problemas");
+                        respuestas.put("habi1_dat_nasc",null);
+                    }
                     /*
-
 habi1_cod
 habi1_nom
 habi1_nom_mae
@@ -1395,5 +1453,27 @@ habi1_dat_nasc
             }
             return 0;
         }
+    }
+
+    private class ZoomDetectHandler extends Handler{
+        @Override
+        public void handleMessage(Message msg) {
+            if(msg.what==PinchaWebView.SAIR){
+                mostraNext();
+            }
+        }
+    }
+
+    private void mostraNext() {
+        findViewById(R.id.next).setVisibility(View.VISIBLE);
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    public void run() {
+                        Log.i("tag", "This'll run 3 sec later");
+                        findViewById(R.id.next).setVisibility(View.GONE);
+
+                    }
+                },
+                3000);
     }
 }

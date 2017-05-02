@@ -18,77 +18,56 @@
             android:layout_weight="5"
             android:orientation="vertical"
             android:layout_height="match_parent">
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nome_da_rua"
-                />
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:ems="10"
+                android:hint="@string/logradouro"
                 style="@style/EditGrande"
                 android:id="@+id/editText_nomedarua" />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/numero"
-                />
-
             <EditText
+                android:hint="@string/numero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_numero" />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/complemento"
-                />
-
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 android:ems="10"
                 style="@style/EditGrande"
+                android:hint="@string/complemento"
                 android:id="@+id/editText_complemento" />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/telefone"
-                />
-
             <EditText
+                android:hint="@string/telefone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="phone"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_telefone" />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/bairro"
-                />
             <EditText
+                android:hint="@string/bairro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_bairro" />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/cidade"
-                />
-
             <EditText
+                android:hint="@string/cidade"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_cidade" />
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/estado"
                 />
@@ -98,11 +77,8 @@
                 android:id="@+id/estado_spinner"
                 android:entries="@array/estados"
                 />
-            <TextView android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nome_do_contato"
-                />
             <EditText
+                android:hint="@string/nome_do_contato"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"

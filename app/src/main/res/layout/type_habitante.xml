@@ -18,17 +18,34 @@
             android:layout_weight="5"
             android:orientation="vertical"
             android:layout_height="match_parent">
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/nome_do_habitante"
+                android:text="@string/celular_do_habitante"
                 />
             <EditText
+                android:hint="@string/nome_do_habitante"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom" />
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nome_do_habitante"
+                />
+            <EditText
+                android:hint="@string/celular_do_habitante"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:ems="10"
+                style="@style/EditGrande"
+                android:id="@+id/editText_habi1_cel" />
             <TextView android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/genero_do_habitante"
@@ -38,65 +55,82 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <RadioButton
+                    android:textSize="26dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="M"
                     android:id="@+id/masculino_radiobutton"/>
                 <RadioButton
+                    android:textSize="26dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="F"
                     android:id="@+id/feminino_radiobutton"/>
             </RadioGroup>
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/nome_da_mae"
                 />
             <EditText
+                android:hint="@string/nome_da_mae"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom_mae" />
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/nome_do_pai"
                 />
             <EditText
+                android:hint="@string/nome_do_pai"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_habi1_nom_pai" />
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/cns"
                 />
             <EditText
+                android:hint="@string/cns"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_habi1_cns" />
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/rg"
                 />
             <EditText
+                android:hint="@string/rg"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
                 android:ems="10"
                 style="@style/EditGrande"
                 android:id="@+id/editText_habi1_rg" />
-            <TextView android:layout_width="match_parent"
+            <TextView
+                android:visibility="gone"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/cpf"
                 />
             <EditText
+                android:hint="@string/cpf"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"

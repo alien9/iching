@@ -209,7 +209,8 @@ public class Login extends AppCompatActivity implements LoaderCallbacks<Cursor> 
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
         String cidade = ((Spinner)findViewById(R.id.city_spinner)).getSelectedItem().toString();
-        ((IChing)getApplicationContext()).setDomain(cidades.optString(cidade));
+        ((IChing)getApplicationContext()).setDomain(cidades.optJSONObject(cidade).optString("url"));
+        ((IChing)getApplicationContext()).setEstado(cidades.optJSONObject(cidade).optString("uf"));
         SharedPreferences.Editor e = sharedpreferences.edit();
         e.putString("username", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?email:"");
         if(Debug.isDebuggerConnected()) e.putString("password", (((CheckBox)findViewById(R.id.remeber_me)).isChecked())?password:"");
