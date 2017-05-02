@@ -136,4 +136,5 @@
     <string name="genero_do_habitante">Gênero</string>
     <string name="celular_do_habitante">Celular</string>
     <string name="logradouro">Logradouro</string>
+    <string name="cns_invalido">CNS Inválido</string>
 </resources>

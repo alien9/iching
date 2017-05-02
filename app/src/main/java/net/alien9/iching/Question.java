@@ -1292,9 +1292,15 @@ ende1_lng
                     if(((RadioButton)v.findViewById(R.id.feminino_radiobutton)).isChecked()){
                         respuestas.put("habi1_sex","F");
                     }
+
                     respuestas.put("habi1_cod",((TextView)v.findViewById(R.id.habi1_cod)).getText());
                     respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
                     respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
+                    if(!Util.cnsValido(((EditText)v.findViewById(R.id.editText_habi1_cns)).getText().toString())){
+                        Snackbar.make(findViewById(R.id.editText_habi1_cns), getString(R.string.cns_invalido),Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_habi1_cns).requestFocus();
+                        return false;
+                    }
                     respuestas.put("habi1_cns",((EditText)v.findViewById(R.id.editText_habi1_cns)).getText());
                     respuestas.put("habi1_cpf",((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText());
                     respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
