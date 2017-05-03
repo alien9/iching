@@ -75,7 +75,7 @@ public class Lista extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.drawable.tolbar_icon);
+        getSupportActionBar().setIcon(R.drawable.logo_inteiro);
         context=this;
         Intent intent=getIntent();
         cookies=null;
@@ -620,6 +620,7 @@ public class Lista extends AppCompatActivity {
             ((TextView)prog.findViewById(R.id.completed_text)).setText(String.format("%s%%",completed));
         }
     }
+    /*
     @Override
     protected boolean onPrepareOptionsPanel(View view, Menu menu) {
         if (menu != null) {
@@ -636,6 +637,7 @@ public class Lista extends AppCompatActivity {
         }
         return super.onPrepareOptionsPanel(view, menu);
     }
+    */
     @Override
     public void onBackPressed() {
         if(current_pesquisa!=null){

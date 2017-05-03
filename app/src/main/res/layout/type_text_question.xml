@@ -13,7 +13,8 @@
         android:layout_height="wrap_content"
         android:inputType="textMultiLine"
         android:ems="10"
-        android:id="@+id/value_edittext" />
+        android:imeOptions="flagNoExtractUi"
+       android:id="@+id/value_edittext" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

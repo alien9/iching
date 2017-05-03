@@ -2,8 +2,8 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">#ffeeeeee</item>
+        <item name="colorPrimaryDark">#ffcccccc</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:checkboxStyle">@style/checkstyle</item>
         <item name="android:radioButtonStyle">@style/BigRadioButtonStyle</item>
@@ -55,7 +55,7 @@
     </style>
 
     <style name="SpinnerDropDownItem" parent="@android:style/Widget.TextView.SpinnerItem">
-        <item name="android:textColor">@color/blue</item>
+        <item name="android:textColor">#ffcccccc</item>
     </style>
 
     <style name="BigRadioButtonStyle" parent="@android:style/Widget.CompoundButton.RadioButton">

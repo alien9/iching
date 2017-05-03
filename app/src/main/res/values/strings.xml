@@ -137,4 +137,5 @@
     <string name="celular_do_habitante">Celular</string>
     <string name="logradouro">Logradouro</string>
     <string name="cns_invalido">CNS Inválido</string>
+    <string name="cpf_invalido">CPF inválido</string>
 </resources>

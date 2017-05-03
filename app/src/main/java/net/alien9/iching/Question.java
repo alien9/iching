@@ -17,35 +17,29 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
-import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -55,7 +49,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
@@ -63,7 +56,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -73,7 +65,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
@@ -81,7 +72,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static net.alien9.iching.R.id.perg_id;
-import static net.alien9.iching.R.id.shortcut;
 
 public class Question extends AppCompatActivity{
     private static final int TYPE_TEXT = 2;
@@ -97,6 +87,7 @@ public class Question extends AppCompatActivity{
     private static final int TYPE_TABLE = 12;
     private static final int TYPE_HABI = 13;
     private static final int TYPE_ENDE = 14;
+    private static final int TYPE_CNS = 15;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
@@ -111,6 +102,7 @@ public class Question extends AppCompatActivity{
         put("tabela", TYPE_TABLE);
         put("habitante", TYPE_HABI);
         put("endereco", TYPE_ENDE);
+        put("cadastro", TYPE_CNS);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final int POSITION_UPDATE = 0;
@@ -479,7 +471,6 @@ public class Question extends AppCompatActivity{
             }
 
             keynames=new ArrayList<String>();
-            List<JSONObject> things = new ArrayList<>();
             counta=0;
 
             if(polly.optBoolean("comhabi",false)){
@@ -490,20 +481,8 @@ public class Question extends AppCompatActivity{
                 keynames.add("ende");
                 counta++;
             }
-
-            Iterator<?> keys = pergs.keys();
-            try {
-                while( keys.hasNext() ) {
-                    String k = (String) keys.next();
-                    JSONObject j = pergs.optJSONObject(k);
-                    j.put("cod",k);
-                    things.add(j);
-                    counta++;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            Collections.sort(things,new ThingsSorter());
+            List<JSONObject> things = ajeitaHash(pergs);
+            counta+=things.size();
             for(int i=0;i<things.size();i++){
                 keynames.add(things.get(i).optString("cod"));
             }
@@ -537,15 +516,25 @@ public class Question extends AppCompatActivity{
                 }catch(NullPointerException xixi){
                     Log.d("ICHING",tip+" ********************** "+xixi.getMessage());
                 }
-                JSONObject a = item.optJSONObject("resps");
                 ArrayList<String> respskeys = new ArrayList<String>();
                 JSONObject resps = null;
                 if(item.has("resps")) {
                     resps = item.optJSONObject("resps");
-                    Iterator<?> keys = resps.keys();
-                    int n = 0;
-                    while (keys.hasNext()) {
-                        respskeys.add((String) keys.next());
+                    Iterator<?> rkeys = resps.keys();
+                    ArrayList<JSONObject> itens_resposta = new ArrayList<>();
+                    try {
+                        while( rkeys.hasNext() ) {
+                            String k = (String) rkeys.next();
+                            JSONObject j = resps.optJSONObject(k);
+                            j.put("cod",k);
+                            itens_resposta.add(j);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Collections.sort(itens_resposta,new ThingsSorter());
+                    for(int i=0;i<itens_resposta.size();i++){
+                        respskeys.add(itens_resposta.get(i).optString("cod"));
                     }
                 }
                 switch(t){
@@ -626,12 +615,13 @@ ende1_lng
                                 }
                             }
                         };*/
-                        for(int i=0;i<respskeys.size();i++){
+                        List<JSONObject> resp_things = ajeitaHash(resps);
+                        for(int i=0;i<resp_things.size();i++){
                             LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                             RadioButton bu = (RadioButton) vi.inflate(R.layout.radio_button_item, null);
                             //RadioButton bu = new RadioButton(context);//,null,R.style.checkstyle);
-                            bu.setText(resps.optJSONObject(respskeys.get(i)).optString("txt"));
-                            String tag=respskeys.get(i);
+                            bu.setText(resp_things.get(i).optString("txt"));
+                            String tag=resp_things.get(i).optString("cod");//respskeys.get(i);
                             bu.setTag(tag);
                             //bu.setOnCheckedChangeListener(l);
                             if(respuestas.has(perg_id)) {
@@ -664,7 +654,11 @@ ende1_lng
                                 case TYPE_YESORNO:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_radio_mini, null);
                                     RadioGroup gu = (RadioGroup) lu.findViewById(R.id.radio_mini_group);
+                                    if(tipy==TYPE_YESORNO) gu.setOrientation(LinearLayout.HORIZONTAL);
                                     ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
+
+
+
                                     JSONObject subresps = subitem.optJSONObject("resps");
                                     Iterator<?> subkeys = subresps.keys();
                                     while (subkeys.hasNext()) {
@@ -821,6 +815,7 @@ ende1_lng
                         }
                         break;
                     case TYPE_TEXT:
+                    case TYPE_CNS:
                         v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
                         ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         break;
@@ -1002,6 +997,24 @@ ende1_lng
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
         }
+    }
+
+    private List<JSONObject> ajeitaHash(JSONObject pergs) {
+        ArrayList<JSONObject> things = new ArrayList<>();
+        Iterator<?> keys = pergs.keys();
+        try {
+            while( keys.hasNext() ) {
+                String k = (String) keys.next();
+                JSONObject j = pergs.optJSONObject(k);
+                j.put("cod",k);
+                things.add(j);
+                //counta++;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Collections.sort(things,new ThingsSorter());
+        return things;
     }
 
     private void setupDateField(Context context, final ViewGroup v, String data_atual, int am) {
@@ -1196,6 +1209,7 @@ ende1_lng
                     require_comments=item.optJSONObject("resps").optJSONObject("1").optInt("expl",0)==1;
                     resposta = item.optJSONObject("resps").optJSONObject("1");
                 }
+                List<String> obrigs = Arrays.asList(polly.optString("camposobrig", "").split("\\,"));
                 switch(tipo){
                     case TYPE_UNICA:
                     case TYPE_RADIO:
@@ -1209,17 +1223,6 @@ ende1_lng
                         prox=resposta.optString("prox");
                         fim = resposta.optInt("fim", 0) == 1;
                         require_comments=resposta.optInt("expl",0)==1;
-                        break;
-                    case TYPE_NUMBER:
-                    case TYPE_TEXT:
-                    case TYPE_CAMERA:
-                        CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
-                        if(t.length()==0) {
-                            v.findViewById(R.id.value_edittext).requestFocus();
-                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
-                            return false;
-                        }
-                        respostinha.put("v",t);
                         break;
                     case TYPE_DATE:
                         respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
@@ -1249,6 +1252,7 @@ ende1_lng
                                 subtipo=TYPE_TEXT;
                             }
                             JSONObject juk = null;
+                            String subperg_id=(String) ((TextView)g.findViewById(R.id.subperg_id)).getText();
                             switch(subtipo){
                                 case TYPE_RADIO:
                                 case TYPE_UNICA:
@@ -1270,39 +1274,108 @@ ende1_lng
                                 case TYPE_TEXT:
                                 default:
                                     juk=new JSONObject();
-                                    juk.put("v",((EditText)g.findViewById(R.id.value_edittext)).getText());
-                                    resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                    String resp = ((EditText) g.findViewById(R.id.value_edittext)).getText().toString();
+                                    if(obrigs.contains(subperg_id) && (resp.equals(""))){
+                                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                                        return false;
+                                    }
+                                    juk.put("v",resp);
+                                    resposta_multi.put(subperg_id,juk);
                                     break;
                             }
                         }
                         respostinha=resposta_multi;
                         break;
+                    default:
+                    case TYPE_NUMBER:
+                    case TYPE_TEXT:
+                    case TYPE_CAMERA:
+                        if(v.findViewById(R.id.value_edittext)!=null) {
+                            CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
+                            if (t.length() == 0) {
+                                v.findViewById(R.id.value_edittext).requestFocus();
+                                Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                                return false;
+                            }
+                            respostinha.put("v", t);
+                        }
+                        break;
+
                 }
+                if(item.has("mascara")){
+                    if(item.optString("mascara").equals("cns")||item.optString("mascara").equals("cadastro")){
+                        if(!Util.cnsValido(respostinha.getString("v"))){
+                            v.findViewById(R.id.value_edittext).requestFocus();
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cns_invalido),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                    }
+                    if(item.optString("mascara").equals("cpf")){
+                        if(!Util.isCPF(respostinha.getString("v"))){
+                            v.findViewById(R.id.value_edittext).requestFocus();
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cpf_invalido),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                    }
+                }
+
+
                 if(v.findViewById(R.id.habitante_layout)!=null){
-                    respuestas.put("habi1_nom",((EditText)v.findViewById(R.id.editText_habi1_nom)).getText());
-                    respuestas.put("habi1_cel",((EditText)v.findViewById(R.id.editText_habi1_cel)).getText());
-                    if(respuestas.optString("habi1_nom").length()<2){
+                    String t = ((EditText) v.findViewById(R.id.editText_habi1_nom)).getText().toString();
+                    if(obrigs.contains("habi1_nom") && (t.length()==0)){
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
                         v.findViewById(R.id.editText_habi1_nom).requestFocus();
                         return false;
                     }
+                    respuestas.put("habi1_nom",t);
+
+                    t = ((EditText) v.findViewById(R.id.editText_habi1_cel)).getText().toString();
+                    if(obrigs.contains("habi1_cel") && (t.length()==0)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_habi1_cel).requestFocus();
+                        return false;
+                    }
+                    respuestas.put("habi1_cel",t);
+
                     if(((RadioButton)v.findViewById(R.id.masculino_radiobutton)).isChecked()){
                         respuestas.put("habi1_sex","M");
-                    }
-                    if(((RadioButton)v.findViewById(R.id.feminino_radiobutton)).isChecked()){
+                    }else if(((RadioButton)v.findViewById(R.id.feminino_radiobutton)).isChecked()){
                         respuestas.put("habi1_sex","F");
+                    }else if(obrigs.contains("habi1_sex")){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        return false;
                     }
 
                     respuestas.put("habi1_cod",((TextView)v.findViewById(R.id.habi1_cod)).getText());
+
                     respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
                     respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
-                    if(!Util.cnsValido(((EditText)v.findViewById(R.id.editText_habi1_cns)).getText().toString())){
-                        Snackbar.make(findViewById(R.id.editText_habi1_cns), getString(R.string.cns_invalido),Snackbar.LENGTH_LONG).show();
-                        v.findViewById(R.id.editText_habi1_cns).requestFocus();
-                        return false;
+
+                    if(obrigs.contains("habi1_cns")) {
+                        if (!Util.cnsValido(((EditText) v.findViewById(R.id.editText_habi1_cns)).getText().toString())) {
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cns_invalido), Snackbar.LENGTH_LONG).show();
+                            v.findViewById(R.id.editText_habi1_cns).requestFocus();
+                            return false;
+                        }
                     }
                     respuestas.put("habi1_cns",((EditText)v.findViewById(R.id.editText_habi1_cns)).getText());
-                    respuestas.put("habi1_cpf",((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText());
+
+                    String cpf=((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText().toString();
+                    if(obrigs.contains("habi1_cpf")) {
+                        if(!Util.isCPF(cpf)){
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cpf_invalido),Snackbar.LENGTH_LONG).show();
+                            v.findViewById(R.id.editText_habi1_cpf).requestFocus();
+                            return false;
+                        }
+                    }
+                    respuestas.put("habi1_cpf",cpf);
+                    if(obrigs.contains("habi1_rg")) {
+                        if (((EditText) v.findViewById(R.id.editText_habi1_rg)).getText().length() == 0) {
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                            v.findViewById(R.id.editText_habi1_rg).requestFocus();
+                            return false;
+                        }
+                    }
                     respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
                     try {
                         respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition() + 1, ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition() + 1, Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
@@ -1454,7 +1527,7 @@ habi1_dat_nasc
             if(t.has("pergs")){
                 JSONObject pergs = t.optJSONObject("pergs");
                 if(pergs.keys().hasNext()){
-                    return pergs.optJSONObject(pergs.keys().next()).optInt("ord");
+                    return pergs.optJSONObject(pergs.keys().next()).optInt("ord ");
                 }
             }
             return 0;
