@@ -17,6 +17,7 @@ import java.net.CookiePolicy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -29,12 +30,12 @@ import okhttp3.HttpUrl;
  * Created by tiago on 10/01/17.
  */
 public class Util {
-    public static boolean hasValidSession(Context context){
-        Intent intent=((Activity)context).getIntent();
-        if(!intent.hasExtra("CNETSERVERLOGACAO"))
+    public static boolean hasValidSession(Context context) {
+        Intent intent = ((Activity) context).getIntent();
+        if (!intent.hasExtra("CNETSERVERLOGACAO"))
             return false;
-        String cookie= (String) intent.getExtras().get("CNETSERVERLOGACAO");
-        if(cookie!=null)
+        String cookie = (String) intent.getExtras().get("CNETSERVERLOGACAO");
+        if (cookie != null)
             return true;
         return false;
     }
@@ -48,7 +49,7 @@ public class Util {
 
         @Override
         public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-            this.cookies =  cookies;
+            this.cookies = cookies;
         }
 
         @Override
@@ -58,19 +59,19 @@ public class Util {
             return new ArrayList<Cookie>();
         }
 
-        public List<Cookie> getCookies(){
+        public List<Cookie> getCookies() {
             return cookies;
         }
-        public String getCookie(String name){
+
+        public String getCookie(String name) {
             return cookies.toString();
         }
     }
-    public static boolean unpackZip(String path, String zipname)
-    {
+
+    public static boolean unpackZip(String path, String zipname) {
         InputStream is;
         ZipInputStream zis;
-        try
-        {
+        try {
             String filename;
             is = new FileInputStream(path + File.separator + zipname);
             zis = new ZipInputStream(new BufferedInputStream(is));
@@ -78,8 +79,7 @@ public class Util {
             byte[] buffer = new byte[1024];
             int count;
 
-            while ((ze = zis.getNextEntry()) != null)
-            {
+            while ((ze = zis.getNextEntry()) != null) {
                 // zapis do souboru
                 filename = ze.getName();
 
@@ -93,8 +93,7 @@ public class Util {
                 FileOutputStream fout = new FileOutputStream(path + filename);
 
                 // cteni zipu a zapis
-                while ((count = zis.read(buffer)) != -1)
-                {
+                while ((count = zis.read(buffer)) != -1) {
                     fout.write(buffer, 0, count);
                 }
                 fout.close();
@@ -102,31 +101,30 @@ public class Util {
             }
 
             zis.close();
-        }
-        catch(IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
 
         return true;
     }
+
     public static boolean unzip(String path, String zipname) {
-        try  {
-            FileInputStream fin = new FileInputStream(path+File.separator+zipname);
+        try {
+            FileInputStream fin = new FileInputStream(path + File.separator + zipname);
             ZipInputStream zin = new ZipInputStream(fin);
             ZipEntry ze = null;
             while ((ze = zin.getNextEntry()) != null) {
                 Log.v("Decompress", "Unzipping " + ze.getName());
 
-                if(ze.isDirectory()) {
-                    Util._dirChecker(ze.getName(),path);
+                if (ze.isDirectory()) {
+                    Util._dirChecker(ze.getName(), path);
                 } else {
-                    FileOutputStream fout = new FileOutputStream(path+File.separator + ze.getName());
+                    FileOutputStream fout = new FileOutputStream(path + File.separator + ze.getName());
                     byte b[] = new byte[1024];
                     int n;
-                    while ((n = zin.read(b,0,1024)) >= 0) {
-                        fout.write(b,0,n);
+                    while ((n = zin.read(b, 0, 1024)) >= 0) {
+                        fout.write(b, 0, n);
                     }
 
                     //for (int c = zin.read(); c != -1; c = zin.read()) {
@@ -139,7 +137,7 @@ public class Util {
 
             }
             zin.close();
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.e("Decompress", "unzip", e);
             return false;
         }
@@ -147,11 +145,12 @@ public class Util {
     }
 
     private static void _dirChecker(String dir, String location) {
-        File f = new File(location+File.separator + dir);
-        if(!f.isDirectory()) {
+        File f = new File(location + File.separator + dir);
+        if (!f.isDirectory()) {
             f.mkdirs();
         }
     }
+
     static boolean isValid(final File file) {
         ZipFile zipfile = null;
         try {
@@ -168,6 +167,27 @@ public class Util {
             } catch (IOException e) {
             }
         }
+    }
+
+    public static boolean cnsValido(String cns) {
+        if(cns.length()==0)return true;
+        if (cns.length() > 15) return false;
+        while (cns.length() < 15) cns = '0' + cns;
+        Pattern ptn1 = Pattern.compile("\\A[1-2]\\d{10}00[0-1]\\d\\Z", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        Pattern ptn2 = Pattern.compile("\\A[7-9]\\d{14}\\Z", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        if (ptn1.matcher(cns).matches() || ptn2.matcher(cns).matches()) {
+            return (mod11CNS(cns) % 11 == 0);
+        }
+        return false;
+    }
+
+    static int mod11CNS(String cns) {
+        String[] ac = cns.split("");
+        int soma = 0;
+        for (int i = 1; i < ac.length; i++) {
+            soma += Integer.parseInt(ac[i]) * (16 - i);
+        }
+        return soma;
     }
 }
 

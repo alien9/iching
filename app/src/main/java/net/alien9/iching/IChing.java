@@ -233,7 +233,6 @@ public class IChing extends Application {
         return sharedpreferences.getString("uf", null);
     }
 
-
     public void setDomain(String d) {
         SharedPreferences sharedpreferences = getSharedPreferences("PESQUISADOR", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedpreferences.edit();
