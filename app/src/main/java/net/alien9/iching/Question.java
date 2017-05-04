@@ -1007,6 +1007,15 @@ ende1_lng
                 String k = (String) keys.next();
                 JSONObject j = pergs.optJSONObject(k);
                 j.put("cod",k);
+                if(j.optInt("ord",-1)==-1){
+                    if(j.has("pergs")){
+                        Iterator<String> ku = j.optJSONObject("pergs").keys();
+                        if(ku.hasNext()){
+                            JSONObject g = j.optJSONObject("pergs").optJSONObject(ku.next());
+                            if(g.has("ord")) j.put("ord", g.optInt("ord"));
+                        }
+                    }
+                }
                 things.add(j);
                 //counta++;
             }
