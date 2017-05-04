@@ -17,6 +17,7 @@
             app:contentInsetLeft="10dp"
             app:contentInsetStart="10dp"
             app:titleMarginStart="16dp"
+            app:titleTextColor="@color/darkGreen"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
@@ -73,24 +74,27 @@
         </LinearLayout>
     </RelativeLayout>
     <include layout="@layout/content_question"/>
+
     <ImageButton
         android:id="@+id/next"
         android:layout_width="80dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical|end"
+        android:layout_height="80dp"
+        android:padding="8dp"
+        android:layout_gravity="bottom|end"
         android:layout_margin="0dp"
         android:background="@color/transparent"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/but_forward" />
+        app:srcCompat="@drawable/frecha" />
 
     <ImageButton
         android:id="@+id/previous"
-        android:visibility="gone"
+        android:padding="8dp"
         android:layout_width="80dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical|start"
+        android:layout_height="80dp"
+        android:layout_gravity="bottom|start"
         android:layout_margin="0dp"
         android:background="@color/transparent"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/but_backward" />
+        android:visibility="gone"
+        app:srcCompat="@drawable/frechb" />
 </android.support.design.widget.CoordinatorLayout>

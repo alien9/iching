@@ -75,7 +75,7 @@ public class Lista extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.drawable.logo_inteiro);
+        getSupportActionBar().setIcon(R.drawable.ic_logo_newt_completo);
         context=this;
         Intent intent=getIntent();
         cookies=null;

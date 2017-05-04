@@ -148,7 +148,7 @@ public class Question extends AppCompatActivity{
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.drawable.tolbar_icon);
+        getSupportActionBar().setIcon(R.drawable.ic_logo_newt_completo);
         Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"));
         getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
