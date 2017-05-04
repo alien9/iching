@@ -149,7 +149,7 @@ public class Question extends AppCompatActivity{
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.drawable.ic_logo_newt_completo);
-        Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"));
+        Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"), polly.optBoolean("sus"));
         getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         final View te=findViewById(R.id.messenger_layout);
@@ -1511,7 +1511,12 @@ habi1_dat_nasc
     public void onBackPressed() {
         IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
         if(pu.getCurrentItem()==0){
-            finish();
+            IChing iching = (IChing) getApplicationContext();
+            JSONObject respuestas = iching.getRespostas();
+            Intent intent = new Intent(this, Lista.class);
+            intent.putExtra("cod",iching.getCod());
+            intent.putExtra("CNETSERVERLOGACAO",cookies);
+            startActivity(intent);
         }
     }
 

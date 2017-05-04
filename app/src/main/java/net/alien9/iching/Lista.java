@@ -40,7 +40,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -360,12 +359,14 @@ public class Lista extends AppCompatActivity {
         cleanUp();
         totalsize = 0;
         currentsize=0;
+        List<Boolean> issus = new ArrayList<>();
         if(pesquisa.has("habi")) {
             JSONArray habi = pesquisa.optJSONArray("habi");
             for (int i = 0; i < habi.length(); i++) {
                 JSONObject it = habi.optJSONObject(i);
                 names.add(it.optString("habi1_nom"));
                 focos.add("habi");
+                issus.add(pesquisa.optBoolean("sus"));
             }
         }else if(pesquisa.has("ende")){
             JSONArray ende = pesquisa.optJSONArray("ende");
@@ -373,9 +374,10 @@ public class Lista extends AppCompatActivity {
                 JSONObject it = ende.optJSONObject(i);
                 names.add(it.optString("ende1_logr"));
                 focos.add("ende");
+                issus.add(pesquisa.optBoolean("sus"));
             }
         }
-        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos));
+        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos, issus));
     }
 
     private void showPesquisas() {
@@ -383,6 +385,7 @@ public class Lista extends AppCompatActivity {
         if(stuff==null)return;
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
+        List<Boolean> issus=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
@@ -391,6 +394,7 @@ public class Lista extends AppCompatActivity {
             JSONObject it = stuff.optJSONObject(i);
             names.add(it.optString("nom"));
             focos.add(it.optString("foco","geral"));
+            issus.add(it.optBoolean("sus"));
             if(it.has("midia")){
                 String filename=it.optString("midia");
                 File file = new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
@@ -408,7 +412,7 @@ public class Lista extends AppCompatActivity {
                 new MediaLoader(media.get(0)).execute();
             }
         }
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos));
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos,issus));
     }
 
     private void showProgressDialog() {
@@ -566,13 +570,15 @@ public class Lista extends AppCompatActivity {
         private final List<String> names;
         private final int resourceId;
         private final List<String> focos;
+        private final List<Boolean> issus;
 
 
-        public StuffAdapter(Context context, int resource, List<String> n, List<String> f){
+        public StuffAdapter(Context context, int resource, List<String> n, List<String> f, List<Boolean> sus){
             super(context, resource, n);
             resourceId=resource;
             names=n;
             focos=f;
+            issus = sus;
         }
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -583,7 +589,7 @@ public class Lista extends AppCompatActivity {
                 v = vi.inflate(resourceId, null);
             }
             ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
-            Bitmap bi=((IChing)getApplicationContext()).getItemBitmap((java.lang.String) focos.get(position));
+            Bitmap bi=((IChing)getApplicationContext()).getItemBitmap((java.lang.String) focos.get(position),issus.get(position));
             ((ImageView)v.findViewById(R.id.bullet)).setImageBitmap(bi);
             return v;
         }

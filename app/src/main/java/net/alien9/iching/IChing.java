@@ -268,7 +268,7 @@ public class IChing extends Application {
         isReloading = reloading;
     }
 
-    public Bitmap getItemBitmap(String string) {
+    public Bitmap getItemBitmap(String string, Boolean esus) {
         Integer bitmap_res = BULLETS.get(string);
         if(bitmap_res==null){
             bitmap_res=R.drawable.bullet_doc;
@@ -277,7 +277,7 @@ public class IChing extends Application {
         Bitmap bi= Bitmap.createBitmap(bm.getWidth(),bm.getHeight(),Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bi);
         Paint paint = new Paint();
-        int color = ContextCompat.getColor(this, R.color.darkGreen);
+        int color = ContextCompat.getColor(this, (esus)?R.color.darkGreen:R.color.red);
         paint.setColor(color);
         canvas.drawBitmap(bi, new Matrix(), null);
         canvas.drawCircle(bi.getWidth()/2,bi.getHeight()/2, bi.getHeight()/2, paint);
