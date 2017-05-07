@@ -656,9 +656,6 @@ ende1_lng
                                     RadioGroup gu = (RadioGroup) lu.findViewById(R.id.radio_mini_group);
                                     if(tipy==TYPE_YESORNO) gu.setOrientation(LinearLayout.HORIZONTAL);
                                     ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
-
-
-
                                     JSONObject subresps = subitem.optJSONObject("resps");
                                     Iterator<?> subkeys = subresps.keys();
                                     while (subkeys.hasNext()) {
@@ -682,6 +679,21 @@ ende1_lng
                                         data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                                     }
                                     setupDateField(context,lu,data_atual,item.optInt("anomax", c.get(Calendar.YEAR)));
+                                    break;
+                                case TYPE_MULTIPLA:
+                                case TYPE_CHECKBOX:
+                                    lu = (LinearLayout) vi.inflate(R.layout.type_checkbox_mini, null);
+                                    ((TextView)lu.findViewById(R.id.perg_textview)).setText(subitem.optString("txt"));
+                                    subresps = subitem.optJSONObject("resps");
+                                    subkeys = subresps.keys();
+                                    while (subkeys.hasNext()) {
+                                        String k = (String) subkeys.next();
+                                        JSONObject resp = subresps.optJSONObject(k);
+                                        CheckBox bu = new CheckBox(context);
+                                        bu.setText(resp.optString("txt"));
+                                        bu.setTag(k);
+                                        ((ViewGroup) lu.findViewById(R.id.checkbox_mini_group)).addView(bu);
+                                    }
                                     break;
                                 case TYPE_TEXT:
                                 default:
@@ -1279,6 +1291,16 @@ ende1_lng
                                     juk=new JSONObject();
                                     juk.put("v",d);
                                     resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
+                                    break;
+                                case TYPE_CHECKBOX:
+                                case TYPE_MULTIPLA:
+                                    juk = new JSONObject();
+                                    gr = (ViewGroup) g.findViewById(R.id.checkbox_mini_group);
+                                    for (int i = 0; i < gr.getChildCount(); i++) {
+                                        CheckBox c= (CheckBox) gr.getChildAt(i);
+                                        juk.put((String) c.getTag(),c.isChecked());
+                                    }
+                                    respostinha.put("v",juk);
                                     break;
                                 case TYPE_TEXT:
                                 default:
