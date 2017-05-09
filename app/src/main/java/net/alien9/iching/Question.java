@@ -1003,9 +1003,11 @@ ende1_lng
                     if(tw!=null)
                         tw.setText(title);
                 }
-                String instr=item.optString("instr","");
-                ((TextView)v.findViewById(R.id.instr_text)).setText(instr);
+                if(v.findViewById(R.id.instr_text)!=null) {
+                    String instr = item.optString("instr", "");
 
+                    ((TextView) v.findViewById(R.id.instr_text)).setText(instr);
+                }
                 ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
                 v.setTag(keynames.get(position));
                 collection.addView(v);
