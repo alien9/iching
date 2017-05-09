@@ -84,6 +84,7 @@
         android:layout_margin="0dp"
         android:background="@color/transparent"
         android:scaleType="fitCenter"
+        android:baselineAlignBottom="false"
         app:srcCompat="@drawable/frecha" />
 
     <ImageButton

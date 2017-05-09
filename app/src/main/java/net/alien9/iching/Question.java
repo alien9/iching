@@ -828,7 +828,11 @@ ende1_lng
                         break;
                     case TYPE_TEXT:
                     case TYPE_CNS:
-                        v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
+                        if(item.has("mascara")){
+                            v = (ViewGroup) inflater.inflate(R.layout.type_large_number, collection, false);
+                        }else {
+                            v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
+                        }
                         ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         break;
                     case TYPE_MIDIA:
@@ -940,7 +944,12 @@ ende1_lng
                         }
                         break;
                     default:
-                        v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
+                        if(item.has("mascara")){
+                            v = (ViewGroup) inflater.inflate(R.layout.type_large_number, collection, false);
+                        }else {
+                            v = (ViewGroup) inflater.inflate(R.layout.type_text_question, collection, false);
+                        }
+                        ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                         break;
                 }
                 if(v.findViewById(R.id.type_of_question)!=null)
@@ -994,6 +1003,9 @@ ende1_lng
                     if(tw!=null)
                         tw.setText(title);
                 }
+                String instr=item.optString("instr","");
+                ((TextView)v.findViewById(R.id.instr_text)).setText(instr);
+
                 ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
                 v.setTag(keynames.get(position));
                 collection.addView(v);
