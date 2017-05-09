@@ -1004,8 +1004,7 @@ ende1_lng
                         tw.setText(title);
                 }
                 if(v.findViewById(R.id.instr_text)!=null) {
-                    String instr = item.optString("instr", "");
-
+                    String instr = item.optString("ins", "");
                     ((TextView) v.findViewById(R.id.instr_text)).setText(instr);
                 }
                 ((TextView)v.findViewById(R.id.perg_id)).setText(keynames.get(position));
