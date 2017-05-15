@@ -401,6 +401,14 @@ public class Lista extends AppCompatActivity {
                 issus.add(pesquisa.optBoolean("sus"));
             }
         }
+        if(!pesquisa.optBoolean("obrig",false)){
+            names.add(getString(R.string.nova));
+            if(pesquisa.has("ende"))
+                focos.add("ende");
+            else
+                focos.add("habi");
+            issus.add(pesquisa.optBoolean("sus"));
+        }
         ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos, issus));
     }
 

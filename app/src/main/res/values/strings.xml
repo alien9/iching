@@ -142,4 +142,5 @@
     <string name="Password">Senha</string>
     <string name="enter">ENTRAR</string>
     <string name="remember_city">Lembrar cidade</string>
+    <string name="nova">Nova...</string>
 </resources>
