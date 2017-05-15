@@ -173,7 +173,7 @@ public class Lista extends AppCompatActivity {
     }
 
     private void requestLogin() {
-        Intent intent = new Intent(this, Login.class);
+        Intent intent = new Intent(this, SimpleLogin.class);
         startActivity(intent);
         finish();
     }
@@ -332,10 +332,34 @@ public class Lista extends AppCompatActivity {
                 prog.dismiss();
             }
             if(todo!=null){
+                final boolean[] remember = new boolean[]{true};
                 switch(todo){
                     case EXIT:
-                        ((IChing)getApplicationContext()).setCookieJar(null);
-                        requestLogin();
+                        final CharSequence[] items = {getString(R.string.remember_city)};
+                        AlertDialog dialog = new AlertDialog.Builder(context)
+                                .setCancelable(false)
+                                .setTitle(getString(R.string.logout))
+                                .setMultiChoiceItems(items, remember, new DialogInterface.OnMultiChoiceClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+                                        remember[0] = isChecked;
+                                    }
+                                }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        if(!remember[0]){
+                                            SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+                                            SharedPreferences.Editor e = sharedpreferences.edit();
+                                            if(sharedpreferences.contains("cidade")) {
+                                                e.remove("cidade");
+                                                e.commit();
+                                            }
+                                        }
+                                        ((IChing)getApplicationContext()).setCookieJar(null);
+                                        requestLogin();
+                                    }
+                                }).create();
+                        dialog.show();
                         break;
                 }
             }else {

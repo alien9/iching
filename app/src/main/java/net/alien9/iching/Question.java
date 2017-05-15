@@ -763,6 +763,10 @@ ende1_lng
                             JSONObject jake = item.optJSONObject("resps").optJSONObject("1");
                             final int minimum = jake.optInt("menorval",0);
                             final int maximum= jake.optInt("maiorval",10);
+                            final String rotmin = jake.optString("rotmin",jake.optString("menorval","0"));
+                            final String rotmax = jake.optString("rotmax",jake.optString("maiorval","10"));
+                            final String rotmed = jake.optString("rotmed","");
+
                             v = (ViewGroup) inflater.inflate(R.layout.type_range_question, collection, false);
                             ((EditText)v.findViewById(R.id.value_edittext)).setText(respuestas.optString(perg_id));
                             Bitmap bm = Bitmap.createBitmap(1168, 172, Bitmap.Config.ARGB_8888);
@@ -771,9 +775,11 @@ ende1_lng
                             paint.setColor(Color.BLACK);
                             paint.setTextSize(62);
                             Canvas canvas = new Canvas(bm);
-                            canvas.drawText("" + minimum, 5, 160, paint);
+                            canvas.drawText(rotmin, 5, 160, paint);
+                            paint.setTextAlign(Paint.Align.CENTER);
+                            canvas.drawText(rotmed, 579, 160, paint);
                             paint.setTextAlign(Paint.Align.RIGHT);
-                            canvas.drawText("" + maximum, 1163, 160, paint);
+                            canvas.drawText(rotmax, 1163, 160, paint);
                             v.findViewById(R.id.seek_layout).setBackground(new BitmapDrawable(getResources(), bm));
                             SeekBar s = (SeekBar) v.findViewById(R.id.seek);
                             final View v2=v;
