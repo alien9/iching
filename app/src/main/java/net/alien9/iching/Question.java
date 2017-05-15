@@ -539,7 +539,10 @@ public class Question extends AppCompatActivity{
                 }
                 switch(t){
                     case TYPE_HABI:
-                        v = (ViewGroup) inflater.inflate(R.layout.type_habitante, collection, false);
+                        if(getResources().getBoolean(R.bool.isTablet))
+                            v = (ViewGroup) inflater.inflate(R.layout.type_habitante_splat, collection, false);
+                        else
+                            v = (ViewGroup) inflater.inflate(R.layout.type_habitante, collection, false);
                         String data_atual;
                         Calendar c = Calendar.getInstance();
                         if(respuestas.has("hab1_dat_nasc")) {
@@ -549,6 +552,12 @@ public class Question extends AppCompatActivity{
                         }
                         setupDateField(context, v, data_atual, c.get(Calendar.YEAR));
                         ((EditText)v.findViewById(R.id.editText_habi1_nom)).setText(respuestas.optString("habi1_nom",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_cns)).setText(respuestas.optString("habi1_cns",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).setText(respuestas.optString("habi1_nom_mae",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).setText(respuestas.optString("habi1_nom_pai",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_cpf)).setText(respuestas.optString("habi1_cpf",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_rg)).setText(respuestas.optString("habi1_rg",""));
+                        ((EditText)v.findViewById(R.id.editText_habi1_cel)).setText(respuestas.optString("habi1_cel",""));
                         if(respuestas.optString("habi1_sex","X").equals("M"))
                             ((RadioButton)v.findViewById(R.id.masculino_radiobutton)).setChecked(true);
                         if(respuestas.optString("habi1_sex","X").equals("F"))
@@ -565,8 +574,11 @@ ende1_lat
 ende1_lng
                         *
                         * */
+                        if(getResources().getBoolean(R.bool.isTablet))
+                            v = (ViewGroup) inflater.inflate(R.layout.type_endereco_splat, collection, false);
+                        else
+                            v = (ViewGroup) inflater.inflate(R.layout.type_endereco, collection, false);
 
-                        v = (ViewGroup) inflater.inflate(R.layout.type_endereco, collection, false);
                         ((EditText)v.findViewById(R.id.editText_nomedarua)).setText(respuestas.optString("ende1_logr"));
                         ((EditText)v.findViewById(R.id.editText_numero)).setText(respuestas.optString("ende1_num"));
                         ((EditText)v.findViewById(R.id.editText_complemento)).setText(respuestas.optString("ende1_compl"));

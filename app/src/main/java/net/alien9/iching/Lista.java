@@ -103,14 +103,26 @@ public class Lista extends AppCompatActivity {
                     current_pesquisa = stuff.optJSONObject(i);
                     if(current_pesquisa.optString("foco").equals("ende")){
                         if(current_pesquisa.optJSONArray("ende").length()>0){
-                            showEnderecos(current_pesquisa);
+                            showEnderecosOrHabitantes(current_pesquisa);
                             return;
+                        }else{
+                            if(current_pesquisa.optBoolean("obrig",false)){
+                                current_pesquisa=null;
+                                Snackbar.make(findViewById(R.id.content_lista), getString(R.string.no_questions_available), Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                                return;
+                            }
                         }
                     }
                     if(current_pesquisa.optString("foco").equals("habi")){
                         if(current_pesquisa.optJSONArray("habi").length()>0){
-                            showEnderecos(current_pesquisa);
+                            showEnderecosOrHabitantes(current_pesquisa);
                             return;
+                        }else{
+                            if(current_pesquisa.optBoolean("obrig",false)){
+                                current_pesquisa=null;
+                                Snackbar.make(findViewById(R.id.content_lista), getString(R.string.no_questions_available), Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                                return;
+                            }
                         }
                     }
                 }else{
@@ -375,7 +387,7 @@ public class Lista extends AppCompatActivity {
         editor.commit();
     }
 
-    private void showEnderecos(JSONObject pesquisa){
+    private void showEnderecosOrHabitantes(JSONObject pesquisa){
         setTitle(pesquisa.optString("nom"));
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
