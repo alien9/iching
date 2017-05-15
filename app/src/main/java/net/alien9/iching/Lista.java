@@ -88,7 +88,7 @@ public class Lista extends AppCompatActivity {
             return;
         }
         stuff=iching.getStuff();
-        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+        final SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
         JSONObject journal;
         try {
             journal=new JSONObject(sharedpreferences.getString("journal","{}"));
@@ -150,15 +150,39 @@ public class Lista extends AppCompatActivity {
         });
         if(intent.hasExtra("result")){ // está trazendo json pra gravar
             SharedPreferences.Editor editor = sharedpreferences.edit();
+            JSONObject resultado;
             try {
-                JSONObject resultado=new JSONObject(intent.getExtras().getString("result"));
+                resultado=new JSONObject(intent.getExtras().getString("result"));
                 String cod=intent.getExtras().getString("cod");
                 if(!journal.has(cod)) journal.put(cod,new JSONArray());
                 journal.optJSONArray(cod).put(resultado);
-
-            } catch (JSONException ignored) {}
+            } catch (JSONException ignored) {
+                resultado=new JSONObject();
+            }
             editor.putString("journal", journal.toString());
             editor.commit();
+            for(int k=0;k<stuff.length();k++){
+                JSONObject p=stuff.optJSONObject(k);
+                if(p.has("habi")){
+                    for(int l=0;l<p.optJSONArray("habi").length();l++){
+                        if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod")==resultado.optString("habi1_cod")){
+                            p.optJSONArray("habi").remove(l);
+                        }
+                    }
+                }
+                if(p.has("ende")){
+                    for(int l=0;l<p.optJSONArray("ende").length();l++){
+                        if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod")==resultado.optString("ende1_cod")){
+                            p.optJSONArray("ende").remove(l);
+                        }
+                    }
+                }
+                try {
+                    stuff.put(k,p);
+                } catch (JSONException ignoree) {
+                }
+            }
+            iching.setStuff(stuff);
             showPesquisas();
         }else {
             reload();
@@ -391,6 +415,9 @@ public class Lista extends AppCompatActivity {
         setTitle(pesquisa.optString("nom"));
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
+        SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
+
+
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
@@ -400,17 +427,19 @@ public class Lista extends AppCompatActivity {
             JSONArray habi = pesquisa.optJSONArray("habi");
             for (int i = 0; i < habi.length(); i++) {
                 JSONObject it = habi.optJSONObject(i);
-                names.add(it.optString("habi1_nom"));
-                focos.add("habi");
-                issus.add(pesquisa.optBoolean("sus"));
+                    names.add(it.optString("habi1_nom"));
+                    focos.add("habi");
+                    issus.add(pesquisa.optBoolean("sus"));
+
             }
         }else if(pesquisa.has("ende")){
             JSONArray ende = pesquisa.optJSONArray("ende");
             for (int i = 0; i < ende.length(); i++) {
                 JSONObject it = ende.optJSONObject(i);
-                names.add(it.optString("ende1_logr"));
-                focos.add("ende");
-                issus.add(pesquisa.optBoolean("sus"));
+                    names.add(it.optString("ende1_logr"));
+                    focos.add("ende");
+                    issus.add(pesquisa.optBoolean("sus"));
+
             }
         }
         if(!pesquisa.optBoolean("obrig",false)){
