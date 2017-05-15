@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
@@ -371,31 +372,36 @@ public class Lista extends AppCompatActivity {
                 final boolean[] remember = new boolean[]{true};
                 switch(todo){
                     case EXIT:
-                        final CharSequence[] items = {getString(R.string.remember_city)};
-                        AlertDialog dialog = new AlertDialog.Builder(context)
-                                .setCancelable(false)
-                                .setTitle(getString(R.string.logout))
-                                .setMultiChoiceItems(items, remember, new DialogInterface.OnMultiChoiceClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
-                                        remember[0] = isChecked;
-                                    }
-                                }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        if(!remember[0]){
-                                            SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
-                                            SharedPreferences.Editor e = sharedpreferences.edit();
-                                            if(sharedpreferences.contains("cidade")) {
-                                                e.remove("cidade");
-                                                e.commit();
-                                            }
+                        if(Debug.isDebuggerConnected()) {
+                            final CharSequence[] items = {getString(R.string.remember_city)};
+                            AlertDialog dialog = new AlertDialog.Builder(context)
+                                    .setCancelable(false)
+                                    .setTitle(getString(R.string.logout))
+                                    .setMultiChoiceItems(items, remember, new DialogInterface.OnMultiChoiceClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+                                            remember[0] = isChecked;
                                         }
-                                        ((IChing)getApplicationContext()).setCookieJar(null);
-                                        requestLogin();
-                                    }
-                                }).create();
-                        dialog.show();
+                                    }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            if (!remember[0]) {
+                                                SharedPreferences sharedpreferences = getSharedPreferences("login", Context.MODE_PRIVATE);
+                                                SharedPreferences.Editor e = sharedpreferences.edit();
+                                                if (sharedpreferences.contains("cidade")) {
+                                                    e.remove("cidade");
+                                                    e.commit();
+                                                }
+                                            }
+                                            ((IChing) getApplicationContext()).setCookieJar(null);
+                                            requestLogin();
+                                        }
+                                    }).create();
+                            dialog.show();
+                        }else{
+                            ((IChing) getApplicationContext()).setCookieJar(null);
+                            requestLogin();
+                        }
                         break;
                 }
             }else {
@@ -427,18 +433,18 @@ public class Lista extends AppCompatActivity {
             JSONArray habi = pesquisa.optJSONArray("habi");
             for (int i = 0; i < habi.length(); i++) {
                 JSONObject it = habi.optJSONObject(i);
-                    names.add(it.optString("habi1_nom"));
-                    focos.add("habi");
-                    issus.add(pesquisa.optBoolean("sus"));
+                names.add(it.optString("habi1_nom"));
+                focos.add("habi");
+                issus.add(pesquisa.optBoolean("sus"));
 
             }
         }else if(pesquisa.has("ende")){
             JSONArray ende = pesquisa.optJSONArray("ende");
             for (int i = 0; i < ende.length(); i++) {
                 JSONObject it = ende.optJSONObject(i);
-                    names.add(it.optString("ende1_logr"));
-                    focos.add("ende");
-                    issus.add(pesquisa.optBoolean("sus"));
+                names.add(it.optString("ende1_logr"));
+                focos.add("ende");
+                issus.add(pesquisa.optBoolean("sus"));
 
             }
         }
