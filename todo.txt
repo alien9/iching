@@ -1,31 +1,44 @@
-todo
+===================================================================================================================
+PENTE FINO DO DIA 10/05/2017
 
--interromper pesquisa - incluir motivo -- ok (FALTAM MOTIVOS POSSIVEIS)
--foco diz o tipo de destinatário da pesquisa (habi - fa-user, ende - fa-home)
--obrig diz se a pesquisa tem, obrigatoriamente, o destinatário definido ou não: true - tem de estar definido e vem com lista; false - nunca é definido e não vem com lista; ausente (null) é indiferente e pode vir com lista
--campos vem com o nome, sem hierarquia entre habi e ende (v. abaixo)
--listar endereços das aplicações por ordem de proximidade da posição atual (controlável por variável de configuração/menu)
--Implementar "não sei" e "não quero responder" como alternativas adicionais de todas as questões - quando selecionados, desativa respostas 
--Fazer régua na numérica
--não guardar senha no final!
--Para permitir a escolha da cidade no app:
-	-primeiro login mostra lista de cidades baixada de home.newt.com.br/index.php?m=getcidades - resposta é um objeto no formato {"<nome da cidade>":"<host da cidade>","<nome de outra cidade>":"<host de outra cidade>"}
-	-monta um drop down com as cidades sobre os campos de login e senha
-	-gajo faz login na cidade - se entrar, memoriza a cidade e o seu host e segue...
-	-nos logins subsequentes, não mostra o drop down, e aparece um ícone de menu com Configurações, que permite exibir o drop down de novo
+Debug:
 
--fazer apk
--fazer print das telas de login, abertura e dos diferentes tipos de pesquisa e mandar
-
-
-[{"cod":5,"foco":"habi","obrig":(true/false),"habi":[{"habi1_cod":44,habi1_nom":"maria das dores","habi1_nom_mae":"lindalva","ende1_logr":"rua um","ende1_num":" sn","ende1_bai":"brejal",ende1_lat:-23.333,ende1_lng:-45.333},{habi1_cod:22,"josé maria","habi1_cns":"523452345243"}],pergs: ]
+-O campo habi1_cod está vindo com o valor "id da pergunta" no json submetido para o servidor - testado em um questionário que não tinha habi1_cod pré-especificado
+-pergunta simnao no final de uma tela com uma das respostas redirecionando (pulando) para outra pergunta não funciona (Teste de questionário, pergunta 2, "sim" deveria levar para a pergunta 4)
+-APÓS ENVIAR QUESTIONÁRIOS, SE MUDAR DE APLICAÇÃO OU BLOQUEAR E DESBLOQUEAR, O MENU OFERECE, DE NOVO, PARA ENVIAR AS MESMAS APLICAÇÕES QUE JÁ FORAM ENVIADAS -----CRÍTICO
+-E ESTÁ ACUMULANDO! SE BLOQUEAR E DESBLOQUEAR VAI AUMENTANDO A LISTA DE APLICAÇÕES A ENVIAR!!
+-Se o gajo acabou de carregar a lista de questionários do servidor (após o envio), ao se entrar em um questionário e clicar em voltar (arrependido) ele carrega de novo
+-Ao entrar numa imagem
 
 
 
-DA RESPOSTA DO TABLET
--Raíz é um objeto cujos atributos são os códigos das edições carregadas
--Cada atributo tem como valor um array de respostas
--Cada resposta é um objeto contendo: dataehora (unix ts), gps (lat lng), prec (int) e demais atributos são códigos das perguntas
--O valor do atributo <perg1_cod> é um objeto contendo "v" (valor) e "c" (comments) - se "não sei" o valor é "ns" e se "não quero responder" o valor é "nr"
+Todo
 
-{"<edpe1_cod>":[{"dataehora":1487995392,"gps":"<lat> <lng>","prec": <precisao em metros>,<cód de pergunta>:{"v":"<valor>","c":""<comments>},<cód de outra pergunta>:{"v":"ns"}},{ } ]
+-Montar a tela de login conforme o layout
+-Colocar o título "Selecione o município de instalação" na tela de cidade
+-Drop down de cidades só vem da primeira vez - MUDAMOS: SE FOR VERSÃO DEBUG ELE MOSTRA DIÁLOGO NO LOGOUT, SE FOR RELEASE LEMBRA TUDO E SÓ MUDA SE DESINSTALAR
+-Ao final de uma pesquisa, se não houver mensagem final será exibido um diálogo com o texto "Questionário concluído" e OK
+-Aumentar a espessura da linha base nas perguntas tipo numerica e o tamanho da bolinha de controle
+-A seta de voltar só fica visível quando é possível voltar (pergunta anterior permite a volta)
+-pergunta do tipo cadastro com campo habi1_cns tem de ter a máscara CNS, forçada
+-colocar na lateral direita da barra superior da lista de questionários, à esquerda do menu, o número de pesquisas feitas disponíveis para envio - usar "Executados: N"
+-em cada linha de um questionário, colocar na extremidade direita o número de aplicações disponíveis nesta opção (é o número de itens que o gajo encontrará quando clicar no questionário)
+-depois que um questionário agendado tiver sido concluído com sucesso, ele deve sair da lista de aplicações agendadas disponíveis para o questionário
+-Remover o item Configurações que é o primeiro do menu durante uma pesquisa (aplicação) - não está levando a lugar nenhum
+-POSSIBILIDADE DE LOGOUT ENQUANTO OFFLINE
+ -Sair deve ser possível mesmo sem wifi, afinal, pode acontecer de o device ficar sem bateria, por exemplo
+ -ao reiniciar, verificar se há dados armazenados pendentes. Temos de prever que o gajo que está com o device não é, necessariamente, o que fez as pesquisas pendentes. Cenários abaixo
+	-O gajo que está reiniciando é o mesmo, mas está sem wifi: O tablet tem de conseguir autenticar o gajo com as informações que tem armazenadas.
+	-O gajo que está reiniciando é o mesmo e está com wifi: O tablet autentica com as informações armazenadas e não sincroniza
+	-O gajo que está reiniciando não é o mesmo e está sem wifi: O tablet não conseguirá autenticar - exibe mensagem "não é possível autenticar este usuário sem conexão à rede"
+	-O gajo que está reiniciando não é o mesmo e está com wifi: O tablet autentica, informa que possui aplicações armazenadas e envia. Notar que o envio deve ser feito em nome do usuário anterior. 
+-ajuste de imagem ao tamanho da tela, com possibilidade de "pinch"
+-a tela de endereço (comende) deve estar em duas colunas (pelo menos quando em tablet):
+  - rua, número, complemento, telefone (telefone é máscara fone) e celular (máscara fone)
+  - bairro, cidade, estado, cep (cep é máscara cep), contato e presente
+-na tela de endereço (comende) (tirar o nome do contato, o checkbox presente e - MUDANÇA: deixe o nome do contato e o presente e encerre a pesquisa se não marcar o presente) só mostre as informações de lat/lng e ende1_cod se o json trouxer debug=true
+-a tela de habitante (comhabi) deve estar em duas colunas (pelo menos quando em tablet) e vamos tirar o nome do pai e da mãe:
+  - nome, data de nascimento, sexo, celular (celular é máscara fone)
+  - CNS, rg, cpf (CNS é máscara cns, cpf é numérico)
+-na minha versão do app ainda não estava aparecendo a instrução da pergunta
+-rótulos de numérica estão com corpo muito grande e muito longe da barra
