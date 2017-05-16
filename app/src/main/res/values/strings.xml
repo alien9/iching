@@ -144,4 +144,5 @@
     <string name="remember_city">Lembrar cidade</string>
     <string name="nova">Nova...</string>
     <string name="no_questions_available">Não há pesquisas para responder</string>
+    <string name="msgfim_padrao">Questionário concluído</string>
 </resources>

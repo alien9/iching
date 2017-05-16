@@ -186,7 +186,8 @@ public class Lista extends AppCompatActivity {
             iching.setStuff(stuff);
             showPesquisas();
         }else {
-            reload();
+            if(!intent.hasExtra("quiet"))
+                reload();
         }
     }
 

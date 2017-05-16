@@ -366,18 +366,18 @@ public class Question extends AppCompatActivity{
     private void termina() {
         isPagingUp=false;
         jadeu=true;
-        if(polly.has("msgfim")){
+//        if(polly.has("msgfim")){
             IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
             findViewById(R.id.next).setVisibility(View.GONE);
             findViewById(R.id.previous).setVisibility(View.GONE);
             pu.setVisibility(View.GONE);
             View te=findViewById(R.id.messenger_layout);
-            ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim"));
+            ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim", getString(R.string.msgfim_padrao)));
             te.setVisibility(View.VISIBLE);
             findViewById(R.id.main_view).setVisibility(View.GONE);
             return;
-        }
-        encerra();
+  //      }
+        //encerra();
     }
 
     private void encerra() {
@@ -1578,6 +1578,7 @@ habi1_dat_nasc
             Intent intent = new Intent(this, Lista.class);
             intent.putExtra("cod",iching.getCod());
             intent.putExtra("CNETSERVERLOGACAO",cookies);
+            intent.putExtra("quiet",true);
             startActivity(intent);
         }
     }
