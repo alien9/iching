@@ -188,6 +188,8 @@ public class Lista extends AppCompatActivity {
         }else {
             if(!intent.hasExtra("quiet"))
                 reload();
+            else
+                showPesquisas();
         }
     }
 
