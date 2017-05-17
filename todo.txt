@@ -3,6 +3,11 @@ PENTE FINO DO DIA 10/05/2017
 
 Debug:
 
+-Pergunta tipo cadastro, habi, habi1_cns, com máscara CNS, não usou a máscara (veio o teclado normal)
+-Depois de uma tela longa, a pergunta seguinte veio em branco e tive de deslizar para cima até ela aparecer
+-Pergunta opcional e o app não deixou pular: Ficha de cadastro individual, pergunta 16, Número NIS
+-Pergunta pulada na mesma tela da que manda pular está sendo considerada como obrigatória
+
 -O campo habi1_cod está vindo com o valor "id da pergunta" no json submetido para o servidor - testado em um questionário que não tinha habi1_cod pré-especificado
 -pergunta simnao no final de uma tela com uma das respostas redirecionando (pulando) para outra pergunta não funciona (Teste de questionário, pergunta 2, "sim" deveria levar para a pergunta 4)
 -APÓS ENVIAR QUESTIONÁRIOS, SE MUDAR DE APLICAÇÃO OU BLOQUEAR E DESBLOQUEAR, O MENU OFERECE, DE NOVO, PARA ENVIAR AS MESMAS APLICAÇÕES QUE JÁ FORAM ENVIADAS -----CRÍTICO
