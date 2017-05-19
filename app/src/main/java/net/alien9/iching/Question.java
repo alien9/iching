@@ -1412,9 +1412,9 @@ ende1_lng
 
                     respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
                     respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
-
-                    if(obrigs.contains("habi1_cns")) {
-                        if (!Util.cnsValido(((EditText) v.findViewById(R.id.editText_habi1_cns)).getText().toString())) {
+                    String cns=((EditText) v.findViewById(R.id.editText_habi1_cns)).getText().toString();
+                    if(obrigs.contains("habi1_cns")||(cns.length()>0)) {
+                        if (!Util.cnsValido(cns)) {
                             Snackbar.make(findViewById(R.id.main_view), getString(R.string.cns_invalido), Snackbar.LENGTH_LONG).show();
                             v.findViewById(R.id.editText_habi1_cns).requestFocus();
                             return false;
