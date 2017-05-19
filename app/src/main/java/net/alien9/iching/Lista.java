@@ -115,9 +115,11 @@ public class Lista extends AppCompatActivity {
                         }
                     }
                     if(current_pesquisa.optString("foco").equals("habi")){
-                        if(current_pesquisa.optJSONArray("habi").length()>0){
-                            showEnderecosOrHabitantes(current_pesquisa);
-                            return;
+                        if(current_pesquisa.has("habi")){
+                            if(current_pesquisa.optJSONArray("habi").length()>0) {
+                                showEnderecosOrHabitantes(current_pesquisa);
+                                return;
+                            }
                         }else{
                             if(current_pesquisa.optBoolean("obrig",false)){
                                 current_pesquisa=null;

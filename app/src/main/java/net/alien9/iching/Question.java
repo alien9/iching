@@ -1355,9 +1355,11 @@ ende1_lng
                         if(v.findViewById(R.id.value_edittext)!=null) {
                             CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
                             if (t.length() == 0) {
-                                v.findViewById(R.id.value_edittext).requestFocus();
-                                Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
-                                return false;
+                                if(!item.optBoolean("opc",false)) {
+                                    v.findViewById(R.id.value_edittext).requestFocus();
+                                    Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                                    return false;
+                                }
                             }
                             respostinha.put("v", t);
                         }
