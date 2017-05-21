@@ -145,4 +145,5 @@
     <string name="nova">Nova...</string>
     <string name="no_questions_available">Não há pesquisas para responder</string>
     <string name="msgfim_padrao">Questionário concluído</string>
+    <string name="escolha_muinicipio_de_instalacao">Selecione o município de instalação</string>
 </resources>

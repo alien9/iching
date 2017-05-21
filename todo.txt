@@ -5,13 +5,13 @@ Debug:
 
 -Pergunta tipo cadastro, habi, habi1_cns, com máscara CNS, não usou a máscara (veio o teclado normal)
 -Depois de uma tela longa, a pergunta seguinte veio em branco e tive de deslizar para cima até ela aparecer
--Pergunta opcional e o app não deixou pular: Ficha de cadastro individual, pergunta 16, Número NIS
--Pergunta pulada na mesma tela da que manda pular está sendo considerada como obrigatória
+-Pergunta opcional e o app não deixou pular: Ficha de cadastro individual, pergunta 16, Número NIS - (ok)
+-Pergunta pulada na mesma tela da que manda pular está sendo considerada como obrigatória (nao consigo replicar, como faz)
 
--O campo habi1_cod está vindo com o valor "id da pergunta" no json submetido para o servidor - testado em um questionário que não tinha habi1_cod pré-especificado
+-O campo habi1_cod está vindo com o valor "id da pergunta" no json submetido para o servidor - testado em um questionário que não tinha habi1_cod pré-especificado (nao consigo replicar)
 -pergunta simnao no final de uma tela com uma das respostas redirecionando (pulando) para outra pergunta não funciona (Teste de questionário, pergunta 2, "sim" deveria levar para a pergunta 4)
 -APÓS ENVIAR QUESTIONÁRIOS, SE MUDAR DE APLICAÇÃO OU BLOQUEAR E DESBLOQUEAR, O MENU OFERECE, DE NOVO, PARA ENVIAR AS MESMAS APLICAÇÕES QUE JÁ FORAM ENVIADAS -----CRÍTICO
--E ESTÁ ACUMULANDO! SE BLOQUEAR E DESBLOQUEAR VAI AUMENTANDO A LISTA DE APLICAÇÕES A ENVIAR!! não consigo replicar isso
+-E ESTÁ ACUMULANDO! SE BLOQUEAR E DESBLOQUEAR VAI AUMENTANDO A LISTA DE APLICAÇÕES A ENVIAR!! não consigo replicar isso, é parte de um problema do passado
 -Se o gajo acabou de carregar a lista de questionários do servidor (após o envio), ao se entrar em um questionário e clicar em voltar (arrependido) ele carrega de novo (ok)
 
 
@@ -19,7 +19,7 @@ Debug:
 Todo
 
 -Montar a tela de login conforme o layout (ok)
--Colocar o título "Selecione o município de instalação" na tela de cidade
+-Colocar o título "Selecione o município de instalação" na tela de cidade 
 -Drop down de cidades só vem da primeira vez - MUDAMOS: SE FOR VERSÃO DEBUG ELE MOSTRA DIÁLOGO NO LOGOUT, SE FOR RELEASE LEMBRA TUDO E SÓ MUDA SE DESINSTALAR
 -Ao final de uma pesquisa, se não houver mensagem final será exibido um diálogo com o texto "Questionário concluído" e OK
 -Aumentar a espessura da linha base nas perguntas tipo numerica e o tamanho da bolinha de controle

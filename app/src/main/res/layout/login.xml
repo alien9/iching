@@ -6,9 +6,16 @@
     <RelativeLayout
         android:id="@+id/cidade_select"
         android:visibility="gone"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="22dp"
+            android:layout_marginLeft="80dp"
+            android:layout_marginTop="30dp"
+            android:text="@string/escolha_muinicipio_de_instalacao"
+            />
         <Spinner
             android:layout_centerInParent="true"
             android:layout_margin="80dp"
