@@ -426,9 +426,8 @@ public class Lista extends AppCompatActivity {
         setTitle(pesquisa.optString("nom"));
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
+        List<String> quants=new ArrayList<>();
         SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
-
-
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
@@ -441,7 +440,7 @@ public class Lista extends AppCompatActivity {
                 names.add(it.optString("habi1_nom"));
                 focos.add("habi");
                 issus.add(pesquisa.optBoolean("sus"));
-
+                quants.add("");
             }
         }else if(pesquisa.has("ende")){
             JSONArray ende = pesquisa.optJSONArray("ende");
@@ -450,7 +449,7 @@ public class Lista extends AppCompatActivity {
                 names.add(it.optString("ende1_logr"));
                 focos.add("ende");
                 issus.add(pesquisa.optBoolean("sus"));
-
+                quants.add("");
             }
         }
         if(!pesquisa.optBoolean("obrig",false)){
@@ -460,8 +459,9 @@ public class Lista extends AppCompatActivity {
             else
                 focos.add("habi");
             issus.add(pesquisa.optBoolean("sus"));
+            quants.add("");
         }
-        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos, issus));
+        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos, issus, quants));
     }
 
     private void showPesquisas() {
@@ -470,6 +470,7 @@ public class Lista extends AppCompatActivity {
         List<String> names=new ArrayList<>();
         List<String> focos=new ArrayList<>();
         List<Boolean> issus=new ArrayList<>();
+        List<String> quants=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
@@ -479,6 +480,16 @@ public class Lista extends AppCompatActivity {
             names.add(it.optString("nom"));
             focos.add(it.optString("foco","geral"));
             issus.add(it.optBoolean("sus"));
+            String q="";
+            if(it.has("habi")){
+                if(it.optJSONArray("habi").length()>0)
+                    q=""+it.optJSONArray("habi").length();
+            }
+            if(it.has("ende")){
+                if(it.optJSONArray("ende").length()>0)
+                    q=""+it.optJSONArray("ende").length();
+            }
+            quants.add(q);
             if(it.has("midia")){
                 String filename=it.optString("midia");
                 File file = new File(getExternalCacheDir()+File.separator+"midia"+File.separator+filename);
@@ -496,7 +507,7 @@ public class Lista extends AppCompatActivity {
                 new MediaLoader(media.get(0)).execute();
             }
         }
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos,issus));
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos,issus, quants));
     }
 
     private void showProgressDialog() {
@@ -655,14 +666,16 @@ public class Lista extends AppCompatActivity {
         private final int resourceId;
         private final List<String> focos;
         private final List<Boolean> issus;
+        private final List<String> quants;
 
 
-        public StuffAdapter(Context context, int resource, List<String> n, List<String> f, List<Boolean> sus){
+        public StuffAdapter(Context context, int resource, List<String> n, List<String> f, List<Boolean> sus, List<String> q){
             super(context, resource, n);
             resourceId=resource;
             names=n;
             focos=f;
             issus = sus;
+            quants=q;
         }
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -675,6 +688,7 @@ public class Lista extends AppCompatActivity {
             ((TextView)v.findViewById(R.id.text1)).setText(names.get(position).toString());
             Bitmap bi=((IChing)getApplicationContext()).getItemBitmap((java.lang.String) focos.get(position),issus.get(position));
             ((ImageView)v.findViewById(R.id.bullet)).setImageBitmap(bi);
+            ((TextView)v.findViewById(R.id.counter)).setText(quants.get(position).toString());
             return v;
         }
     }
