@@ -446,7 +446,9 @@ public class Lista extends AppCompatActivity {
             JSONArray ende = pesquisa.optJSONArray("ende");
             for (int i = 0; i < ende.length(); i++) {
                 JSONObject it = ende.optJSONObject(i);
-                names.add(it.optString("ende1_logr"));
+                String l=it.optString("ende1_logr");
+                if(it.optString("ende1_num", "").length()>0) l+=", "+it.optString("ende1_num");
+                names.add(l);
                 focos.add("ende");
                 issus.add(pesquisa.optBoolean("sus"));
                 quants.add("");
