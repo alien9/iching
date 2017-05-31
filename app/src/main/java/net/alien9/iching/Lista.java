@@ -168,14 +168,14 @@ public class Lista extends AppCompatActivity {
                 JSONObject p=stuff.optJSONObject(k);
                 if(p.has("habi")){
                     for(int l=0;l<p.optJSONArray("habi").length();l++){
-                        if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod")==resultado.optString("habi1_cod")){
+                        if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))){
                             p.optJSONArray("habi").remove(l);
                         }
                     }
                 }
                 if(p.has("ende")){
                     for(int l=0;l<p.optJSONArray("ende").length();l++){
-                        if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod")==resultado.optString("ende1_cod")){
+                        if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod").equals(resultado.optString("ende1_cod"))){
                             p.optJSONArray("ende").remove(l);
                         }
                     }
