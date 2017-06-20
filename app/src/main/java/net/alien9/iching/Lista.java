@@ -166,9 +166,40 @@ public class Lista extends AppCompatActivity {
             editor.commit();
             for(int k=0;k<stuff.length();k++){
                 JSONObject p=stuff.optJSONObject(k);
+
+                if(Debug.isDebuggerConnected()) {
+                    AlertDialog dialog = new AlertDialog.Builder(context)
+                            .setTitle(getString(R.string.veja_bem))
+                            .setMessage(getString(R.string.desinfect_device))
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+
+                                }
+                            }).create();
+                    dialog.show();
+                }else{
+                    if(p.has("habi")){
+                        for(int l=0;l<p.optJSONArray("habi").length();l++){
+                            if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))){
+                                //if(debug)
+                                p.optJSONArray("habi").remove(l);
+                            }
+                        }
+                    }
+                    if(p.has("ende")){
+                        for(int l=0;l<p.optJSONArray("ende").length();l++){
+                            if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod").equals(resultado.optString("ende1_cod"))){
+                                p.optJSONArray("ende").remove(l);
+                            }
+                        }
+                    }
+                }
+
                 if(p.has("habi")){
                     for(int l=0;l<p.optJSONArray("habi").length();l++){
                         if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))){
+                            //if(debug)
                             p.optJSONArray("habi").remove(l);
                         }
                     }

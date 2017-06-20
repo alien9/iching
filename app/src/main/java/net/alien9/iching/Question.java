@@ -367,16 +367,16 @@ public class Question extends AppCompatActivity{
         isPagingUp=false;
         jadeu=true;
 //        if(polly.has("msgfim")){
-            IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
-            findViewById(R.id.next).setVisibility(View.GONE);
-            findViewById(R.id.previous).setVisibility(View.GONE);
-            pu.setVisibility(View.GONE);
-            View te=findViewById(R.id.messenger_layout);
-            ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim", getString(R.string.msgfim_padrao)));
-            te.setVisibility(View.VISIBLE);
-            findViewById(R.id.main_view).setVisibility(View.GONE);
-            return;
-  //      }
+        IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        findViewById(R.id.next).setVisibility(View.GONE);
+        findViewById(R.id.previous).setVisibility(View.GONE);
+        pu.setVisibility(View.GONE);
+        View te=findViewById(R.id.messenger_layout);
+        ((TextView)te.findViewById(R.id.message_textView)).setText(polly.optString("msgfim", getString(R.string.msgfim_padrao)));
+        te.setVisibility(View.VISIBLE);
+        findViewById(R.id.main_view).setVisibility(View.GONE);
+        return;
+        //      }
         //encerra();
     }
 
@@ -1074,11 +1074,11 @@ ende1_lng
         List<String> dias=new ArrayList<String>();
         List<String> anos=new ArrayList<String>();
         List<String> meses=new ArrayList<>();
-        if(data_atual.equals("")){
-            dias.add("");
-            meses.add("");
-            anos.add("");
-        }
+        //if(data_atual.equals("")){
+        dias.add("");
+        meses.add("");
+        anos.add("");
+        //}
         meses.addAll(Arrays.asList(getResources().getStringArray(R.array.meses)));
         for(int i=1;i<32;i++){
             dias.add(""+i);
@@ -1102,9 +1102,15 @@ ende1_lng
         yup.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                fixDays(v);
+                if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0) {
+                    fixDays(v);
+                }else{
+                    if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_day)).setSelection(0);
+                    if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_month)).setSelection(0);
+                }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
 
@@ -1114,7 +1120,29 @@ ende1_lng
         ((Spinner)v.findViewById(R.id.spinner_month)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
-                fixDays(v);
+                if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0) {
+                    fixDays(v);
+                }else{
+                    if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_day)).setSelection(0);
+                    if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        ((Spinner)v.findViewById(R.id.spinner_day)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
+                if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()==0) {
+                    if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_month)).setSelection(0);
+                    if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
+                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -1277,7 +1305,16 @@ ende1_lng
                         require_comments=resposta.optInt("expl",0)==1;
                         break;
                     case TYPE_DATE:
-                        respostinha.put("v",String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                        String dr="";
+                        try{
+                            dr=String.format("%02d/%02d/%04d",new Integer[]{((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition(),Integer.parseInt(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItem().toString())});
+                        }catch (NumberFormatException exx){
+                            if(!item.optBoolean("opc")){
+                                Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
+                                return false;
+                            }
+                        }
+                        respostinha.put("v",dr);
                         break;
                     case TYPE_CHECKBOX:
                     case TYPE_MULTIPLA:
@@ -1318,7 +1355,14 @@ ende1_lng
                                     resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                     break;
                                 case TYPE_DATE:
-                                    String d=String.format("%02d/%02d/%04d",((Spinner)g.findViewById(R.id.spinner_day)).getSelectedItemPosition()+1, ((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition()+1,Integer.parseInt(((Spinner)g.findViewById(R.id.spinner_year)).getSelectedItem().toString()));
+
+                                    String d=null;
+                                    try{
+                                        d=String.format("%02d/%02d/%04d",((Spinner)g.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition(),Integer.parseInt(((Spinner)g.findViewById(R.id.spinner_year)).getSelectedItem().toString()));
+                                    }catch(NumberFormatException xxx){
+                                        Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
+                                        return false;
+                                    }
                                     juk=new JSONObject();
                                     juk.put("v",d);
                                     resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
@@ -1442,7 +1486,7 @@ ende1_lng
                     }
                     respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
                     try {
-                        respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition() + 1, ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition() + 1, Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
+                        respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition(), Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                     }catch(NumberFormatException xxx){
                         Log.d("ICHING", "Não é possível ler uma data válida. Sem problemas");
                         respuestas.put("habi1_dat_nasc",null);

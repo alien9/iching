@@ -146,4 +146,6 @@
     <string name="no_questions_available">Não há pesquisas para responder</string>
     <string name="msgfim_padrao">Questionário concluído</string>
     <string name="escolha_muinicipio_de_instalacao">Selecione o município de instalação</string>
+    <string name="desinfect_device">Remover dados locais?</string>
+    <string name="veja_bem">Aviso</string>
 </resources>
