@@ -145,22 +145,32 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:orientation="horizontal">
+
+                android:orientation="horizontal"
+                android:weightSum="10"
+                >
                 <Spinner
+                    android:maxLines="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:prompt="@string/day"
+                    android:ellipsize="end"
                     android:id="@+id/spinner_day" />
                 <Spinner
+                    android:scrollHorizontally="true"
+                    android:maxLines="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:entries="@array/meses"
+                    android:ellipsize="end"
                     android:prompt="@string/month"
                     android:id="@+id/spinner_month" />
                 <Spinner
+                    android:maxLines="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:prompt="@string/year"
+                    android:ellipsize="end"
                     android:id="@+id/spinner_year" />
             </LinearLayout>
         </LinearLayout>
@@ -175,7 +185,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="id da pergunta"
+        android:text=""
         android:id="@+id/habi1_cod"
         android:visibility="gone"
         />

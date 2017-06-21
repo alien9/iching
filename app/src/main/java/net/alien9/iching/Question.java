@@ -551,6 +551,7 @@ public class Question extends AppCompatActivity{
                             data_atual="";//String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                         }
                         setupDateField(context, v, data_atual, c.get(Calendar.YEAR));
+                        ((TextView)v.findViewById(R.id.habi1_cod)).setText(respuestas.optString("habi1_cod",""));
                         ((EditText)v.findViewById(R.id.editText_habi1_nom)).setText(respuestas.optString("habi1_nom",""));
                         ((EditText)v.findViewById(R.id.editText_habi1_cns)).setText(respuestas.optString("habi1_cns",""));
                         ((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).setText(respuestas.optString("habi1_nom_mae",""));
