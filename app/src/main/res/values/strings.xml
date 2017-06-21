@@ -148,4 +148,5 @@
     <string name="escolha_muinicipio_de_instalacao">Selecione o município de instalação</string>
     <string name="desinfect_device">Remover dados locais?</string>
     <string name="veja_bem">Aviso</string>
+    <string name="cep">CEP</string>
 </resources>

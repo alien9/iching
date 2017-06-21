@@ -1510,6 +1510,10 @@ habi1_dat_nasc
                         findViewById(R.id.editText_nomedarua).requestFocus();
                         return false;
                     }
+                    respuestas.put("ende1_cep", ((EditText) v.findViewById(R.id.editText_cep)).getText());
+                    respuestas.put("ende1_bai", ((EditText) v.findViewById(R.id.editText_bairro)).getText());
+                    respuestas.put("ende1_cida", ((EditText) v.findViewById(R.id.editText_cidade)).getText());
+                    respuestas.put("ende1_uf", ((Spinner) v.findViewById(R.id.estado_spinner)).getSelectedItem().toString());
                     respuestas.put("ende1_num", ((EditText) v.findViewById(R.id.editText_numero)).getText());
                     respuestas.put("ende1_tele", ((EditText) v.findViewById(R.id.editText_telefone)).getText());
                     respuestas.put("ende1_compl", ((EditText) v.findViewById(R.id.editText_complemento)).getText());
