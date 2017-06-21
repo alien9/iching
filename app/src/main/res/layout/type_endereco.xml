@@ -59,6 +59,14 @@
                 style="@style/EditGrande"
                 android:id="@+id/editText_bairro" />
             <EditText
+                android:hint="@string/cep"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:ems="10"
+                style="@style/EditGrande"
+                android:id="@+id/editText_cep" />
+            <EditText
                 android:hint="@string/cidade"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
