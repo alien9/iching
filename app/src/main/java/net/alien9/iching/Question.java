@@ -70,6 +70,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import static net.alien9.iching.R.id.perg_id;
 
@@ -1105,11 +1106,6 @@ ende1_lng
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0) {
                     fixDays(v);
-                }else{
-                    if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_day)).setSelection(0);
-                    if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_month)).setSelection(0);
                 }
             }
             @Override
@@ -1124,10 +1120,10 @@ ende1_lng
                 if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0) {
                     fixDays(v);
                 }else{
-                    if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_day)).setSelection(0);
-                    if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
+                    //if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()>0)
+                    //    ((Spinner)v.findViewById(R.id.spinner_day)).setSelection(0);
+                    //if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
+//                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
                 }
             }
             @Override
@@ -1138,12 +1134,12 @@ ende1_lng
         ((Spinner)v.findViewById(R.id.spinner_day)).setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int j, long l) {
-                if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()==0) {
-                    if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_month)).setSelection(0);
-                    if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
-                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
-                }
+//                if(((Spinner)v.findViewById(R.id.spinner_day)).getSelectedItemPosition()==0) {
+//                    if(((Spinner)v.findViewById(R.id.spinner_month)).getSelectedItemPosition()>0)
+//                        ((Spinner)v.findViewById(R.id.spinner_month)).setSelection(0);
+//                    if(((Spinner)v.findViewById(R.id.spinner_year)).getSelectedItemPosition()>0)
+//                        ((Spinner)v.findViewById(R.id.spinner_year)).setSelection(0);
+//                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -1155,7 +1151,7 @@ ende1_lng
             if(dat.length==3){
                 dup.setSelection(ass.getPosition(dat[0]));
                 mup = (Spinner) v.findViewById(R.id.spinner_month);
-                mup.setSelection(Integer.parseInt(dat[1])-1);
+                mup.setSelection(Integer.parseInt(dat[1]));
                 yup.setSelection(ssa.getPosition(dat[2]));
             }
         }
@@ -1514,7 +1510,11 @@ habi1_dat_nasc
                     respuestas.put("ende1_cep", ((EditText) v.findViewById(R.id.editText_cep)).getText());
                     respuestas.put("ende1_bai", ((EditText) v.findViewById(R.id.editText_bairro)).getText());
                     respuestas.put("ende1_cida", ((EditText) v.findViewById(R.id.editText_cidade)).getText());
-                    respuestas.put("ende1_uf", ((Spinner) v.findViewById(R.id.estado_spinner)).getSelectedItem().toString());
+                    String uf="";
+                    int uf_index=((Spinner) v.findViewById(R.id.estado_spinner)).getSelectedItemPosition();
+                    if(uf_index>0) uf = getResources().getStringArray(R.array.ufs)[uf_index-1];
+
+                    respuestas.put("ende1_uf", uf);
                     respuestas.put("ende1_num", ((EditText) v.findViewById(R.id.editText_numero)).getText());
                     respuestas.put("ende1_tele", ((EditText) v.findViewById(R.id.editText_telefone)).getText());
                     respuestas.put("ende1_compl", ((EditText) v.findViewById(R.id.editText_complemento)).getText());

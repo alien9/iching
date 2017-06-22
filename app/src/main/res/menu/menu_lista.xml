@@ -6,6 +6,11 @@
     <item android:id="@+id/send_data"
         android:title="@string/action_send"
         />
+    <item android:checkable="true"
+        android:title="@string/apagar_dados"
+        android:visible="false"
+        android:id="@+id/remove_data"
+        />
     <item android:id="@+id/logout"
         android:title="@string/logout"
         />

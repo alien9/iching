@@ -111,17 +111,17 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/ende1_lat"
+        android:id="@+id/ende1_lat" android:visibility="gone"
         />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/ende1_lng"
+        android:id="@+id/ende1_lng" android:visibility="gone"
         />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/ende1_cod"
+        android:id="@+id/ende1_cod" android:visibility="gone"
         />
     <include layout="@layout/decline"/>
 </LinearLayout>

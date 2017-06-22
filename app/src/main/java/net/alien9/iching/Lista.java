@@ -103,7 +103,9 @@ public class Lista extends AppCompatActivity {
                 if(current_pesquisa==null){ // CLICKOU NUMA PESQUISA
                     current_pesquisa = stuff.optJSONObject(i);
                     if(current_pesquisa.optString("foco").equals("ende")){
-                        if(current_pesquisa.optJSONArray("ende").length()>0){
+                        JSONArray arr = current_pesquisa.optJSONArray("ende");
+                        if(arr==null)arr=new JSONArray();
+                        if(arr.length()>0){
                             showEnderecosOrHabitantes(current_pesquisa);
                             return;
                         }else{
@@ -115,7 +117,9 @@ public class Lista extends AppCompatActivity {
                         }
                     }
                     if(current_pesquisa.optString("foco").equals("habi")){
-                        if(current_pesquisa.has("habi")){
+                        JSONArray arr = current_pesquisa.optJSONArray("habi");
+                        if(arr==null)arr=new JSONArray();
+                        if(arr.length()>0){
                             if(current_pesquisa.optJSONArray("habi").length()>0) {
                                 showEnderecosOrHabitantes(current_pesquisa);
                                 return;
@@ -164,9 +168,9 @@ public class Lista extends AppCompatActivity {
             }
             editor.putString("journal", journal.toString());
             editor.commit();
-            for(int k=0;k<stuff.length();k++){
-                JSONObject p=stuff.optJSONObject(k);
-
+            for(int k=0;k<stuff.length();k++) {
+                JSONObject p = stuff.optJSONObject(k);
+/*
                 if(Debug.isDebuggerConnected()) {
                     AlertDialog dialog = new AlertDialog.Builder(context)
                             .setTitle(getString(R.string.veja_bem))
@@ -195,29 +199,33 @@ public class Lista extends AppCompatActivity {
                         }
                     }
                 }
-
-                if(p.has("habi")){
-                    for(int l=0;l<p.optJSONArray("habi").length();l++){
-                        if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))){
-                            //if(debug)
-                            p.optJSONArray("habi").remove(l);
+*/
+                SharedPreferences sp = getSharedPreferences("iching", Context.MODE_PRIVATE);
+                if (!Debug.isDebuggerConnected() || (sp.getBoolean("remove_data",false))) {
+                    if (p.has("habi")) {
+                        for (int l = 0; l < p.optJSONArray("habi").length(); l++) {
+                            if (p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))) {
+                                //if(debug)
+                                p.optJSONArray("habi").remove(l);
+                            }
                         }
                     }
-                }
-                if(p.has("ende")){
-                    for(int l=0;l<p.optJSONArray("ende").length();l++){
-                        if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod").equals(resultado.optString("ende1_cod"))){
-                            p.optJSONArray("ende").remove(l);
+                    if (p.has("ende")) {
+                        for (int l = 0; l < p.optJSONArray("ende").length(); l++) {
+                            if (p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod").equals(resultado.optString("ende1_cod"))) {
+                                p.optJSONArray("ende").remove(l);
+                            }
                         }
                     }
-                }
-                try {
-                    stuff.put(k,p);
-                } catch (JSONException ignoree) {
+                    try {
+                        stuff.put(k, p);
+                    } catch (JSONException ignoree) {
+                    }
                 }
             }
             iching.setStuff(stuff);
             showPesquisas();
+
         }else {
             if(!intent.hasExtra("quiet"))
                 reload();
@@ -258,6 +266,12 @@ public class Lista extends AppCompatActivity {
         int n=contagem();
         String itemzinho=(n==1)?"item":"itens";
         menu.findItem(R.id.send_data).setTitle(String.format("Enviar: %s %s",""+contagem(),itemzinho));
+        menu.findItem(R.id.remove_data).setVisible(Debug.isDebuggerConnected());
+        if(Debug.isDebuggerConnected()) {
+            SharedPreferences sharedpreferences = getSharedPreferences("iching", Context.MODE_PRIVATE);
+            menu.findItem(R.id.remove_data).setChecked(sharedpreferences.getBoolean("remove_data",false));
+        }
+
         return super.onPrepareOptionsMenu(menu);
     }
     @Override
@@ -289,6 +303,14 @@ public class Lista extends AppCompatActivity {
                     return true;
                 }
                 reload();
+                break;
+            case R.id.remove_data:
+                SharedPreferences sharedpreferences = getSharedPreferences("iching", Context.MODE_PRIVATE);
+                SharedPreferences.Editor e = sharedpreferences.edit();
+                e.putBoolean("remove_data",!item.isChecked());
+                item.setChecked(item.isChecked());
+                e.commit();
+
                 break;
         }
         return true;
