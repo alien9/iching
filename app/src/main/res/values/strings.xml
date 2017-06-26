@@ -37,6 +37,20 @@
         <item>Novembro</item>
         <item>Dezembro</item>
     </string-array>
+    <string-array name="meses_abbrev">
+        <item>Jan</item>
+        <item>Fev</item>
+        <item>Mar</item>
+        <item>Abr</item>
+        <item>Mai</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Ago</item>
+        <item>Set</item>
+        <item>Out</item>
+        <item>Nov</item>
+        <item>Dez</item>
+    </string-array>
     <string-array name="estados">
         <item/>
         <item>Acre</item>

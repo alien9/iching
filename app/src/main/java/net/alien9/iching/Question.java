@@ -103,7 +103,7 @@ public class Question extends AppCompatActivity{
         put("tabela", TYPE_TABLE);
         put("habitante", TYPE_HABI);
         put("endereco", TYPE_ENDE);
-        put("cadastro", TYPE_CNS);
+        put("cns", TYPE_CNS);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final int POSITION_UPDATE = 0;
@@ -655,12 +655,31 @@ ende1_lng
                         while (keys.hasNext()) {
                             String subitem_key = keys.next().toString();
                             JSONObject subitem = subpergs.optJSONObject(subitem_key);
+
+                            String nome_tipo=subitem.optString("tipo");
+                            if(nome_tipo.equals("cadastro")){
+                                //data, cns, cep, fone, alfa, numerico são os templates possiveis
+                                try {
+                                    nome_tipo = subitem.optJSONObject("resps").optJSONObject("1").optString("template");
+                                }catch(NullPointerException xixi){
+                                    nome_tipo="textual";
+                                }
+                            }
                             int tipy;
                             try {
-                                tipy = FIELD_TYPES.get(subitem.optString("tipo"));
+                                tipy = FIELD_TYPES.get(nome_tipo);
                             }catch(NullPointerException xixi){
                                 tipy=TYPE_TEXT;
                             }
+                            //String campo=subitem_key;
+                            String valor="";
+                            if(subitem.has("campo")){
+                                valor=respuestas.optString(subitem.optString("campo"));
+                                //campo=subitem.optString("campo");
+                                //respuestas.optJSONObject(subitem_key).put("v",);
+                            }
+
+
                             LinearLayout lu;
                             switch(tipy){
                                 case TYPE_RADIO:
@@ -687,8 +706,10 @@ ende1_lng
                                 case TYPE_DATE:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_date_mini, null);
                                     c = Calendar.getInstance();
-                                    if(respuestas.has(subitem_key)) {
-                                        data_atual = respuestas.optJSONObject(subitem_key).optString("v");
+                                    data_atual="";
+                                    if(valor.length()>0) {
+                                        Date d = new Date(Integer.parseInt(valor) * 1000);
+                                        data_atual=new SimpleDateFormat("dd/MM/yyyy").format(d);
                                     }else{
                                         data_atual=String.format("%02d/%02d/%04d",c.get(c.DAY_OF_MONTH),c.get(c.MONTH)+1,c.get(Calendar.YEAR));
                                     }
@@ -1093,7 +1114,7 @@ ende1_lng
         Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
         mup.setAdapter(mss);
 
-        int ano_inicial=am-150;
+        int ano_inicial=1901;
         for(int i=ano_inicial;i<=am;i++){
             anos.add(""+i);
         }
@@ -1332,11 +1353,21 @@ ende1_lng
                         for(int o=0;o<tabela.getChildCount();o++){
                             int subtipo;
                             View g = tabela.getChildAt(o);
+                            String nome_tipo=item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo");
+                            if(nome_tipo.equals("cadastro")){
+                                //data, cns, cep, fone, alfa, numerico são os templates possiveis
+                                try {
+                                    nome_tipo = item.optJSONObject("pergs").optJSONObject(((TextView) g.findViewById(R.id.subperg_id)).getText().toString()).optJSONObject("resps").optJSONObject("1").optString("template");
+                                }catch(NullPointerException xixi){
+                                    nome_tipo="texto";
+                                }
+                            }
                             try{
-                                subtipo=FIELD_TYPES.get(item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo"));
+                                subtipo=FIELD_TYPES.get(nome_tipo);
                             }catch(NullPointerException xixi){
                                 subtipo=TYPE_TEXT;
                             }
+
                             JSONObject juk = null;
                             String subperg_id=(String) ((TextView)g.findViewById(R.id.subperg_id)).getText();
                             switch(subtipo){
