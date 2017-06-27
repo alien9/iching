@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    style="@style/AppTheme.NoActionBar"
+    >
+    <include layout="@layout/titletext"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="id da pergunta"
+        android:id="@+id/perg_id"
+        android:visibility="gone"
+        />
+    <RadioGroup android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:paddingLeft="28dp"
+        android:id="@+id/multipla_radio"
+        >
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Masculino"
+            android:id="@+id/M"
+            />
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Feminino"
+            android:id="@+id/F"
+            />
+    </RadioGroup>
+    <include layout="@layout/decline"/>
+</LinearLayout>

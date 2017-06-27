@@ -164,4 +164,6 @@
     <string name="veja_bem">Aviso</string>
     <string name="cep">CEP</string>
     <string name="apagar_dados">Apagar dados no dispositivo</string>
+    <string name="cep_invalido">CEP inválido</string>
+    <string name="tel_invalido">Telefone não válido</string>
 </resources>

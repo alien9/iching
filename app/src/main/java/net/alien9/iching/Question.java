@@ -72,6 +72,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static net.alien9.iching.R.id.default_activity_button;
 import static net.alien9.iching.R.id.perg_id;
 
 public class Question extends AppCompatActivity{
@@ -89,6 +90,7 @@ public class Question extends AppCompatActivity{
     private static final int TYPE_HABI = 13;
     private static final int TYPE_ENDE = 14;
     private static final int TYPE_CNS = 15;
+    private static final int TYPE_SEX = 16;
     private static final Hashtable<String, Integer> FIELD_TYPES = new Hashtable<String, Integer>() {{
         put("radio", TYPE_RADIO);
         put("checkbox", TYPE_CHECKBOX);
@@ -104,6 +106,7 @@ public class Question extends AppCompatActivity{
         put("habitante", TYPE_HABI);
         put("endereco", TYPE_ENDE);
         put("cns", TYPE_CNS);
+        put("sexo",TYPE_SEX);
     }};
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     public static final int POSITION_UPDATE = 0;
@@ -511,6 +514,15 @@ public class Question extends AppCompatActivity{
                     item.put("tipo","tabela");
                 }
                 String tip=item.optString("tipo","text");
+                if(tip.equals("cadastro")){
+                    //data, cns, cep, fone, alfa, numerico são os templates possiveis
+                    // falta o tipo sex que será implementado
+                    try {
+                        tip = item.optJSONObject("resps").optJSONObject("1").optString("template");
+                    } catch (NullPointerException xixi) {
+                        tip = "textual";
+                    }
+                }
                 int t = 0;
                 try {
                     t = FIELD_TYPES.get(tip);
@@ -646,6 +658,13 @@ ende1_lng
                             ((ViewGroup)v.findViewById(R.id.multipla_radio)).addView(bu);
                         }
                         break;
+                    case TYPE_SEX:
+                        v = (ViewGroup) inflater.inflate(R.layout.type_sex, collection, false);
+                        if(respuestas.optString("habi1_sex","X").equals("M"))
+                            ((RadioButton)v.findViewById(R.id.M)).setChecked(true);
+                        if(respuestas.optString("habi1_sex","X").equals("F"))
+                            ((RadioButton)v.findViewById(R.id.F)).setChecked(true);
+                        break;
                     case TYPE_TABLE:
                         v = (ViewGroup) inflater.inflate(R.layout.type_table_question, collection, false);
                         LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -702,6 +721,7 @@ ende1_lng
                                     break;
                                 case TYPE_NUMBER:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_number_mini, null);
+                                    ((EditText)lu.findViewById(R.id.value_edittext)).setText(valor);
                                     break;
                                 case TYPE_DATE:
                                     lu = (LinearLayout) vi.inflate(R.layout.type_date_mini, null);
@@ -730,9 +750,13 @@ ende1_lng
                                         ((ViewGroup) lu.findViewById(R.id.checkbox_mini_group)).addView(bu);
                                     }
                                     break;
+                                case TYPE_SEX:
+                                    lu = (LinearLayout) inflater.inflate(R.layout.type_sex_mini, null);
+                                    break;
                                 case TYPE_TEXT:
                                 default:
                                     lu = (LinearLayout) inflater.inflate(R.layout.type_text_mini, null);
+                                    ((EditText)lu.findViewById(R.id.value_edittext)).setText(valor);
 
                             }
                             lu.setBackgroundColor((n%2==0)?Color.parseColor("#0000ff00"):Color.parseColor("#ffdddddd"));
@@ -1309,6 +1333,19 @@ ende1_lng
                 }
                 List<String> obrigs = Arrays.asList(polly.optString("camposobrig", "").split("\\,"));
                 switch(tipo){
+                    case TYPE_SEX:
+                        switch (((RadioGroup) v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId()){
+                            case R.id.M:
+                                respostinha.put("v","M");
+                                break;
+                            case R.id.F:
+                                respostinha.put("v","F");
+                                break;
+                            default:
+                                Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
+                                return false;
+                        }
+                        break;
                     case TYPE_UNICA:
                     case TYPE_RADIO:
                     case TYPE_YESORNO:
@@ -1453,6 +1490,20 @@ ende1_lng
                             return false;
                         }
                     }
+                    if(item.optString("mascara").equals("cep")){
+                        if(!Util.isCEP(respostinha.getString("v"))){
+                            v.findViewById(R.id.value_edittext).requestFocus();
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cep_invalido),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                    }
+                    if(item.optString("mascara").equals("tel")){
+                        if(!Util.isTelephone(respostinha.getString("v"))){
+                            v.findViewById(R.id.value_edittext).requestFocus();
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.tel_invalido),Snackbar.LENGTH_LONG).show();
+                            return false;
+                        }
+                    }
                 }
 
 
@@ -1481,9 +1532,7 @@ ende1_lng
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
                         return false;
                     }
-
                     respuestas.put("habi1_cod",((TextView)v.findViewById(R.id.habi1_cod)).getText());
-
                     respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
                     respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
                     String cns=((EditText) v.findViewById(R.id.editText_habi1_cns)).getText().toString();

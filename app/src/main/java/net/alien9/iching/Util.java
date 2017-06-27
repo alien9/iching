@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -43,6 +44,16 @@ public class Util {
 
     public static CookieJar getCookieJar(Context context) {
         return new CookiePot();
+    }
+
+    public static boolean isCEP(String v) {
+        Pattern p = Pattern.compile("\\d{5}-?(\\d{3})?");
+        return p.matcher(v).matches();
+    }
+
+    public static boolean isTelephone(String v) {
+        Pattern p = Pattern.compile("\\d{4,}");
+        return p.matcher(v).matches();
     }
 
     private static class CookiePot implements CookieJar {
