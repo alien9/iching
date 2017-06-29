@@ -85,7 +85,7 @@
                 android:id="@+id/estado_spinner"
                 android:entries="@array/estados"
                 />
-            <EditText
+            <!--EditText
                 android:hint="@string/nome_do_contato"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/presente_checkbox"
                 android:text="@string/presente"
-                />
+                /-->
         </LinearLayout>
     </LinearLayout>
     <TextView

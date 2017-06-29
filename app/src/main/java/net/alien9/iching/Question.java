@@ -1115,8 +1115,10 @@ ende1_lng
         Collections.sort(things,new ThingsSorter());
         return things;
     }
-
     private void setupDateField(Context context, final ViewGroup v, String data_atual, int am) {
+        setupDateField(context, v, data_atual, am, false);
+    }
+    private void setupDateField(Context context, final ViewGroup v, String data_atual, int am, boolean abbrev) {
         Calendar c = Calendar.getInstance();
         List<String> dias=new ArrayList<String>();
         List<String> anos=new ArrayList<String>();
@@ -1126,7 +1128,10 @@ ende1_lng
         meses.add("");
         anos.add("");
         //}
-        meses.addAll(Arrays.asList(getResources().getStringArray(R.array.meses)));
+        if(abbrev)
+            meses.addAll(Arrays.asList(getResources().getStringArray(R.array.meses_abbrev)));
+        else
+            meses.addAll(Arrays.asList(getResources().getStringArray(R.array.meses)));
         for(int i=1;i<32;i++){
             dias.add(""+i);
         }
@@ -1138,7 +1143,7 @@ ende1_lng
         Spinner mup = (Spinner) v.findViewById(R.id.spinner_month);
         mup.setAdapter(mss);
 
-        int ano_inicial=1901;
+        int ano_inicial=1910;
         for(int i=ano_inicial;i<=am;i++){
             anos.add(""+i);
         }
@@ -1411,6 +1416,7 @@ ende1_lng
                                 case TYPE_RADIO:
                                 case TYPE_UNICA:
                                 case TYPE_YESORNO:
+                                case TYPE_SEX:
                                     juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
                                     if(juk==null){
                                         Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
@@ -1592,7 +1598,7 @@ habi1_dat_nasc
                     respuestas.put("ende1_cida", ((EditText) v.findViewById(R.id.editText_cidade)).getText());
                     String uf="";
                     int uf_index=((Spinner) v.findViewById(R.id.estado_spinner)).getSelectedItemPosition();
-                    if(uf_index>0) uf = getResources().getStringArray(R.array.ufs)[uf_index-1];
+                    if(uf_index>0) uf = getResources().getStringArray(R.array.ufs)[uf_index];
 
                     respuestas.put("ende1_uf", uf);
                     respuestas.put("ende1_num", ((EditText) v.findViewById(R.id.editText_numero)).getText());
