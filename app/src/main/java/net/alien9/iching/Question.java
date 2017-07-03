@@ -1338,6 +1338,7 @@ ende1_lng
                     resposta = item.optJSONObject("resps").optJSONObject("1");
                 }
                 List<String> obrigs = Arrays.asList(polly.optString("camposobrig", "").split("\\,"));
+                boolean is_opc=item.optBoolean("opc");
                 switch(tipo){
                     case TYPE_SEX:
                         switch (((RadioGroup) v.findViewById(R.id.multipla_radio)).getCheckedRadioButtonId()){
@@ -1348,15 +1349,17 @@ ende1_lng
                                 respostinha.put("v","F");
                                 break;
                             default:
-                                Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
-                                return false;
+                                if(!is_opc) {
+                                    Snackbar.make(findViewById(R.id.main_view), getString(R.string.value_required), Snackbar.LENGTH_LONG).show();
+                                    return false;
+                                }
                         }
                         break;
                     case TYPE_UNICA:
                     case TYPE_RADIO:
                     case TYPE_YESORNO:
                         respostinha=getRadioValue((RadioGroup)v.findViewById(R.id.multipla_radio));
-                        if(respostinha==null){
+                        if((respostinha==null)&&!is_opc){
                             Snackbar.make(findViewById(R.id.main_view),getString(R.string.value_required),Snackbar.LENGTH_LONG).show();
                             return false;
                         }
