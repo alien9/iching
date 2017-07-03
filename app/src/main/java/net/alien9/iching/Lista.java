@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.CookieJar;
 import okhttp3.MultipartBody;
@@ -170,36 +171,6 @@ public class Lista extends AppCompatActivity {
             editor.commit();
             for(int k=0;k<stuff.length();k++) {
                 JSONObject p = stuff.optJSONObject(k);
-/*
-                if(Debug.isDebuggerConnected()) {
-                    AlertDialog dialog = new AlertDialog.Builder(context)
-                            .setTitle(getString(R.string.veja_bem))
-                            .setMessage(getString(R.string.desinfect_device))
-                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int id) {
-
-                                }
-                            }).create();
-                    dialog.show();
-                }else{
-                    if(p.has("habi")){
-                        for(int l=0;l<p.optJSONArray("habi").length();l++){
-                            if(p.optJSONArray("habi").optJSONObject(l).optString("habi1_cod").equals(resultado.optString("habi1_cod"))){
-                                //if(debug)
-                                p.optJSONArray("habi").remove(l);
-                            }
-                        }
-                    }
-                    if(p.has("ende")){
-                        for(int l=0;l<p.optJSONArray("ende").length();l++){
-                            if(p.optJSONArray("ende").optJSONObject(l).optString("ende1_cod").equals(resultado.optString("ende1_cod"))){
-                                p.optJSONArray("ende").remove(l);
-                            }
-                        }
-                    }
-                }
-*/
                 SharedPreferences sp = getSharedPreferences("iching", Context.MODE_PRIVATE);
                 if (!Debug.isDebuggerConnected() || (sp.getBoolean("remove_data",false))) {
                     if (p.has("habi")) {
@@ -262,16 +233,19 @@ public class Lista extends AppCompatActivity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         MenuItem item = menu.findItem(R.id.send_data);
         JSONObject j = getJournal();
-        item.setEnabled((j.length()>0)?true:false);
+        //item.setEnabled((j.length()>0)?true:false);
         int n=contagem();
         String itemzinho=(n==1)?"item":"itens";
-        menu.findItem(R.id.send_data).setTitle(String.format("Enviar: %s %s",""+contagem(),itemzinho));
+        if(j.length()>0)
+            menu.findItem(R.id.send_data).setTitle(String.format("Enviar: %s %s",""+contagem(),itemzinho));
+        else
+            menu.findItem(R.id.send_data).setTitle(getString(R.string.synchronize));
+
         menu.findItem(R.id.remove_data).setVisible(Debug.isDebuggerConnected());
         if(Debug.isDebuggerConnected()) {
             SharedPreferences sharedpreferences = getSharedPreferences("iching", Context.MODE_PRIVATE);
             menu.findItem(R.id.remove_data).setChecked(sharedpreferences.getBoolean("remove_data",false));
         }
-
         return super.onPrepareOptionsMenu(menu);
     }
     @Override
@@ -393,7 +367,7 @@ public class Lista extends AppCompatActivity {
             Response response = null;
             try {
                 CookieJar cookieJar = ((IChing) getApplicationContext()).getCookieJar();
-                OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).build();
+                OkHttpClient client = new OkHttpClient.Builder().cookieJar(cookieJar).connectTimeout(60,TimeUnit.SECONDS).build();
                 //String r = ((IChing) getApplicationContext()).getRespostas().toString();
                 //request=new Request.Builder().url(String.format("%s?c=%sm=save&d=%s", new String[]{getString(R.string.save_url),((IChing)getApplicationContext()).getPesqId(), URLEncoder.encode(r,"UTF-8")})).build();
 
@@ -409,7 +383,7 @@ public class Lista extends AppCompatActivity {
                 }
                 ((IChing)getApplicationContext()).setStuff(stuff);
             } catch (IOException e) {
-                Snackbar.make(findViewById(R.id.content_lista), e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
+                Snackbar.make(findViewById(R.id.content_lista), e.getMessage(), Snackbar.LENGTH_LONG).show();
                 return false;
             } catch (JSONException e) {
                 e.printStackTrace();

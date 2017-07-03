@@ -599,6 +599,7 @@ ende1_lng
                         ((EditText)v.findViewById(R.id.editText_telefone)).setText(respuestas.optString("ende1_tele"));
                         ((EditText)v.findViewById(R.id.editText_bairro)).setText(respuestas.optString("ende1_bai"));
                         ((EditText)v.findViewById(R.id.editText_cidade)).setText(respuestas.optString("ende1_cida"));
+                        ((EditText)v.findViewById(R.id.editText_cep)).setText(respuestas.optString("ende1_cep"));
                         ((TextView)v.findViewById(R.id.ende1_lat)).setText(respuestas.optString("ende1_lat"));
                         ((TextView)v.findViewById(R.id.ende1_lng)).setText(respuestas.optString("ende1_lng"));
                         ((TextView)v.findViewById(R.id.ende1_cod)).setText(respuestas.optString("ende1_cod"));
@@ -1396,6 +1397,7 @@ ende1_lng
                             int subtipo;
                             View g = tabela.getChildAt(o);
                             String nome_tipo=item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optString("tipo");
+                            boolean is_opcional=item.optJSONObject("pergs").optJSONObject(((TextView)g.findViewById(R.id.subperg_id)).getText().toString()).optBoolean("opc");
                             if(nome_tipo.equals("cadastro")){
                                 //data, cns, cep, fone, alfa, numerico são os templates possiveis
                                 try {
@@ -1418,25 +1420,28 @@ ende1_lng
                                 case TYPE_YESORNO:
                                 case TYPE_SEX:
                                     juk = getRadioValue((ViewGroup)g.findViewById(R.id.radio_mini_group));
-                                    if(juk==null){
-                                        Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
+                                    if((juk==null)&&!is_opcional){
+                                        Snackbar.make(findViewById(R.id.main_view),R.string.choice_required,Snackbar.LENGTH_LONG).show();
+                                        findViewById(R.id.content_scroller).scrollTo(0,g.findViewById(R.id.radio_mini_group).getBottom());
                                         g.findViewById(R.id.radio_mini_group).requestFocus();
                                         return false;
                                     }
                                     resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                     break;
                                 case TYPE_DATE:
-
                                     String d=null;
                                     try{
                                         d=String.format("%02d/%02d/%04d",((Spinner)g.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner)g.findViewById(R.id.spinner_month)).getSelectedItemPosition(),Integer.parseInt(((Spinner)g.findViewById(R.id.spinner_year)).getSelectedItem().toString()));
+                                        juk=new JSONObject();
+                                        juk.put("v",d);
+                                        resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                     }catch(NumberFormatException xxx){
-                                        Snackbar.make(findViewById(R.id.main_view),R.string.value_required,Snackbar.LENGTH_LONG).show();
-                                        return false;
+                                        if(!is_opcional) {
+                                            Snackbar.make(findViewById(R.id.main_view), R.string.value_required, Snackbar.LENGTH_LONG).show();
+                                            findViewById(R.id.content_scroller).scrollTo(0,g.findViewById(R.id.date_split_container).getBottom());
+                                            return false;
+                                        }
                                     }
-                                    juk=new JSONObject();
-                                    juk.put("v",d);
-                                    resposta_multi.put((String) ((TextView)g.findViewById(R.id.subperg_id)).getText(),juk);
                                     break;
                                 case TYPE_CHECKBOX:
                                 case TYPE_MULTIPLA:
@@ -1452,7 +1457,7 @@ ende1_lng
                                 default:
                                     juk=new JSONObject();
                                     String resp = ((EditText) g.findViewById(R.id.value_edittext)).getText().toString();
-                                    if(obrigs.contains(subperg_id) && (resp.equals(""))){
+                                    if(obrigs.contains(subperg_id) && (resp.equals("")) && !is_opcional){
                                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
                                         return false;
                                     }

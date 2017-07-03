@@ -120,7 +120,7 @@
     <string name="carregando">Carregando...</string>
     <string name="aguarde">Aguarde</string>
     <string name="minimo_tamanho_de_texto">Texto deve ser informado</string>
-    <string name="valor_requerido">Questão Obrigatória</string>
+    <string name="valor_requerido">Resposta Obrigatória</string>
     <string name="value_required">Valor Obrigatório</string>
     <string name="loading_files">Carregando arquivos adicionais...</string>
     <string name="no_network_available">Não há conexão. Tente novamente quando estiver conectado.</string>
@@ -166,4 +166,6 @@
     <string name="apagar_dados">Apagar dados no dispositivo</string>
     <string name="cep_invalido">CEP inválido</string>
     <string name="tel_invalido">Telefone não válido</string>
+    <string name="synchronize">Atualizar</string>
+    <string name="choice_required">Escolha uma opção</string>
 </resources>
