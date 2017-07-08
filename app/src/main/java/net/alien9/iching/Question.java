@@ -156,6 +156,7 @@ public class Question extends AppCompatActivity{
         Bitmap bu=((IChing) getApplicationContext()).getItemBitmap(polly.optString("foco", "geral"), polly.optBoolean("sus"));
         getSupportActionBar().setTitle(polly.optString("nom"));
         final IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        pu.removeAllViews();
         final View te=findViewById(R.id.messenger_layout);
         if(polly.has("msgini")){
             findViewById(R.id.next).setVisibility(View.GONE);
@@ -178,7 +179,7 @@ public class Question extends AppCompatActivity{
                 return true;
             }
         });
-
+        pa.notifyDataSetChanged();
         pu.setAdapter(pa);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Activity budega = (Activity) this;
@@ -462,6 +463,10 @@ public class Question extends AppCompatActivity{
         public BunchViewAdapter(Context c) {
             context = c;
             counta=-1;
+        }
+        @Override
+        public int getItemPosition(Object object) {
+            return PagerAdapter.POSITION_NONE;
         }
         @Override
         public int getCount() {
