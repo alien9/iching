@@ -139,6 +139,8 @@ public class Question extends AppCompatActivity{
                 ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
                 if(polly.has("preset")){
                     ((IChing)getApplicationContext()).setRespostas(polly.optJSONObject("preset"));
+                }else{
+                    ((IChing)getApplicationContext()).setRespostas(new JSONObject());
                 }
             } catch (JSONException ignore) {
                 Snackbar.make(findViewById(R.id.main_view), "Dados Incorretos", Snackbar.LENGTH_LONG).setAction("Action", null).show();
