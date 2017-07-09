@@ -1207,7 +1207,7 @@ ende1_lng
         if(data_atual!=""){
             String[] dat=data_atual.split("\\/");
             if(dat.length==3){
-                dup.setSelection(ass.getPosition(dat[0]));
+                dup.setSelection(ass.getPosition(""+Integer.parseInt(dat[0])));
                 mup = (Spinner) v.findViewById(R.id.spinner_month);
                 mup.setSelection(Integer.parseInt(dat[1]));
                 yup.setSelection(ssa.getPosition(dat[2]));
