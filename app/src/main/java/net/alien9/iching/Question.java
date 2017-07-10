@@ -137,8 +137,8 @@ public class Question extends AppCompatActivity{
             try {
                 polly=new JSONObject(h);
                 ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
-                if(polly.has("preset")){
-                    ((IChing)getApplicationContext()).setRespostas(polly.optJSONObject("preset"));
+                if(intent.hasExtra("preset")){
+                    ((IChing)getApplicationContext()).setRespostas(new JSONObject(intent.getExtras().getString("preset")));
                 }else{
                     ((IChing)getApplicationContext()).setRespostas(new JSONObject());
                 }

@@ -101,7 +101,13 @@ public class Lista extends AppCompatActivity {
         ((ListView)findViewById(R.id.lista_list)).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(current_pesquisa==null){ // CLICKOU NUMA PESQUISA
+                JSONObject preset;
+                try {
+                    preset=new JSONObject(((TextView)view.findViewById(R.id.preset)).getText().toString());
+                } catch (JSONException e) {
+                    preset=new JSONObject();
+                }
+                if(current_pesquisa==null){ // CLICKOU NUMA PESQUISA com agendamentos
                     current_pesquisa = stuff.optJSONObject(i);
                     if(current_pesquisa.optString("foco").equals("ende")){
                         JSONArray arr = current_pesquisa.optJSONArray("ende");
@@ -133,25 +139,28 @@ public class Lista extends AppCompatActivity {
                             }
                         }
                     }
-                }else{
-                    //selecionando extras da pesquisa
+                }
+
+                /*else{
+                    //selecionando pessoa para aplicar uma pesquisa
                     if(current_pesquisa.optString("foco").equals("habi")){
                         try {
-                            current_pesquisa.put("preset",current_pesquisa.optJSONArray("habi").optJSONObject(i));
+                            current_pesquisa.put("preset",preset);
                         } catch (JSONException ignore) {
                             Log.d("ICHING","habitante mal informado!");
                         }
                     }
                     if(current_pesquisa.optString("foco").equals("ende")){
                         try {
-                            current_pesquisa.put("preset",current_pesquisa.optJSONArray("ende").optJSONObject(i));
+                            current_pesquisa.put("preset",preset);
                         } catch (JSONException ignore) {
                             Log.d("ICHING","endereço mal informado!");
                         }
                     }
-                }
+                }*/
                 Intent intent = new Intent(context, Question.class);
                 intent.putExtra("poll",current_pesquisa.toString());
+                intent.putExtra("preset",preset.toString());
                 intent.putExtra("CNETSERVERLOGACAO",cookies);
                 startActivity(intent);
             }
@@ -452,6 +461,7 @@ public class Lista extends AppCompatActivity {
     private void showEnderecosOrHabitantes(JSONObject pesquisa){
         setTitle(pesquisa.optString("nom"));
         List<String> names=new ArrayList<>();
+        List<String> presets=new ArrayList<>();
         List<String> focos=new ArrayList<>();
         List<String> quants=new ArrayList<>();
         SharedPreferences sharedpreferences = getSharedPreferences("results", Context.MODE_PRIVATE);
@@ -465,6 +475,7 @@ public class Lista extends AppCompatActivity {
             for (int i = 0; i < habi.length(); i++) {
                 JSONObject it = habi.optJSONObject(i);
                 names.add(it.optString("habi1_nom"));
+                presets.add(it.toString());
                 focos.add("habi");
                 issus.add(pesquisa.optBoolean("sus"));
                 quants.add("");
@@ -476,6 +487,7 @@ public class Lista extends AppCompatActivity {
                 String l=it.optString("ende1_logr");
                 if(it.optString("ende1_num", "").length()>0) l+=", "+it.optString("ende1_num");
                 names.add(l);
+                presets.add(it.toString());
                 focos.add("ende");
                 issus.add(pesquisa.optBoolean("sus"));
                 quants.add("");
@@ -483,6 +495,7 @@ public class Lista extends AppCompatActivity {
         }
         if(!pesquisa.optBoolean("obrig",false)){
             names.add(getString(R.string.nova));
+            presets.add("");
             if(pesquisa.has("ende"))
                 focos.add("ende");
             else
@@ -490,7 +503,7 @@ public class Lista extends AppCompatActivity {
             issus.add(pesquisa.optBoolean("sus"));
             quants.add("");
         }
-        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, focos, issus, quants));
+        ((ListView) findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this, R.layout.content_lista_item, names, presets, focos, issus, quants));
     }
 
     private void showPesquisas() {
@@ -500,12 +513,14 @@ public class Lista extends AppCompatActivity {
         List<String> focos=new ArrayList<>();
         List<Boolean> issus=new ArrayList<>();
         List<String> quants=new ArrayList<>();
+        List<String> presets=new ArrayList<>();
         media=new ArrayList<>();
         cleanUp();
         totalsize = 0;
         currentsize=0;
         for(int i=0;i<stuff.length();i++){
             JSONObject it = stuff.optJSONObject(i);
+            presets.add("");
             names.add(it.optString("nom"));
             focos.add(it.optString("foco","geral"));
             issus.add(it.optBoolean("sus"));
@@ -536,7 +551,7 @@ public class Lista extends AppCompatActivity {
                 new MediaLoader(media.get(0)).execute();
             }
         }
-        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,focos,issus, quants));
+        ((ListView)findViewById(R.id.lista_list)).setAdapter(new StuffAdapter<String>(this,R.layout.content_lista_item,names,presets,focos,issus, quants));
     }
 
     private void showProgressDialog() {
@@ -696,15 +711,17 @@ public class Lista extends AppCompatActivity {
         private final List<String> focos;
         private final List<Boolean> issus;
         private final List<String> quants;
+        private final List<String> presets;
 
 
-        public StuffAdapter(Context context, int resource, List<String> n, List<String> f, List<Boolean> sus, List<String> q){
+        public StuffAdapter(Context context, int resource, List<String> n, List<String> p, List<String> f, List<Boolean> sus, List<String> q){
             super(context, resource, n);
             resourceId=resource;
             names=n;
             focos=f;
             issus = sus;
             quants=q;
+            presets=p;
         }
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -718,6 +735,7 @@ public class Lista extends AppCompatActivity {
             Bitmap bi=((IChing)getApplicationContext()).getItemBitmap((java.lang.String) focos.get(position),issus.get(position));
             ((ImageView)v.findViewById(R.id.bullet)).setImageBitmap(bi);
             ((TextView)v.findViewById(R.id.counter)).setText(quants.get(position).toString());
+            ((TextView)v.findViewById(R.id.preset)).setText(presets.get(position).toString());
             return v;
         }
     }
