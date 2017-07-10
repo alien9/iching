@@ -267,25 +267,21 @@ public class Question extends AppCompatActivity{
         JSONObject respuestas = ((IChing)getApplicationContext()).getRespostas();
         Calendar c=Calendar.getInstance();
         try {
-            if(!respuestas.has("dataehora")){
-                respuestas.put("dataehora",Math.round(c.getTimeInMillis()/1000));
+            respuestas.put("dataehora",Math.round(c.getTimeInMillis()/1000));
+            JSONObject g = ((IChing) getApplicationContext()).getLastKnownPosition();
+            final SharedPreferences sharedpreferences=getSharedPreferences("position",MODE_PRIVATE);
+            if(g==null){
+                g = new JSONObject(sharedpreferences.getString("gps","{}"));
+            }else{
+                SharedPreferences.Editor e = sharedpreferences.edit();
+                e.putString("gps", g.toString());
+                e.commit();
             }
-            if(!respuestas.has("gps")){
-                JSONObject g = ((IChing) getApplicationContext()).getLastKnownPosition();
-                final SharedPreferences sharedpreferences=getSharedPreferences("position",MODE_PRIVATE);
-                if(g==null){
-                    g = new JSONObject(sharedpreferences.getString("gps","{}"));
-                }else{
-                    SharedPreferences.Editor e = sharedpreferences.edit();
-                    e.putString("gps", g.toString());
-                    e.commit();
-                }
 
-                if(g!=null) {
-                    if (g.has("latitude")) {
-                        respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
-                        respuestas.put("gpsprec", g.optString("accuracy"));
-                    }
+            if(g!=null) {
+                if (g.has("latitude")) {
+                    respuestas.put("gps", String.format("%s %s", g.optString("latitude"), g.optString("longitude")));
+                    respuestas.put("gpsprec", g.optString("accuracy"));
                 }
             }
         } catch (JSONException e) {
@@ -1532,14 +1528,15 @@ ende1_lng
                     String t = ((EditText) v.findViewById(R.id.editText_habi1_nom)).getText().toString();
                     if(obrigs.contains("habi1_nom") && (t.length()==0)){
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_nom).getY());
                         v.findViewById(R.id.editText_habi1_nom).requestFocus();
                         return false;
                     }
                     respuestas.put("habi1_nom",t);
-
                     t = ((EditText) v.findViewById(R.id.editText_habi1_cel)).getText().toString();
                     if(obrigs.contains("habi1_cel") && (t.length()==0)){
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_cel).getY());
                         v.findViewById(R.id.editText_habi1_cel).requestFocus();
                         return false;
                     }
@@ -1551,15 +1548,31 @@ ende1_lng
                         respuestas.put("habi1_sex","F");
                     }else if(obrigs.contains("habi1_sex")){
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.masculino_radiobutton).getY());
                         return false;
                     }
                     respuestas.put("habi1_cod",((TextView)v.findViewById(R.id.habi1_cod)).getText());
-                    respuestas.put("habi1_nom_mae",((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
-                    respuestas.put("habi1_nom_pai",((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
+                    String nome= String.valueOf(((EditText)v.findViewById(R.id.editText_habi1_nom_mae)).getText());
+                    if(obrigs.contains("habi1_nom_mae") && (nome.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_nom_mae).getY());
+                        v.findViewById(R.id.editText_habi1_nom_mae).requestFocus();
+                        return false;
+                    }
+                    respuestas.put("habi1_nom_mae",nome);
+                    nome= String.valueOf(((EditText)v.findViewById(R.id.editText_habi1_nom_pai)).getText());
+                    if(obrigs.contains("habi1_nom_pai") && (nome.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_nom_pai).getY());
+                        v.findViewById(R.id.editText_habi1_nom_pai).requestFocus();
+                        return false;
+                    }
+                    respuestas.put("habi1_nom_pai",nome);
                     String cns=((EditText) v.findViewById(R.id.editText_habi1_cns)).getText().toString();
                     if(obrigs.contains("habi1_cns")||(cns.length()>0)) {
                         if (!Util.cnsValido(cns)) {
                             Snackbar.make(findViewById(R.id.main_view), getString(R.string.cns_invalido), Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_cns).getY());
                             v.findViewById(R.id.editText_habi1_cns).requestFocus();
                             return false;
                         }
@@ -1570,6 +1583,7 @@ ende1_lng
                     if(obrigs.contains("habi1_cpf")) {
                         if(!Util.isCPF(cpf)){
                             Snackbar.make(findViewById(R.id.main_view), getString(R.string.cpf_invalido),Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_cpf).getY());
                             v.findViewById(R.id.editText_habi1_cpf).requestFocus();
                             return false;
                         }
@@ -1578,6 +1592,7 @@ ende1_lng
                     if(obrigs.contains("habi1_rg")) {
                         if (((EditText) v.findViewById(R.id.editText_habi1_rg)).getText().length() == 0) {
                             Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_rg).getY());
                             v.findViewById(R.id.editText_habi1_rg).requestFocus();
                             return false;
                         }
@@ -1586,6 +1601,12 @@ ende1_lng
                     try {
                         respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition(), Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                     }catch(NumberFormatException xxx){
+                        if(obrigs.contains("habi1_dat_nasc")) {
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.spinner_day).getY());
+                            v.findViewById(R.id.spinner_day).requestFocus();
+                            return false;
+                        }
                         Log.d("ICHING", "Não é possível ler uma data válida. Sem problemas");
                         respuestas.put("habi1_dat_nasc",null);
                     }
