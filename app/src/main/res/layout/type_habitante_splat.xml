@@ -156,12 +156,15 @@
             android:text="@string/data_nasc"
             />
         <LinearLayout
+            android:id="@+id/nasc_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:weightSum="10"
             android:padding="0dp"
             android:orientation="horizontal">
             <Spinner
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:layout_margin="0dp"

@@ -1547,7 +1547,7 @@ ende1_lng
                     }else if(((RadioButton)v.findViewById(R.id.feminino_radiobutton)).isChecked()){
                         respuestas.put("habi1_sex","F");
                     }else if(obrigs.contains("habi1_sex")){
-                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido),Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.genero_requerido),Snackbar.LENGTH_LONG).show();
                         (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.masculino_radiobutton).getY());
                         return false;
                     }
@@ -1579,6 +1579,16 @@ ende1_lng
                     }
                     respuestas.put("habi1_cns",((EditText)v.findViewById(R.id.editText_habi1_cns)).getText());
 
+                    if(obrigs.contains("habi1_rg")) {
+                        if (((EditText) v.findViewById(R.id.editText_habi1_rg)).getText().length() == 0) {
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_rg).getY());
+                            v.findViewById(R.id.editText_habi1_rg).requestFocus();
+                            return false;
+                        }
+                    }
+                    respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
+
                     String cpf=((EditText)v.findViewById(R.id.editText_habi1_cpf)).getText().toString();
                     if(obrigs.contains("habi1_cpf")) {
                         if(!Util.isCPF(cpf)){
@@ -1589,21 +1599,13 @@ ende1_lng
                         }
                     }
                     respuestas.put("habi1_cpf",cpf);
-                    if(obrigs.contains("habi1_rg")) {
-                        if (((EditText) v.findViewById(R.id.editText_habi1_rg)).getText().length() == 0) {
-                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
-                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_rg).getY());
-                            v.findViewById(R.id.editText_habi1_rg).requestFocus();
-                            return false;
-                        }
-                    }
-                    respuestas.put("habi1_rg",((EditText)v.findViewById(R.id.editText_habi1_rg)).getText());
+
                     try {
                         respuestas.put("habi1_dat_nasc", String.format("%02d/%02d/%04d", new Integer[]{((Spinner) v.findViewById(R.id.spinner_day)).getSelectedItemPosition(), ((Spinner) v.findViewById(R.id.spinner_month)).getSelectedItemPosition(), Integer.parseInt(((Spinner) v.findViewById(R.id.spinner_year)).getSelectedItem().toString())}));
                     }catch(NumberFormatException xxx){
                         if(obrigs.contains("habi1_dat_nasc")) {
-                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
-                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.spinner_day).getY());
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.data_nasc_requerido), Snackbar.LENGTH_LONG).show();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.nasc_container).getBottom());
                             v.findViewById(R.id.spinner_day).requestFocus();
                             return false;
                         }
@@ -1626,20 +1628,73 @@ habi1_dat_nasc
                     respuestas.put("ende1_logr", ((EditText) v.findViewById(R.id.editText_nomedarua)).getText());
                     if (respuestas.optString("ende1_logr").length() < 1) {
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
-                        findViewById(R.id.editText_nomedarua).requestFocus();
+                        v.findViewById(R.id.editText_nomedarua).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_cpf).getY());
                         return false;
                     }
-                    respuestas.put("ende1_cep", ((EditText) v.findViewById(R.id.editText_cep)).getText());
-                    respuestas.put("ende1_bai", ((EditText) v.findViewById(R.id.editText_bairro)).getText());
-                    respuestas.put("ende1_cida", ((EditText) v.findViewById(R.id.editText_cidade)).getText());
+                    String t=((EditText) v.findViewById(R.id.editText_cep)).getText().toString();
+                    if(obrigs.contains("ende1_cep")){
+                        if(!Util.isCEP(t)){
+                            Snackbar.make(findViewById(R.id.main_view), getString(R.string.cep_invalido), Snackbar.LENGTH_LONG).show();
+                            v.findViewById(R.id.editText_cep).requestFocus();
+                            (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_cep).getY());
+                            return false;
+                        }
+                    }
+                    respuestas.put("ende1_cep", t);
+                    t=((EditText) v.findViewById(R.id.editText_bairro)).getText().toString();
+                    if(obrigs.contains("ende1_bai") && (t.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_bairro).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_bairro).getY());
+                        return false;
+                    }
+                    respuestas.put("ende1_bai", t);
+                    t=((EditText) v.findViewById(R.id.editText_cidade)).getText().toString();
+                    if(obrigs.contains("ende1_cida") && (t.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_cidade).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_cidade).getY());
+                        return false;
+                    }
+                    respuestas.put("ende1_cida", t);
                     String uf="";
                     int uf_index=((Spinner) v.findViewById(R.id.estado_spinner)).getSelectedItemPosition();
-                    if(uf_index>0) uf = getResources().getStringArray(R.array.ufs)[uf_index];
 
+                    if(obrigs.contains("ende1_uf") && (uf_index<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.uf_required), Snackbar.LENGTH_LONG).show();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.estado_spinner).getBottom());
+                        return false;
+                    }
+                    if(uf_index>0) uf = getResources().getStringArray(R.array.ufs)[uf_index];
                     respuestas.put("ende1_uf", uf);
-                    respuestas.put("ende1_num", ((EditText) v.findViewById(R.id.editText_numero)).getText());
-                    respuestas.put("ende1_tele", ((EditText) v.findViewById(R.id.editText_telefone)).getText());
-                    respuestas.put("ende1_compl", ((EditText) v.findViewById(R.id.editText_complemento)).getText());
+
+                    t=((EditText) v.findViewById(R.id.editText_numero)).getText().toString();
+                    if(obrigs.contains("ende1_num") && (t.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_numero).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_numero).getY());
+                        return false;
+                    }
+                    respuestas.put("ende1_num", t);
+
+                    t=((EditText) v.findViewById(R.id.editText_telefone)).getText().toString();
+                    if(obrigs.contains("ende1_tele") && (t.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_telefone).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_telefone).getY());
+                        return false;
+                    }
+                    respuestas.put("ende1_tele", t);
+
+                    t=((EditText) v.findViewById(R.id.editText_complemento)).getText().toString();
+                    if(obrigs.contains("ende1_tele") && (t.length()<1)){
+                        Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
+                        v.findViewById(R.id.editText_complemento).requestFocus();
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_complemento).getY());
+                        return false;
+                    }
+                    respuestas.put("ende1_compl", t);
                 }
                 /*
 ((EditText)v.findViewById(R.id.editText_nomedarua)).setText(respuestas.optString("ende1_logr"));

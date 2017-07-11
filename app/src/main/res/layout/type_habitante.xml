@@ -145,11 +145,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-
+                android:id="@+id/nasc_container"
                 android:orientation="horizontal"
                 android:weightSum="10"
                 >
                 <Spinner
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:spinnerMode="dialog"
                     android:maxLines="1"
                     android:layout_width="wrap_content"

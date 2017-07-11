@@ -168,4 +168,7 @@
     <string name="tel_invalido">Telefone não válido</string>
     <string name="synchronize">Atualizar</string>
     <string name="choice_required">Escolha uma opção</string>
+    <string name="genero_requerido">Gênero é obrigatório</string>
+    <string name="data_nasc_requerido">Data de nascimento é obrigatória</string>
+    <string name="uf_required">UF obrigatório</string>
 </resources>
