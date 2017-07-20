@@ -681,11 +681,13 @@ public class Lista extends AppCompatActivity {
                     String key = iter.next();
                     if(pergs.optJSONObject(key).has("resps")){
                         JSONObject jk = pergs.optJSONObject(key).optJSONObject("resps");
-                        Iterator<String> biter = jk.keys();
-                        while(biter.hasNext()){
-                            String bey = biter.next();
-                            if(jk.optJSONObject(bey).has("midia"))
-                                filenames.put(jk.optJSONObject(bey).optString("midia"),false);
+                        if(jk!=null){
+                            Iterator<String> biter = jk.keys();
+                            while(biter.hasNext()){
+                                String bey = biter.next();
+                                if(jk.optJSONObject(bey).has("midia"))
+                                    filenames.put(jk.optJSONObject(bey).optString("midia"),false);
+                            }
                         }
                     }
                 }
