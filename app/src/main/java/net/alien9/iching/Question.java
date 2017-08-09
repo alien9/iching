@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -40,6 +41,10 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -54,6 +59,7 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import org.json.JSONException;
@@ -61,6 +67,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,6 +308,19 @@ public class Question extends AppCompatActivity{
 
                 }
                 setToDo(Question.NOTHING);
+            }
+        });
+        findViewById(R.id.pincha).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                someImagem();
+            }
+        });
+        Button valid = new Button(this);
+        valid.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                someImagem();
             }
         });
     }
@@ -988,11 +1008,20 @@ ende1_lng
                                 @Override
                                 public void onClick(View v) {
                                     getSupportActionBar().hide();
-                                    findViewById(R.id.content_scroller).setVisibility(View.GONE);
-                                    findViewById(R.id.next).setVisibility(View.GONE);
-                                    findViewById(R.id.previous).setVisibility(View.GONE);
-                                    String data = "<body style=\"margin:0;padding:0;height:100%;text-align:center\"><img style=\"height:100%\" src=\""+file+"\"/></body>";
+                                    String scripts="";
+                                    try {
+                                        Resources res = getResources();
+                                        InputStream in_s = res.openRawResource(R.raw.scripts);
+
+                                        byte[] b = new byte[in_s.available()];
+                                        in_s.read(b);
+                                        scripts=new String(b);
+                                    } catch (Exception e) {
+                                    }
+                                    String data = scripts+"<body style=\"margin:0;padding:0;height:100%;text-align:center\"><img onclick=\"cric();\" style=\"height:100%\" src=\""+file+"\"/></body>";
                                     PinchaWebView w = (PinchaWebView) findViewById(R.id.pincha);
+                                    w.getSettings().setJavaScriptEnabled(true);
+                                    w.setWebViewClient(new WebSensor());
                                     w.loadDataWithBaseURL("file:///android_asset/", data, "text/html", "utf-8", null);
                                     w.getSettings().setBuiltInZoomControls(true);
                                     w.setLongClickable(true);
@@ -1005,6 +1034,9 @@ ende1_lng
                                     });
                                     ZoomDetectHandler zh=new ZoomDetectHandler();
                                     w.setZoomDetector(zh);
+                                    findViewById(R.id.content_scroller).setVisibility(View.GONE);
+                                    findViewById(R.id.next).setVisibility(View.GONE);
+                                    findViewById(R.id.previous).setVisibility(View.GONE);
                                     findViewById(R.id.video_container).setVisibility(View.VISIBLE);
                                     findViewById(R.id.pincha).setVisibility(View.VISIBLE);
                                     findViewById(R.id.video_view).setVisibility(View.GONE);
@@ -1091,6 +1123,24 @@ ende1_lng
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
         }
+    }
+
+    private boolean someImagem() {
+        IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
+        int vi = vu.getCurrentItem();
+        View v = vu.getChildAt(vi);
+        if(v==null)return false;
+        if(findViewById(R.id.pincha)==null)return false;
+        if(findViewById(R.id.pincha).getVisibility()==View.GONE)return false;
+        findViewById(R.id.content_scroller).setVisibility(View.VISIBLE);
+        findViewById(R.id.next).setVisibility(View.VISIBLE);
+        findViewById(R.id.previous).setVisibility(View.VISIBLE);
+        findViewById(R.id.video_container).setVisibility(View.GONE);
+        findViewById(R.id.pincha).setVisibility(View.GONE);
+        findViewById(R.id.video_view).setVisibility(View.GONE);
+        getSupportActionBar().show();
+        return true;
+
     }
 
     private List<JSONObject> ajeitaHash(JSONObject pergs) {
@@ -1629,7 +1679,7 @@ habi1_dat_nasc
                     if (respuestas.optString("ende1_logr").length() < 1) {
                         Snackbar.make(findViewById(R.id.main_view), getString(R.string.valor_requerido), Snackbar.LENGTH_LONG).show();
                         v.findViewById(R.id.editText_nomedarua).requestFocus();
-                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_habi1_cpf).getY());
+                        (findViewById(R.id.content_scroller)).scrollTo(0, (int) v.findViewById(R.id.editText_nomedarua).getY());
                         return false;
                     }
                     String t=((EditText) v.findViewById(R.id.editText_cep)).getText().toString();
@@ -1800,6 +1850,7 @@ habi1_dat_nasc
     @Override
     public void onBackPressed() {
         IChingViewPager pu = (IChingViewPager) findViewById(R.id.main_view);
+        if(someImagem())return;
         if(pu.getCurrentItem()==0){
             IChing iching = (IChing) getApplicationContext();
             JSONObject respuestas = iching.getRespostas();
@@ -1850,5 +1901,22 @@ habi1_dat_nasc
                     }
                 },
                 3000);
+    }
+
+    private class WebSensor extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            ///view.loadUrl(url);
+            view.addJavascriptInterface(new Object()
+            {
+                @JavascriptInterface
+                public void performClick() throws Exception
+                {
+                    Log.d("LOGIN::", "Clicked");
+                    Toast.makeText(Question.this, "Login clicked", Toast.LENGTH_LONG).show();
+                }
+            }, "login");
+            return true;
+        }
     }
 }
