@@ -62,6 +62,8 @@ public class IChing extends Application {
         put((String) "ende", R.drawable.bullet_casa);
         put((String) "geral", R.drawable.bullet_doc);
     }};
+    private JSONObject result;
+
     public static IChing getInstance() {
         return singleton;
     }
@@ -283,6 +285,14 @@ public class IChing extends Application {
         canvas.drawCircle(bi.getWidth()/2,bi.getHeight()/2, bi.getHeight()/2, paint);
         canvas.drawBitmap(bm,0,0,null);
         return bi;
+    }
+
+    public void setResult(JSONObject s) {
+        result=s;
+    }
+
+    public JSONObject getResult() {
+        return result;
     }
 
     private static class CookiePot implements CookieJar {

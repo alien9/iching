@@ -28,5 +28,12 @@
         android:id="@+id/perg_id"
         android:visibility="gone"
         />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="arquivo"
+        android:id="@+id/filename"
+        android:visibility="visible"
+        />
     <include layout="@layout/decline"/>
 </LinearLayout>

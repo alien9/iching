@@ -30,6 +30,7 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -65,6 +66,7 @@ import android.widget.VideoView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -143,6 +145,7 @@ public class Question extends AppCompatActivity{
             String h = intent.getExtras().getString("poll");
             try {
                 polly=new JSONObject(h);
+                //polly.optJSONObject("pergs").put("900",new JSONObject("{\"tipo\":\"camera\",\"txt\":\"teste photo\",\"ord\":\"0\"}"));
                 ((IChing)getApplicationContext()).setCod(polly.optString("cod"));
                 if(intent.hasExtra("preset")){
                     ((IChing)getApplicationContext()).setRespostas(new JSONObject(intent.getExtras().getString("preset")));
@@ -407,8 +410,9 @@ public class Question extends AppCompatActivity{
         IChing iching = (IChing) getApplicationContext();
         JSONObject respuestas = iching.getRespostas();
         Intent intent = new Intent(this, Lista.class);
-        intent.putExtra("result",respuestas.toString());
+        //intent.putExtra("result",respuestas.toString());
         intent.putExtra("cod",iching.getCod());
+        iching.setResult(respuestas);
         intent.putExtra("CNETSERVERLOGACAO",cookies);
         iching.setRespostas(new JSONObject());
         startActivity(intent);
@@ -1343,10 +1347,19 @@ ende1_lng
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             //Bundle extras = data.getExtras();
             Bitmap imageBitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
-            //Bitmap imageBitmap = (Bitmap) extras.get("data");
-            ImageView iw= (ImageView) findViewById(R.id.camera_image_view);
-            if(iw!=null)
-                iw.setImageBitmap(imageBitmap);
+
+            final float densityMultiplier = getResources().getDisplayMetrics().density;
+
+            int h= (int) (100*densityMultiplier);
+            int w= (int) (h * imageBitmap.getWidth()/((double) imageBitmap.getHeight()));
+            imageBitmap=Bitmap.createScaledBitmap(imageBitmap, w, h, true);
+
+            IChingViewPager vu= (IChingViewPager) findViewById(R.id.main_view);
+            int vi = vu.getCurrentItem();
+            View v = vu.getChildAt(vi);
+            ImageView iw= (ImageView) v.findViewById(R.id.camera_image_view);
+            iw.setImageBitmap(imageBitmap);
+            ((TextView) v.findViewById(R.id.filename)).setText(imageFile.getAbsolutePath());
         }
     }
     protected boolean validate(String comentario){
@@ -1524,10 +1537,17 @@ ende1_lng
                         }
                         respostinha=resposta_multi;
                         break;
+                    case TYPE_CAMERA:
+                        String filename= (String) ((TextView)v.findViewById(R.id.filename)).getText();
+                        Bitmap bm = BitmapFactory.decodeFile(filename);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                        String encodedImage = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                        respostinha.put("v", encodedImage);
+                        break;
                     default:
                     case TYPE_NUMBER:
                     case TYPE_TEXT:
-                    case TYPE_CAMERA:
                         if(v.findViewById(R.id.value_edittext)!=null) {
                             CharSequence t = ((TextView) v.findViewById(R.id.value_edittext)).getText();
                             if (t.length() == 0) {

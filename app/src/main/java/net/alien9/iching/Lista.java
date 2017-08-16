@@ -165,11 +165,11 @@ public class Lista extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        if(intent.hasExtra("result")){ // está trazendo json pra gravar
+        if(intent.hasExtra("cod")){ // está trazendo json pra gravar
             SharedPreferences.Editor editor = sharedpreferences.edit();
             JSONObject resultado;
             try {
-                resultado=new JSONObject(intent.getExtras().getString("result"));
+                resultado=iching.getResult();//new JSONObject(intent.getExtras().getString("result"));
                 String cod=intent.getExtras().getString("cod");
                 if(!journal.has(cod)) journal.put(cod,new JSONArray());
                 journal.optJSONArray(cod).put(resultado);
