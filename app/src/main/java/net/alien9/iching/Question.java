@@ -1345,7 +1345,6 @@ ende1_lng
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            //Bundle extras = data.getExtras();
             Bitmap imageBitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
 
             final float densityMultiplier = getResources().getDisplayMetrics().density;
@@ -1539,11 +1538,14 @@ ende1_lng
                         break;
                     case TYPE_CAMERA:
                         String filename= (String) ((TextView)v.findViewById(R.id.filename)).getText();
-                        Bitmap bm = BitmapFactory.decodeFile(filename);
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                        String encodedImage = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-                        respostinha.put("v", encodedImage);
+                        File fu=new File(filename);
+                        if(fu.exists()) {
+                            Bitmap bm = BitmapFactory.decodeFile(filename);
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                            String encodedImage = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                            respostinha.put("v", encodedImage);
+                        }
                         break;
                     default:
                     case TYPE_NUMBER:

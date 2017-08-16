@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:text="arquivo"
         android:id="@+id/filename"
-        android:visibility="visible"
+        android:visibility="gone"
         />
     <include layout="@layout/decline"/>
 </LinearLayout>
